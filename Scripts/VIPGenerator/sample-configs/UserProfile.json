@@ -1,0 +1,214 @@
+{
+  "sceneName": "UserProfile",
+  "useCases": [
+    {
+      "name": "LoadProfile",
+      "requestFields": [
+        {
+          "name": "userId",
+          "type": "String",
+          "comment": "사용자의 고유 ID"
+        }
+      ],
+      "responseFields": [
+        {
+          "name": "profile",
+          "type": "UserProfile"
+        },
+        {
+          "name": "error",
+          "type": "Error",
+          "isOptional": true
+        }
+      ],
+      "viewModelFields": [
+        {
+          "name": "displayName",
+          "type": "String"
+        },
+        {
+          "name": "email",
+          "type": "String"
+        },
+        {
+          "name": "avatarURL",
+          "type": "URL",
+          "isOptional": true
+        },
+        {
+          "name": "errorMessage",
+          "type": "String",
+          "isOptional": true
+        }
+      ],
+      "isAsyncOperation": true,
+      "requiresNetwork": true
+    },
+    {
+      "name": "UpdateProfile",
+      "requestFields": [
+        {
+          "name": "userId",
+          "type": "String"
+        },
+        {
+          "name": "displayName",
+          "type": "String"
+        },
+        {
+          "name": "email",
+          "type": "String"
+        },
+        {
+          "name": "avatarData",
+          "type": "Data",
+          "isOptional": true,
+          "comment": "새 프로필 이미지 데이터"
+        }
+      ],
+      "responseFields": [
+        {
+          "name": "success",
+          "type": "Bool"
+        },
+        {
+          "name": "updatedProfile",
+          "type": "UserProfile",
+          "isOptional": true
+        },
+        {
+          "name": "error",
+          "type": "Error",
+          "isOptional": true
+        }
+      ],
+      "viewModelFields": [
+        {
+          "name": "success",
+          "type": "Bool"
+        },
+        {
+          "name": "successMessage",
+          "type": "String",
+          "isOptional": true
+        },
+        {
+          "name": "errorMessage",
+          "type": "String",
+          "isOptional": true
+        }
+      ],
+      "isAsyncOperation": true,
+      "requiresNetwork": true
+    },
+    {
+      "name": "UploadAvatar",
+      "requestFields": [
+        {
+          "name": "userId",
+          "type": "String"
+        },
+        {
+          "name": "imageData",
+          "type": "Data",
+          "comment": "업로드할 이미지 데이터"
+        }
+      ],
+      "responseFields": [
+        {
+          "name": "success",
+          "type": "Bool"
+        },
+        {
+          "name": "avatarURL",
+          "type": "URL",
+          "isOptional": true
+        },
+        {
+          "name": "error",
+          "type": "Error",
+          "isOptional": true
+        }
+      ],
+      "viewModelFields": [
+        {
+          "name": "success",
+          "type": "Bool"
+        },
+        {
+          "name": "avatarURL",
+          "type": "URL",
+          "isOptional": true
+        },
+        {
+          "name": "errorMessage",
+          "type": "String",
+          "isOptional": true
+        }
+      ],
+      "isAsyncOperation": true,
+      "requiresNetwork": true
+    }
+  ],
+  "options": {
+    "generateSceneModels": true,
+    "generateInteractor": true,
+    "generatePresenter": true,
+    "generateWorker": true,
+    "generateRouter": true,
+    "generateView": true,
+    "generateTests": true,
+    "useSwiftUI": true,
+    "includeFormatters": true,
+    "includeLogging": true
+  },
+  "imports": [
+    "Foundation",
+    "Entity",
+    "Core",
+    "Factory"
+  ],
+  "dataStoreProperties": [
+    {
+      "name": "currentProfile",
+      "type": "UserProfile",
+      "isPublished": true
+    },
+    {
+      "name": "isLoading",
+      "type": "Bool",
+      "initialValue": "false",
+      "isPublished": true
+    },
+    {
+      "name": "isUpdating",
+      "type": "Bool",
+      "initialValue": "false",
+      "isPublished": true
+    },
+    {
+      "name": "uploadProgress",
+      "type": "Double",
+      "initialValue": "0.0",
+      "isPublished": true
+    }
+  ],
+  "routingMethods": [
+    {
+      "name": "routeToEditProfile",
+      "destination": "EditProfile"
+    },
+    {
+      "name": "routeToSettings",
+      "destination": "Settings"
+    },
+    {
+      "name": "routeToImagePicker",
+      "destination": "ImagePicker"
+    },
+    {
+      "name": "routeToHome",
+      "destination": "Home"
+    }
+  ]
+}

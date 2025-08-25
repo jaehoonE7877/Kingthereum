@@ -1,0 +1,78 @@
+import Foundation
+
+enum Receive {
+    
+    // MARK: - Use cases
+    
+    enum LoadWalletAddress {
+        struct Request {}
+        
+        struct Response {
+            let walletAddress: String
+            let formattedAddress: String
+        }
+        
+        struct ViewModel {
+            let walletAddress: String
+            let formattedAddress: String
+            let qrCodeData: Data?
+        }
+    }
+    
+    enum CopyAddress {
+        struct Request {
+            let address: String
+        }
+        
+        struct Response {
+            let success: Bool
+        }
+        
+        struct ViewModel {
+            let showCopyAlert: Bool
+        }
+    }
+    
+    enum ShareAddress {
+        struct Request {
+            let address: String
+        }
+        
+        struct Response {
+            let shareItems: [Any]
+        }
+        
+        struct ViewModel {
+            let shareItems: [Any]
+            let showShareSheet: Bool
+        }
+    }
+    
+    enum GenerateQRCode {
+        struct Request {
+            let address: String
+        }
+        
+        struct Response {
+            let qrCodeData: Data?
+            let isRefresh: Bool // 새로고침인지 구분
+        }
+        
+        struct ViewModel {
+            let qrCodeData: Data?
+            let isRefresh: Bool
+            let showSuccessAnimation: Bool
+        }
+    }
+}
+
+// MARK: - Supporting Models
+
+struct ReceiveDisplayItem {
+    let walletAddress: String
+    let formattedAddress: String
+    let qrCodeData: Data?
+    let networkName: String
+    let networkIcon: String
+    let warningMessage: String
+}

@@ -1,0 +1,431 @@
+import Testing
+import SwiftUI
+@testable import DesignSystem
+
+// MARK: - ScrollOffsetPreferenceKey Tests
+
+@MainActor @Suite("ScrollOffsetPreferenceKey Tests")
+struct ScrollOffsetPreferenceKeyTests {
+    
+    // MARK: - ScrollOffsetData Tests
+    
+    @Suite("ScrollOffsetData")
+    struct ScrollOffsetDataTests {
+        
+        @Test("초기화 및 기본값")
+        func testInitialization() {
+            // Given & When
+            let data = ScrollOffsetData()
+            
+            // Then
+            #expect(data.offset == 0, "기본 오프셋은 0이어야 함")
+            #expect(data.timestamp > 0, "타임스탬프는 0보다 커야 함")
+        }
+        
+        @Test("커스텀 오프셋으로 초기화")
+        func testCustomOffsetInitialization() {
+            // Given
+            let customOffset: CGFloat = 100.5
+            
+            // When
+            let data = ScrollOffsetData(offset: customOffset)
+            
+            // Then
+            #expect(data.offset == customOffset, "커스텀 오프셋이 정확히 설정되어야 함")
+        }
+        
+        @Test("값 변경 감지 - 임계값 이상")
+        func testShouldUpdateAboveThreshold() {
+            // Given
+            let previousData = ScrollOffsetData(offset: 0)
+            let newData = ScrollOffsetData(offset: 1.0) // 임계값(0.5) 이상
+            
+            // When
+            let shouldUpdate = newData.shouldUpdate(from: previousData)
+            
+            // Then
+            #expect(shouldUpdate == true, "임계값 이상의 변경은 업데이트되어야 함")
+        }
+        
+        @Test("값 변경 감지 - 임계값 이하")
+        func testShouldUpdateBelowThreshold() {
+            // Given
+            let previousData = ScrollOffsetData(offset: 0)
+            let newData = ScrollOffsetData(offset: 0.3) // 임계값(0.5) 이하
+            
+            // When
+            let shouldUpdate = newData.shouldUpdate(from: previousData)
+            
+            // Then
+            #expect(shouldUpdate == false, "임계값 이하의 변경은 업데이트되지 않아야 함")
+        }
+        
+        @Test("동등성 비교 - 임계값 내")
+        func testEqualityWithinThreshold() {
+            // Given
+            let data1 = ScrollOffsetData(offset: 0)
+            let data2 = ScrollOffsetData(offset: 0.4) // 임계값(0.5) 이하
+            
+            // When & Then
+            #expect(data1 == data2, "임계값 내의 차이는 동등하게 처리되어야 함")
+        }
+        
+        @Test("동등성 비교 - 임계값 초과")
+        func testEqualityBeyondThreshold() {
+            // Given
+            let data1 = ScrollOffsetData(offset: 0)
+            let data2 = ScrollOffsetData(offset: 1.0) // 임계값(0.5) 초과
+            
+            // When & Then
+            #expect(data1 != data2, "임계값 초과의 차이는 동등하지 않게 처리되어야 함")
+        }
+    }
+    
+    // MARK: - ScrollOffsetPreferenceKey Tests
+    
+    @Suite("ScrollOffsetPreferenceKey")
+    struct ScrollOffsetPreferenceKeyTests {
+        
+        @Test("기본값 확인")
+        func testDefaultValue() {
+            // Given & When
+            let defaultValue = ScrollOffsetPreferenceKey.defaultValue
+            
+            // Then
+            #expect(defaultValue.offset == 0, "기본 오프셋은 0이어야 함")
+        }
+        
+        @Test("reduce 함수 - 유의미한 변경")
+        func testReduceWithSignificantChange() {
+            // Given
+            var currentValue = ScrollOffsetData(offset: 0)
+            let nextValue = ScrollOffsetData(offset: 10.0) // 임계값 초과
+            
+            // When
+            ScrollOffsetPreferenceKey.reduce(value: &currentValue) {
+                nextValue
+            }
+            
+            // Then
+            #expect(currentValue.offset == 10.0, "유의미한 변경은 값이 업데이트되어야 함")
+        }
+        
+        @Test("reduce 함수 - 미미한 변경")
+        func testReduceWithMinorChange() {
+            // Given
+            var currentValue = ScrollOffsetData(offset: 0)
+            let originalTimestamp = currentValue.timestamp
+            let nextValue = ScrollOffsetData(offset: 0.3) // 임계값 이하
+            
+            // When
+            ScrollOffsetPreferenceKey.reduce(value: &currentValue) {
+                nextValue
+            }
+            
+            // Then
+            #expect(currentValue.offset == 0, "미미한 변경은 값이 유지되어야 함")
+            #expect(currentValue.timestamp == originalTimestamp, "타임스탬프도 유지되어야 함")
+        }
+    }
+    
+    // MARK: - EnhancedScrollOffsetData Tests
+    
+    @Suite("EnhancedScrollOffsetData")
+    struct EnhancedScrollOffsetDataTests {
+        
+        @Test("기본 초기화")
+        func testBasicInitialization() {
+            // Given & When
+            let data = EnhancedScrollOffsetData()
+            
+            // Then
+            #expect(data.offset == 0, "기본 오프셋은 0이어야 함")
+            #expect(data.velocity == 0, "기본 속도는 0이어야 함")
+            #expect(data.direction == .stationary, "기본 방향은 정지상태여야 함")
+        }
+        
+        @Test("방향 계산 - 아래로 스크롤")
+        func testScrollDirectionDown() {
+            // Given
+            let previousOffset: CGFloat = 0
+            let currentOffset: CGFloat = 10
+            let previousTimestamp = CACurrentMediaTime() - 0.1
+            
+            // When
+            let data = EnhancedScrollOffsetData(
+                offset: currentOffset,
+                previousOffset: previousOffset,
+                previousTimestamp: previousTimestamp
+            )
+            
+            // Then
+            #expect(data.direction == .down, "양수 델타는 아래 방향이어야 함")
+        }
+        
+        @Test("방향 계산 - 위로 스크롤")
+        func testScrollDirectionUp() {
+            // Given
+            let previousOffset: CGFloat = 10
+            let currentOffset: CGFloat = 0
+            let previousTimestamp = CACurrentMediaTime() - 0.1
+            
+            // When
+            let data = EnhancedScrollOffsetData(
+                offset: currentOffset,
+                previousOffset: previousOffset,
+                previousTimestamp: previousTimestamp
+            )
+            
+            // Then
+            #expect(data.direction == .up, "음수 델타는 위 방향이어야 함")
+        }
+        
+        @Test("방향 계산 - 정지상태")
+        func testScrollDirectionStationary() {
+            // Given
+            let previousOffset: CGFloat = 0
+            let currentOffset: CGFloat = 0.5 // 임계값(1.0) 이하
+            let previousTimestamp = CACurrentMediaTime() - 0.1
+            
+            // When
+            let data = EnhancedScrollOffsetData(
+                offset: currentOffset,
+                previousOffset: previousOffset,
+                previousTimestamp: previousTimestamp
+            )
+            
+            // Then
+            #expect(data.direction == .stationary, "미미한 변화는 정지상태여야 함")
+        }
+        
+        @Test("속도 계산")
+        func testVelocityCalculation() {
+            // Given
+            let previousOffset: CGFloat = 0
+            let currentOffset: CGFloat = 100
+            let deltaTime: TimeInterval = 0.1 // 100ms
+            let previousTimestamp = CACurrentMediaTime() - deltaTime
+            
+            // When
+            let data = EnhancedScrollOffsetData(
+                offset: currentOffset,
+                previousOffset: previousOffset,
+                previousTimestamp: previousTimestamp
+            )
+            
+            // Then
+            let expectedVelocity = abs(currentOffset - previousOffset) / deltaTime // 1000 pts/s
+            #expect(abs(data.velocity - expectedVelocity) < 50, "속도 계산이 정확해야 함") // 50 pts/s 오차 허용
+        }
+        
+        @Test("유의미한 스크롤 감지")
+        func testSignificantScroll() {
+            // Given
+            let data = EnhancedScrollOffsetData(offset: 10.0)
+            
+            // When & Then
+            #expect(data.isSignificantScroll(threshold: 5.0) == true, "임계값을 넘는 스크롤은 유의미해야 함")
+            #expect(data.isSignificantScroll(threshold: 15.0) == false, "임계값 이하 스크롤은 유의미하지 않아야 함")
+        }
+        
+        @Test("빠른 스크롤 감지")
+        func testFastScroll() {
+            // Given
+            let slowData = EnhancedScrollOffsetData(offset: 10, previousOffset: 0, previousTimestamp: CACurrentMediaTime() - 1.0) // 느린 스크롤
+            let fastData = EnhancedScrollOffsetData(offset: 1000, previousOffset: 0, previousTimestamp: CACurrentMediaTime() - 0.1) // 빠른 스크롤
+            
+            // When & Then
+            #expect(slowData.isFastScroll() == false, "느린 스크롤은 빠른 스크롤로 감지되지 않아야 함")
+            #expect(fastData.isFastScroll() == true, "빠른 스크롤은 올바르게 감지되어야 함")
+        }
+    }
+    
+    // MARK: - ScrollStateManager Tests
+    
+    @Suite("ScrollStateManager")
+    struct ScrollStateManagerTests {
+        
+        @Test("초기 상태")
+        func testInitialState() {
+            // Given & When
+            let manager = ScrollStateManager()
+            
+            // Then
+            #expect(manager.currentOffset.offset == 0, "초기 오프셋은 0이어야 함")
+            #expect(manager.isScrolling == false, "초기에는 스크롤하지 않는 상태여야 함")
+            #expect(manager.scrollDirection == .stationary, "초기 방향은 정지상태여야 함")
+        }
+        
+        @Test("오프셋 업데이트")
+        func testOffsetUpdate() {
+            // Given
+            let manager = ScrollStateManager()
+            let newOffset = ScrollOffsetData(offset: 50.0)
+            
+            // When
+            manager.updateOffset(newOffset)
+            
+            // Then
+            #expect(manager.currentOffset.offset == 50.0, "오프셋이 업데이트되어야 함")
+            #expect(manager.isScrolling == true, "스크롤 상태가 활성화되어야 함")
+            #expect(manager.scrollDirection == .down, "아래 방향으로 설정되어야 함")
+        }
+        
+        @Test("상태 리셋")
+        func testReset() {
+            // Given
+            let manager = ScrollStateManager()
+            manager.updateOffset(ScrollOffsetData(offset: 100.0))
+            
+            // When
+            manager.reset()
+            
+            // Then
+            #expect(manager.currentOffset.offset == 0, "오프셋이 리셋되어야 함")
+            #expect(manager.isScrolling == false, "스크롤 상태가 비활성화되어야 함")
+            #expect(manager.scrollDirection == .stationary, "방향이 정지상태로 리셋되어야 함")
+        }
+        
+        @Test("스크롤 종료 감지", .timeLimit(.minutes(1)))
+        func testScrollEndDetection() async {
+            // Given
+            let manager = ScrollStateManager()
+            let offset = ScrollOffsetData(offset: 50.0)
+            
+            // When
+            manager.updateOffset(offset)
+            
+            // 스크롤 종료 대기 (100ms + 여유시간)
+            try? await Task.sleep(nanoseconds: 200_000_000)
+            
+            // Then
+            #expect(manager.isScrolling == false, "일정 시간 후 스크롤 상태가 종료되어야 함")
+            #expect(manager.scrollDirection == .stationary, "방향이 정지상태로 변경되어야 함")
+        }
+    }
+    
+    // MARK: - Concurrency Safety Tests
+    
+    @Suite("동시성 안전성")
+    struct ConcurrencyTests {
+        
+        @Test("Sendable 프로토콜 준수 확인")
+        func testSendableCompliance() {
+            // Given
+            let data = ScrollOffsetData(offset: 100.0)
+            let enhancedData = EnhancedScrollOffsetData(offset: 50.0)
+            
+            // When & Then
+            // 컴파일 타임에 Sendable 프로토콜 준수가 확인됨
+            Task { @MainActor in
+                let _ = data // Sendable 타입이므로 액터 간 전송 가능
+                let _ = enhancedData // Sendable 타입이므로 액터 간 전송 가능
+            }
+            
+            #expect(true, "Sendable 프로토콜 준수로 컴파일 성공")
+        }
+        
+        @Test("MainActor 격리 확인")
+        func testMainActorIsolation() async {
+            // Given & When & Then
+            await MainActor.run {
+                let manager = ScrollStateManager()
+                let data = ScrollOffsetData(offset: 75.0)
+                
+                // MainActor에서 안전하게 사용 가능
+                manager.updateOffset(data)
+                
+                #expect(manager.currentOffset.offset == 75.0, "MainActor에서 안전하게 업데이트되어야 함")
+            }
+        }
+        
+        @Test("PreferenceKey 스레드 안전성")
+        func testPreferenceKeyThreadSafety() async {
+            // Given
+            var value = ScrollOffsetPreferenceKey.defaultValue
+            let newValue = ScrollOffsetData(offset: 200.0)
+            
+            // When & Then
+            await MainActor.run {
+                // PreferenceKey의 reduce 함수는 MainActor에서 안전하게 실행
+                ScrollOffsetPreferenceKey.reduce(value: &value) {
+                    newValue
+                }
+                
+                #expect(value.offset == 200.0, "MainActor에서 안전하게 reduce되어야 함")
+            }
+        }
+    }
+}
+
+// MARK: - Performance Tests
+
+@MainActor @Suite("성능 테스트")
+struct PerformanceTests {
+    
+    @Test("값 변경 감지 성능")
+    func testUpdatePerformance() {
+        // Given
+        let iterations = 1000
+        var data = ScrollOffsetData()
+        
+        // When
+        let startTime = CACurrentMediaTime()
+        
+        for i in 0..<iterations {
+            let newData = ScrollOffsetData(offset: CGFloat(i) * 0.1)
+            _ = newData.shouldUpdate(from: data)
+            data = newData
+        }
+        
+        let endTime = CACurrentMediaTime()
+        let duration = endTime - startTime
+        
+        // Then
+        #expect(duration < 0.1, "1000회 업데이트가 100ms 이내에 완료되어야 함") // 성능 기준
+    }
+    
+    @Test("PreferenceKey reduce 성능")
+    func testReducePerformance() {
+        // Given
+        let iterations = 1000
+        var value = ScrollOffsetPreferenceKey.defaultValue
+        
+        // When
+        let startTime = CACurrentMediaTime()
+        
+        for i in 0..<iterations {
+            let nextValue = ScrollOffsetData(offset: CGFloat(i))
+            ScrollOffsetPreferenceKey.reduce(value: &value) {
+                nextValue
+            }
+        }
+        
+        let endTime = CACurrentMediaTime()
+        let duration = endTime - startTime
+        
+        // Then
+        #expect(duration < 0.1, "1000회 reduce가 100ms 이내에 완료되어야 함") // 성능 기준
+    }
+    
+    @Test("ScrollStateManager 업데이트 성능")
+    func testScrollStateManagerPerformance() {
+        // Given
+        let iterations = 500
+        let manager = ScrollStateManager()
+        
+        // When
+        let startTime = CACurrentMediaTime()
+        
+        for i in 0..<iterations {
+            let offset = ScrollOffsetData(offset: CGFloat(i))
+            manager.updateOffset(offset)
+        }
+        
+        let endTime = CACurrentMediaTime()
+        let duration = endTime - startTime
+        
+        // Then
+        #expect(duration < 0.1, "500회 상태 업데이트가 100ms 이내에 완료되어야 함") // 성능 기준
+    }
+}

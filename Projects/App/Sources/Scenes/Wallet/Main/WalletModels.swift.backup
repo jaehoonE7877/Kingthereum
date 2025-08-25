@@ -1,0 +1,108 @@
+import Foundation
+import Core
+
+enum Wallet {
+    
+    // MARK: - Get Balance
+    enum GetBalance {
+        struct Request {
+            let walletAddress: String
+        }
+        
+        struct Response {
+            let balance: String
+            let usdValue: String?
+            let error: Error?
+        }
+        
+        struct ViewModel {
+            let balance: String
+            let usdValue: String
+            let isLoading: Bool
+            let errorMessage: String?
+        }
+    }
+    
+    // MARK: - Send Transaction
+    enum SendTransaction {
+        struct Request {
+            let toAddress: String
+            let amount: String
+            let gasPrice: String?
+        }
+        
+        struct Response {
+            let success: Bool
+            let transactionHash: String?
+            let error: Error?
+        }
+        
+        struct ViewModel {
+            let success: Bool
+            let transactionHash: String?
+            let errorMessage: String?
+        }
+    }
+    
+    // MARK: - Load Transactions
+    enum LoadTransactions {
+        struct Request {
+            let walletAddress: String
+        }
+        
+        struct Response {
+            let transactions: [Transaction]
+            let error: Error?
+        }
+        
+        struct ViewModel {
+            let transactions: [TransactionDisplayItem]
+            let isLoading: Bool
+            let errorMessage: String?
+        }
+    }
+    
+    // MARK: - Copy Address
+    enum CopyAddress {
+        struct Request {
+            let address: String
+        }
+        
+        struct Response {
+            let success: Bool
+        }
+        
+        struct ViewModel {
+            let message: String
+        }
+    }
+}
+
+struct TransactionDisplayItem: Identifiable {
+    let id = UUID()
+    let hash: String
+    let type: TransactionType
+    let amount: String
+    let address: String
+    let date: String
+    let status: TransactionStatus
+    
+    enum TransactionType {
+        case sent
+        case received
+        
+        var displayName: String {
+            switch self {
+            case .sent: return "전송"
+            case .received: return "수신"
+            }
+        }
+        
+        var symbol: String {
+            switch self {
+            case .sent: return "↗"
+            case .received: return "↙"
+            }
+        }
+    }
+}

@@ -1,0 +1,111 @@
+import Foundation
+import SecurityKit
+
+enum Authentication {
+    
+    // MARK: - Use Cases
+    enum SetupPIN {
+        struct Request {
+            let pin: String
+        }
+        
+        struct Response: Sendable {
+            let success: Bool
+            let error: Error?
+        }
+        
+        struct ViewModel {
+            let success: Bool
+            let errorMessage: String?
+        }
+    }
+    
+    enum AuthenticateWithBiometrics {
+        struct Request {
+            let reason: String
+        }
+        
+        struct Response: Sendable {
+            let success: Bool
+            let biometricType: BiometricType
+            let error: Error?
+        }
+        
+        struct ViewModel {
+            let success: Bool
+            let biometricTypeDescription: String
+            let errorMessage: String?
+        }
+    }
+    
+    enum AuthenticateWithPIN {
+        struct Request {
+            let pin: String
+        }
+        
+        struct Response: Sendable {
+            let success: Bool
+            let error: Error?
+        }
+        
+        struct ViewModel {
+            let success: Bool
+            let errorMessage: String?
+        }
+    }
+    
+    enum CheckBiometricAvailability {
+        struct Request { }
+        
+        struct Response: Sendable {
+            let isAvailable: Bool
+            let biometricType: BiometricType
+        }
+        
+        struct ViewModel {
+            let isAvailable: Bool
+            let biometricTypeDescription: String
+            let biometricIcon: String
+        }
+    }
+    
+    enum CreateWallet {
+        struct Request {
+            let walletName: String
+        }
+        
+        struct Response: Sendable {
+            let success: Bool
+            let walletAddress: String?
+            let mnemonic: String?
+            let error: Error?
+        }
+        
+        struct ViewModel {
+            let success: Bool
+            let walletAddress: String?
+            let mnemonic: String?
+            let errorMessage: String?
+        }
+    }
+    
+    enum ImportWallet {
+        struct Request {
+            let walletName: String
+            let mnemonic: String
+            let pin: String
+        }
+        
+        struct Response: Sendable {
+            let success: Bool
+            let walletAddress: String?
+            let error: Error?
+        }
+        
+        struct ViewModel {
+            let success: Bool
+            let walletAddress: String?
+            let errorMessage: String?
+        }
+    }
+}

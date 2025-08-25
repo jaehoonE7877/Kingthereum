@@ -1,0 +1,33 @@
+//
+//  Production.xcconfig
+//  Kingtherum
+//
+//  Production environment configuration
+//  🚨 DO NOT COMMIT ACTUAL API KEYS TO GIT
+//
+
+// MARK: - API Configuration
+// In production, these values should come from CI/CD environment variables
+// or be set in a secure production configuration management system
+
+// Infura Configuration
+// Production values should be injected via CI/CD pipeline
+INFURA_PROJECT_ID = $(INFURA_PROJECT_ID_ENV)
+INFURA_PROJECT_SECRET = $(INFURA_PROJECT_SECRET_ENV)
+
+// Etherscan Configuration  
+// Production values should be injected via CI/CD pipeline
+ETHERSCAN_API_KEY = $(ETHERSCAN_API_KEY_ENV)
+
+// MARK: - Build Settings
+// These values will be injected into the app's Info.plist at build time
+
+// Preprocessor macros to inject values into Info.plist
+GCC_PREPROCESSOR_DEFINITIONS = $(inherited) INFURA_PROJECT_ID=\"$(INFURA_PROJECT_ID)\" INFURA_PROJECT_SECRET=\"$(INFURA_PROJECT_SECRET)\" ETHERSCAN_API_KEY=\"$(ETHERSCAN_API_KEY)\"
+
+// MARK: - Production Security
+// 1. API keys should never be hardcoded in this file
+// 2. Use environment variables in CI/CD pipelines
+// 3. Consider using secure key management services
+// 4. Rotate keys regularly
+// 5. Monitor API usage for anomalies

@@ -1,0 +1,80 @@
+# Xcode
+build/
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata/
+*.moved-aside
+*.xccheckout
+*.xcscmblueprint
+*.xcuserstate
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Tuist derived files
+.build/
+Tuist/Dependencies/
+Projects/*/Derived/
+
+# API Keys and Environment Variables
+.env
+*.env
+Config.plist
+Secrets.plist
+InfuraConfig.plist
+
+# Configuration Files (로컬 개발용 설정 파일들)
+**/Config/*-Local.xcconfig
+**/Config/Development-Local.xcconfig
+**/Config/Production-Local.xcconfig
+
+# Security and Sensitive Files
+**/Resources/Keys/
+**/Resources/Secrets/
+*.p12
+*.mobileprovision
+*.provisionprofile
+
+# SwiftPM
+.swiftpm/
+
+# CocoaPods
+Pods/
+*.xcworkspace
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# Bundle artifacts
+*.jsbundle
+
+# DerivedData
+DerivedData/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp

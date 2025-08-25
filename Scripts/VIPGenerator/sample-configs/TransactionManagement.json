@@ -1,0 +1,302 @@
+{
+  "sceneName": "TransactionManagement",
+  "useCases": [
+    {
+      "name": "LoadTransactions",
+      "requestFields": [
+        {
+          "name": "walletAddress",
+          "type": "String",
+          "comment": "지갑 주소"
+        },
+        {
+          "name": "limit",
+          "type": "Int",
+          "defaultValue": "20",
+          "comment": "로드할 거래 수"
+        },
+        {
+          "name": "offset",
+          "type": "Int",
+          "defaultValue": "0",
+          "comment": "페이지네이션 오프셋"
+        }
+      ],
+      "responseFields": [
+        {
+          "name": "transactions",
+          "type": "[Transaction]"
+        },
+        {
+          "name": "hasMore",
+          "type": "Bool"
+        },
+        {
+          "name": "error",
+          "type": "Error",
+          "isOptional": true
+        }
+      ],
+      "viewModelFields": [
+        {
+          "name": "transactionViewModels",
+          "type": "[TransactionViewModel]"
+        },
+        {
+          "name": "hasMoreTransactions",
+          "type": "Bool"
+        },
+        {
+          "name": "isEmpty",
+          "type": "Bool"
+        },
+        {
+          "name": "errorMessage",
+          "type": "String",
+          "isOptional": true
+        }
+      ],
+      "isAsyncOperation": true,
+      "requiresNetwork": true,
+      "requiresDatabase": false
+    },
+    {
+      "name": "FilterTransactions",
+      "requestFields": [
+        {
+          "name": "filterType",
+          "type": "TransactionFilterType",
+          "comment": "필터링 타입"
+        },
+        {
+          "name": "dateRange",
+          "type": "DateRange",
+          "isOptional": true,
+          "comment": "날짜 범위 필터"
+        },
+        {
+          "name": "amountRange",
+          "type": "AmountRange",
+          "isOptional": true,
+          "comment": "금액 범위 필터"
+        }
+      ],
+      "responseFields": [
+        {
+          "name": "filteredTransactions",
+          "type": "[Transaction]"
+        },
+        {
+          "name": "filterType",
+          "type": "TransactionFilterType"
+        },
+        {
+          "name": "totalCount",
+          "type": "Int"
+        }
+      ],
+      "viewModelFields": [
+        {
+          "name": "transactionViewModels",
+          "type": "[TransactionViewModel]"
+        },
+        {
+          "name": "filterTitle",
+          "type": "String"
+        },
+        {
+          "name": "resultCount",
+          "type": "String"
+        },
+        {
+          "name": "isEmpty",
+          "type": "Bool"
+        }
+      ],
+      "isAsyncOperation": false,
+      "requiresNetwork": false,
+      "requiresDatabase": false
+    },
+    {
+      "name": "ExportTransactions",
+      "requestFields": [
+        {
+          "name": "transactions",
+          "type": "[Transaction]"
+        },
+        {
+          "name": "format",
+          "type": "ExportFormat",
+          "comment": "내보내기 형식 (CSV, JSON, PDF)"
+        }
+      ],
+      "responseFields": [
+        {
+          "name": "exportData",
+          "type": "Data",
+          "isOptional": true
+        },
+        {
+          "name": "fileName",
+          "type": "String"
+        },
+        {
+          "name": "format",
+          "type": "ExportFormat"
+        },
+        {
+          "name": "error",
+          "type": "Error",
+          "isOptional": true
+        }
+      ],
+      "viewModelFields": [
+        {
+          "name": "shareItems",
+          "type": "[Any]"
+        },
+        {
+          "name": "successMessage",
+          "type": "String",
+          "isOptional": true
+        },
+        {
+          "name": "errorMessage",
+          "type": "String",
+          "isOptional": true
+        }
+      ],
+      "isAsyncOperation": true,
+      "requiresNetwork": false,
+      "requiresDatabase": false
+    },
+    {
+      "name": "RefreshTransactions",
+      "requestFields": [
+        {
+          "name": "walletAddress",
+          "type": "String"
+        }
+      ],
+      "responseFields": [
+        {
+          "name": "transactions",
+          "type": "[Transaction]"
+        },
+        {
+          "name": "newTransactionsCount",
+          "type": "Int"
+        },
+        {
+          "name": "error",
+          "type": "Error",
+          "isOptional": true
+        }
+      ],
+      "viewModelFields": [
+        {
+          "name": "transactionViewModels",
+          "type": "[TransactionViewModel]"
+        },
+        {
+          "name": "refreshMessage",
+          "type": "String",
+          "isOptional": true
+        },
+        {
+          "name": "errorMessage",
+          "type": "String",
+          "isOptional": true
+        }
+      ],
+      "isAsyncOperation": true,
+      "requiresNetwork": true,
+      "requiresDatabase": false
+    }
+  ],
+  "options": {
+    "generateSceneModels": true,
+    "generateInteractor": true,
+    "generatePresenter": true,
+    "generateWorker": true,
+    "generateRouter": true,
+    "generateView": true,
+    "generateTests": true,
+    "useSwiftUI": true,
+    "includeFormatters": true,
+    "includeLogging": true
+  },
+  "imports": [
+    "Foundation",
+    "Entity",
+    "Core",
+    "WalletKit",
+    "Factory"
+  ],
+  "dataStoreProperties": [
+    {
+      "name": "currentTransactions",
+      "type": "[Transaction]",
+      "initialValue": "[]",
+      "isPublished": true
+    },
+    {
+      "name": "filteredTransactions",
+      "type": "[Transaction]",
+      "initialValue": "[]",
+      "isPublished": true
+    },
+    {
+      "name": "currentFilter",
+      "type": "TransactionFilterType",
+      "initialValue": ".all",
+      "isPublished": true
+    },
+    {
+      "name": "isLoading",
+      "type": "Bool",
+      "initialValue": "false",
+      "isPublished": true
+    },
+    {
+      "name": "isLoadingMore",
+      "type": "Bool",
+      "initialValue": "false",
+      "isPublished": true
+    },
+    {
+      "name": "hasMoreTransactions",
+      "type": "Bool",
+      "initialValue": "false",
+      "isPublished": true
+    },
+    {
+      "name": "walletAddress",
+      "type": "String",
+      "isPublished": false
+    }
+  ],
+  "routingMethods": [
+    {
+      "name": "routeToTransactionDetail",
+      "destination": "TransactionDetail",
+      "parameters": ["transactionHash"]
+    },
+    {
+      "name": "routeToExportOptions",
+      "destination": "ExportOptions"
+    },
+    {
+      "name": "routeToFilterSettings",
+      "destination": "FilterSettings"
+    },
+    {
+      "name": "routeToHome",
+      "destination": "Home"
+    },
+    {
+      "name": "routeToSend",
+      "destination": "Send"
+    }
+  ]
+}

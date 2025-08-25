@@ -1,0 +1,225 @@
+import Foundation
+import os
+
+// MARK: - Base Router Protocol
+
+@MainActor
+protocol BaseRoutingLogic {
+    associatedtype DisplayLogic: AnyObject
+    associatedtype DataStore
+    
+    var viewController: DisplayLogic? { get set }
+    var dataStore: DataStore? { get set }
+}
+
+@MainActor
+protocol BaseDataPassing {
+    associatedtype DataStore
+    var dataStore: DataStore? { get }
+}
+
+// MARK: - Navigation Methods
+
+@MainActor
+protocol NavigationProtocol {
+    func navigateBack()
+    func navigateToRoot()
+    func dismissModal()
+    func presentModal<T: AnyObject>(_ viewController: T)
+}
+
+// MARK: - Router Error Handling
+
+enum RouterError: LocalizedError {
+    case dataStoreNotFound
+    case viewControllerNotFound
+    case invalidNavigationContext
+    case navigationFailed(String)
+    
+    var errorDescription: String? {
+        switch self {
+        case .dataStoreNotFound:
+            return "DataStore를 찾을 수 없습니다"
+        case .viewControllerNotFound:
+            return "ViewController를 찾을 수 없습니다"
+        case .invalidNavigationContext:
+            return "잘못된 네비게이션 컨텍스트입니다"
+        case .navigationFailed(let reason):
+            return "네비게이션 실패: \(reason)"
+        }
+    }
+}
+
+// MARK: - Navigation Context
+
+struct NavigationContext: Sendable {
+    let sourceScene: String
+    let destinationScene: String
+    let isModal: Bool
+    let animated: Bool
+    
+    init(
+        from source: String,
+        to destination: String,
+        isModal: Bool = false,
+        animated: Bool = true
+    ) {
+        self.sourceScene = source
+        self.destinationScene = destination
+        self.isModal = isModal
+        self.animated = animated
+    }
+}
+
+// MARK: - Router Logger
+
+actor RouterLogger {
+    static let shared = RouterLogger()
+    
+    private var navigationHistory: [NavigationEvent] = []
+    private let maxHistoryCount = 100
+    
+    func logNavigation(from source: String, to destination: String, context: String? = nil) {
+        let event = NavigationEvent(
+            timestamp: Date(),
+            source: source,
+            destination: destination,
+            context: context
+        )
+        
+        navigationHistory.append(event)
+        
+        // 히스토리 크기 제한
+        if navigationHistory.count > maxHistoryCount {
+            navigationHistory.removeFirst()
+        }
+        
+        os_log("Navigation: %@ → %@%@", log: .default, type: .debug, source, destination, context.map { " (\($0))" } ?? "")
+    }
+    
+    func getNavigationHistory() -> [NavigationEvent] {
+        return navigationHistory
+    }
+    
+    func clearHistory() {
+        navigationHistory.removeAll()
+    }
+}
+
+struct NavigationEvent: Sendable {
+    let timestamp: Date
+    let source: String
+    let destination: String
+    let context: String?
+}
+
+// MARK: - Router Utilities
+
+@MainActor
+class RouterUtilities {
+    
+    static func validateNavigation(from source: String, to destination: String) -> Bool {
+        // 기본 네비게이션 유효성 검증 로직
+        // 실제 구현에서는 더 정교한 검증 로직 추가 가능
+        return !source.isEmpty && !destination.isEmpty && source != destination
+    }
+    
+    static func createNavigationContext(
+        from source: String,
+        to destination: String,
+        isModal: Bool = false
+    ) -> NavigationContext {
+        return NavigationContext(
+            from: source,
+            to: destination,
+            isModal: isModal
+        )
+    }
+    
+    static func extractSceneName(from className: String) -> String {
+        // "AuthenticationRouter" -> "Authentication"
+        return className.replacingOccurrences(of: "Router", with: "")
+            .replacingOccurrences(of: "View", with: "")
+            .replacingOccurrences(of: "Controller", with: "")
+    }
+}
+
+// MARK: - Standard Router Base Class
+
+@MainActor
+open class StandardRouter<DisplayLogic: AnyObject, DataStore>: BaseRoutingLogic, BaseDataPassing {
+    public weak var viewController: DisplayLogic?
+    public var dataStore: DataStore?
+    
+    private let sceneName: String
+    
+    public init(sceneName: String? = nil) {
+        self.sceneName = sceneName ?? RouterUtilities.extractSceneName(from: String(describing: Self.self))
+    }
+    
+    // MARK: - Protected Methods
+    
+    public func logNavigation(to destination: String, context: String? = nil) {
+        Task {
+            await RouterLogger.shared.logNavigation(
+                from: sceneName,
+                to: destination,
+                context: context
+            )
+        }
+    }
+    
+    public func validateDataStore() throws {
+        guard dataStore != nil else {
+            throw RouterError.dataStoreNotFound
+        }
+    }
+    
+    public func validateViewController() throws {
+        guard viewController != nil else {
+            throw RouterError.viewControllerNotFound
+        }
+    }
+    
+    // MARK: - Common Navigation Methods
+    
+    open func navigateBack() {
+        logNavigation(to: "Back")
+        // 기본 구현 - 실제로는 각 Router에서 구체적으로 구현
+    }
+    
+    open func navigateToRoot() {
+        logNavigation(to: "Root")
+        // 기본 구현 - 실제로는 각 Router에서 구체적으로 구현
+    }
+    
+    open func dismissModal() {
+        logNavigation(to: "Dismiss")
+        // 기본 구현 - 실제로는 각 Router에서 구체적으로 구현
+    }
+}
+
+// MARK: - Router Factory
+
+@MainActor
+class StandardRouterFactory {
+    
+    // Router 인스턴스를 동적으로 생성하는 메서드
+    static func createRouter<T>(ofType type: T.Type) -> T? {
+        // 각 Scene에서 구체적인 Router를 생성할 때 사용
+        return nil
+    }
+}
+
+// MARK: - Router Configuration
+
+struct RouterConfiguration {
+    static let defaultAnimationDuration: TimeInterval = 0.3
+    static let enableLogging: Bool = true
+    static let maxNavigationHistoryCount: Int = 100
+    
+    static func configure() {
+        // Router 전역 설정
+        os_log("Router system configured", log: .default, type: .info)
+    }
+}

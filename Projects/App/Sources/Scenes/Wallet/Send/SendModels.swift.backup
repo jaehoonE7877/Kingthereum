@@ -1,0 +1,207 @@
+import Foundation
+import BigInt
+
+enum Send {
+    
+    // MARK: - Use Cases
+    
+    enum ValidateAddress {
+        struct Request {
+            let address: String
+        }
+        
+        struct Response {
+            let isValid: Bool
+            let errorMessage: String?
+        }
+        
+        struct ViewModel {
+            let isValid: Bool
+            let errorMessage: String?
+            let showError: Bool
+        }
+    }
+    
+    enum ValidateAmount {
+        struct Request {
+            let amount: String
+            let availableBalance: String
+        }
+        
+        struct Response {
+            let isValid: Bool
+            let errorMessage: String?
+            let parsedAmount: Decimal?
+        }
+        
+        struct ViewModel {
+            let isValid: Bool
+            let errorMessage: String?
+            let showError: Bool
+            let formattedAmount: String?
+        }
+    }
+    
+    enum EstimateGas {
+        struct Request {
+            let recipientAddress: String
+            let amount: String
+        }
+        
+        struct Response {
+            let gasOptions: GasOptions?
+            let error: String?
+        }
+        
+        struct ViewModel {
+            let gasOptions: GasOptions?
+            let errorMessage: String?
+            let showError: Bool
+        }
+    }
+    
+    enum PrepareTransaction {
+        struct Request {
+            let recipientAddress: String
+            let amount: String
+            let selectedGasFee: GasFee
+        }
+        
+        struct Response {
+            let transaction: Transaction?
+            let isReadyToSend: Bool
+            let errorMessage: String?
+        }
+        
+        struct ViewModel {
+            let transaction: Transaction?
+            let isReadyToSend: Bool
+            let errorMessage: String?
+            let showError: Bool
+            let totalAmount: String?
+            let totalAmountUSD: String?
+        }
+    }
+    
+    enum SendTransaction {
+        struct Request {
+            let transaction: Transaction
+        }
+        
+        struct Response {
+            let success: Bool
+            let transactionHash: String?
+            let errorMessage: String?
+        }
+        
+        struct ViewModel {
+            let success: Bool
+            let transactionHash: String?
+            let errorMessage: String?
+            let showSuccess: Bool
+            let showError: Bool
+        }
+    }
+}
+
+// MARK: - Supporting Models
+
+extension Send {
+    
+    struct Transaction {
+        let recipientAddress: String
+        let amount: Decimal
+        let gasPrice: BigUInt
+        let gasLimit: BigUInt
+        let nonce: BigUInt
+        
+        var totalAmount: Decimal {
+            let gasFeeInWei = gasPrice * gasLimit
+            let gasFeeInETH = Decimal(string: gasFeeInWei.description) ?? 0
+            let gasFeeInETHConverted = gasFeeInETH / pow(10, 18)
+            return amount + gasFeeInETHConverted
+        }
+    }
+    
+    struct GasOptions {
+        let slow: GasFee
+        let normal: GasFee
+        let fast: GasFee
+    }
+    
+    struct GasFee {
+        let gasPrice: BigUInt
+        let estimatedTime: TimeInterval
+        let feeInETH: Decimal
+        let feeInUSD: Decimal
+        
+        var formattedTime: String {
+            let minutes = Int(estimatedTime / 60)
+            return "\(minutes)분"
+        }
+        
+        var formattedFeeETH: String {
+            return String(format: "%.6f ETH", NSDecimalNumber(decimal: feeInETH).doubleValue)
+        }
+        
+        var formattedFeeUSD: String {
+            return String(format: "$%.2f", NSDecimalNumber(decimal: feeInUSD).doubleValue)
+        }
+    }
+}
+
+// MARK: - Display Models
+
+struct SendDisplayItem {
+    let recipientAddress: String
+    let formattedRecipientAddress: String
+    let amount: String
+    let amountInUSD: String
+    let selectedGasFee: Send.GasFee
+    let totalAmount: String
+    let totalAmountInUSD: String
+    let isReadyToSend: Bool
+}
+
+enum SendStep {
+    case enterRecipient
+    case enterAmount
+    case selectGasFee
+    case confirmTransaction
+    case authenticating
+    case sending
+    case completed
+    case failed
+}
+
+// MARK: - Gas Priority Options
+
+enum GasPriority: String, CaseIterable {
+    case slow = "slow"
+    case normal = "normal"
+    case fast = "fast"
+    
+    var title: String {
+        switch self {
+        case .slow: return "느림"
+        case .normal: return "보통"
+        case .fast: return "빠름"
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .slow: return "tortoise.fill"
+        case .normal: return "hare.fill"
+        case .fast: return "bolt.fill"
+        }
+    }
+    
+    var description: String {
+        switch self {
+        case .slow: return "가장 저렴한 수수료"
+        case .normal: return "권장 수수료"
+        case .fast: return "빠른 처리 보장"
+        }
+    }
+}
