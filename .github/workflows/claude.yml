@@ -1,0 +1,114 @@
+name: Claude Code
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  issues:
+    types: [opened, assigned]
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  claude:
+    # 보안: 특정 사용자만 워크플로우 실행 허용 + @claude 멘션 조건
+    if: |
+      (
+        (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+        (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
+        (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
+        (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude'))) ||
+        (github.event_name == 'pull_request')
+      ) &&
+      (
+        github.repository_owner == github.actor
+      )
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read # Required for Claude to read CI results on PRs
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Code
+        id: claude
+        uses: anthropics/claude-code-action@v0.8  # v1 → v0.8로 수정
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+
+          # 성능 최적화: 실행 시간 제한
+          max_turns: 3
+          timeout_minutes: 10
+
+          # CI 결과 읽기 권한
+          additional_permissions: |
+            actions: read
+
+          # 모델 설정 (기본값: Claude Sonnet 4)
+          # model: "claude-sonnet-4-20250514"  # 필요시 주석 해제
+
+          # 트리거 문구 커스터마이징 (선택사항)
+          # trigger_phrase: "@claude"
+
+          # 특정 사용자 할당 시 트리거 (선택사항)
+          # assignee_trigger: "claude-bot"
+
+          # 허용된 도구 제한 (iOS 프로젝트용으로 수정)
+          allowed_tools: "Bash(xcodebuild),Bash(tuist),Bash(swift test),Bash(swift build),Bash(swiftformat),Bash(swiftlint),Bash(git status),Bash(git log --oneline -10)"
+
+          # 프로젝트별 커스텀 지침 (iOS Swift 프로젝트용)
+          custom_instructions: |
+            **iOS Swift 프로젝트 코딩 표준:**
+            - Clean Swift (VIP) 아키텍처 준수
+            - Swift 6.0+ 및 iOS 18+ 최신 API 사용
+            - SwiftUI 네이티브 패턴 적용
+            - SOLID 원칙 엄격 준수
+            
+            **코드 품질:**
+            - 모든 새로운 클래스/함수에 문서화 주석 추가
+            - 에러 핸들링 및 방어적 프로그래밍
+            - Swift Testing 프레임워크 사용 (@Suite, @Test)
+            - 접근성 (VoiceOver) 지원 필수
+            
+            **리뷰 기준:**
+            - 보안 취약점 확인 (API Key, 민감정보 하드코딩 금지)
+            - 성능 고려사항 검토 (메모리 누수, 동시성)
+            - 테스트 코드 작성 권장 (TDD 방식)
+            - 코드 스타일 일관성 (SwiftFormat, SwiftLint)
+            
+            **PR 생성 규칙:**
+            - 명확한 제목과 상세한 설명
+            - 작은 단위의 의미있는 커밋
+            - VIP 패턴 준수 여부 확인
+            - 관련 이슈 번호 연결
+
+          # 환경 변수 설정
+          claude_env: |
+            DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
+            SWIFT_VERSION: 6.0
+            IOS_DEPLOYMENT_TARGET: 18.0
+
+      # 실행 결과 알림
+      - name: Comment on completion
+        if: always()
+        uses: actions/github-script@v7  # v6 → v7로 업데이트
+        with:
+          script: |
+            const status = '${{ steps.claude.outcome }}' === 'success' ? '✅ 완료' : '❌ 실패';
+            const body = `Claude Code Action ${status}\n\n실행 시간: ${{ steps.claude.outputs.execution_time || '정보 없음' }}`;
+            
+            if (context.eventName === 'issue_comment' || context.eventName === 'issues') {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `<!-- claude-status -->\n${body}`
+              });
+            }
