@@ -7,13 +7,14 @@ struct MainTabView: View {
     @State private var selectedTab: AppTab = .home
     @State private var showTabBar = true
     @State private var showReceiveView = false
+    @State private var columnVisibility: NavigationSplitViewVisibility = .automatic
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     
     var body: some View {
         Group {
             if horizontalSizeClass == .regular {
-                // iPad/Mac - 기존 TabView 사용
-                iPadTabView
+                // iPad/Mac - NavigationSplitView 사용
+                iPadNavigationSplitView
             } else {
                 // iPhone - 커스텀 Tab Bar 사용
                 iPhoneCustomTabView
@@ -24,38 +25,52 @@ struct MainTabView: View {
         }
     }
     
-    // MARK: - iPad/Mac용 TabView
-    private var iPadTabView: some View {
-        TabView(selection: $selectedTab) {
+    // MARK: - iPad/Mac용 NavigationSplitView
+    private var iPadNavigationSplitView: some View {
+        NavigationSplitView(columnVisibility: $columnVisibility) {
+            // Sidebar
+            List(AppTab.allCases, selection: $selectedTab) { tab in
+                NavigationLink(value: tab) {
+                    Label {
+                        Text(tab.title)
+                    } icon: {
+                        Image(systemName: tab.icon)
+                            .foregroundStyle(selectedTab == tab ? Color.kingBlue : Color.secondary)
+                    }
+                }
+                .listRowBackground(
+                    selectedTab == tab ? Color.kingBlue.opacity(0.1) : Color.clear
+                )
+            }
+            .navigationTitle("Kingthereum")
+            .navigationSplitViewColumnWidth(min: 200, ideal: 250, max: 300)
+        } detail: {
+            // Detail View
+            NavigationStack {
+                destinationView(for: selectedTab)
+            }
+        }
+        .navigationSplitViewStyle(.balanced)
+    }
+    
+    // MARK: - Destination View Helper
+    @ViewBuilder
+    private func destinationView(for tab: AppTab) -> some View {
+        switch tab {
+        case .home:
             WalletHomeView(
                 showTabBar: .constant(true),
                 showReceiveView: $showReceiveView
             )
-            .tabItem {
-                Label(AppTab.home.title, systemImage: AppTab.home.icon)
-            }
-            .tag(AppTab.home)
-            
+        case .wallet:
             WalletHomeView(
                 showTabBar: .constant(true),
                 showReceiveView: $showReceiveView
             )
-            .tabItem {
-                Label(AppTab.wallet.title, systemImage: AppTab.wallet.icon)
-            }
-            .tag(AppTab.wallet)
-            
+        case .history:
             HistoryView(showTabBar: .constant(true))
-                .tabItem {
-                    Label(AppTab.history.title, systemImage: AppTab.history.icon)
-                }
-                .tag(AppTab.history)
-            
+        case .settings:
             SettingsView(showTabBar: .constant(true))
-                .tabItem {
-                    Label(AppTab.settings.title, systemImage: AppTab.settings.icon)
-                }
-                .tag(AppTab.settings)
         }
     }
     

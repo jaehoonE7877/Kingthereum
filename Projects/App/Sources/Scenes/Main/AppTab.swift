@@ -1,11 +1,13 @@
 import SwiftUI
 
 /// 앱의 메인 탭
-public enum AppTab: String, CaseIterable {
+public enum AppTab: String, CaseIterable, Identifiable, Hashable {
     case home = "home"
     case wallet = "wallet"
     case history = "history"
     case settings = "settings"
+    
+    public var id: String { self.rawValue }
     
     public var title: String {
         switch self {

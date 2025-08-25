@@ -1,6 +1,27 @@
 import SwiftUI
 import Core
 
+/// 검증 상태를 나타내는 열거형
+public enum ValidationState {
+    case none
+    case valid
+    case invalid(String)
+    
+    var isValid: Bool {
+        switch self {
+        case .none, .valid: return true
+        case .invalid: return false
+        }
+    }
+    
+    var errorMessage: String? {
+        switch self {
+        case .none, .valid: return nil
+        case .invalid(let message): return message
+        }
+    }
+}
+
 public struct GlassTextField: View {
     @Binding var text: String
     let placeholder: String
@@ -9,6 +30,7 @@ public struct GlassTextField: View {
     let keyboardType: UIKeyboardType
     let textContentType: UITextContentType?
     let submitLabel: SubmitLabel
+    let validation: ValidationState
     let onEditingChanged: (Bool) -> Void
     let onSubmit: () -> Void
     
@@ -23,6 +45,7 @@ public struct GlassTextField: View {
         keyboardType: UIKeyboardType = .default,
         textContentType: UITextContentType? = nil,
         submitLabel: SubmitLabel = .return,
+        validation: ValidationState = .none,
         onEditingChanged: @escaping (Bool) -> Void = { _ in },
         onSubmit: @escaping () -> Void = {}
     ) {
@@ -33,65 +56,85 @@ public struct GlassTextField: View {
         self.keyboardType = keyboardType
         self.textContentType = textContentType
         self.submitLabel = submitLabel
+        self.validation = validation
         self.onEditingChanged = onEditingChanged
         self.onSubmit = onSubmit
     }
     
     public var body: some View {
-        HStack {
-            Group {
-                if isSecure && !showSecureText {
-                    SecureField(placeholder, text: $text)
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Group {
+                    if isSecure && !showSecureText {
+                        SecureField(placeholder, text: $text)
+                            .submitLabel(submitLabel)
+                            .onSubmit {
+                                onSubmit()
+                            }
+                    } else {
+                        TextField(placeholder, text: $text, onEditingChanged: { editing in
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                isEditing = editing
+                            }
+                            onEditingChanged(editing)
+                        })
                         .submitLabel(submitLabel)
                         .onSubmit {
                             onSubmit()
                         }
-                } else {
-                    TextField(placeholder, text: $text, onEditingChanged: { editing in
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            isEditing = editing
-                        }
-                        onEditingChanged(editing)
-                    })
-                    .submitLabel(submitLabel)
-                    .onSubmit {
-                        onSubmit()
+                    }
+                }
+                .font(style.font)
+                .foregroundColor(style.textColor)
+                .keyboardType(keyboardType)
+                .textContentType(textContentType)
+                .autocapitalization(.none)
+                .disableAutocorrection(true)
+                
+                // Validation Icon
+                if !text.isEmpty {
+                    Image(systemName: validation.isValid ? "checkmark.circle.fill" : "xmark.circle.fill")
+                        .foregroundColor(validation.isValid ? .green : .red)
+                        .font(.system(size: 16))
+                }
+                
+                if isSecure {
+                    Button(action: {
+                        showSecureText.toggle()
+                    }) {
+                        Image(systemName: showSecureText ? "eye.slash" : "eye")
+                            .foregroundColor(style.iconColor)
+                            .font(.system(size: 16))
                     }
                 }
             }
-            .font(style.font)
-            .foregroundColor(style.textColor)
-            .keyboardType(keyboardType)
-            .textContentType(textContentType)
-            .autocapitalization(.none)
-            .disableAutocorrection(true)
+            .padding(.horizontal, style.horizontalPadding)
+            .padding(.vertical, style.verticalPadding)
+            .background(style.backgroundColor, in: RoundedRectangle(cornerRadius: style.cornerRadius))
+            .overlay(
+                RoundedRectangle(cornerRadius: style.cornerRadius)
+                    .stroke(
+                        !validation.isValid ? .red :
+                        isEditing ? style.focusedBorderColor : style.borderColor,
+                        lineWidth: style.borderWidth
+                    )
+            )
+            .shadow(
+                color: style.shadowColor,
+                radius: style.shadowRadius,
+                x: 0,
+                y: style.shadowOffset
+            )
             
-            if isSecure {
-                Button(action: {
-                    showSecureText.toggle()
-                }) {
-                    Image(systemName: showSecureText ? "eye.slash" : "eye")
-                        .foregroundColor(style.iconColor)
-                        .font(.system(size: 16))
-                }
+            // Error Message
+            if let errorMessage = validation.errorMessage, !text.isEmpty {
+                Text(errorMessage)
+                    .font(.caption)
+                    .foregroundColor(.red)
+                    .padding(.horizontal, 4)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .padding(.horizontal, style.horizontalPadding)
-        .padding(.vertical, style.verticalPadding)
-        .background(style.backgroundColor, in: RoundedRectangle(cornerRadius: style.cornerRadius))
-        .overlay(
-            RoundedRectangle(cornerRadius: style.cornerRadius)
-                .stroke(
-                    isEditing ? style.focusedBorderColor : style.borderColor,
-                    lineWidth: style.borderWidth
-                )
-        )
-        .shadow(
-            color: style.shadowColor,
-            radius: style.shadowRadius,
-            x: 0,
-            y: style.shadowOffset
-        )
     }
 }
 
