@@ -39,7 +39,7 @@ jobs:
 
       - name: Run Claude Code
         id: claude
-        uses: anthropics/claude-code-action@v0.8  # v1 → v0.8로 수정
+        uses: anthropics/claude-code-action@beta  # v1 → v0.8로 수정
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
 
