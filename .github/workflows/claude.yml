@@ -52,7 +52,8 @@ jobs:
             actions: read
 
           # 모델 설정 (기본값: Claude Sonnet 4)
-          # model: "claude-sonnet-4-20250514"  # 필요시 주석 해제
+          model: "claude-sonnet-4-20250514"  # 필요시 주석 해제
+
 
           # 트리거 문구 커스터마이징 (선택사항)
           # trigger_phrase: "@claude"
