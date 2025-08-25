@@ -41,7 +41,7 @@ jobs:
         id: claude
         uses: anthropics/claude-code-action@beta  # v1 → v0.8로 수정
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
           # 성능 최적화: 실행 시간 제한
           max_turns: 3
@@ -101,6 +101,7 @@ jobs:
         if: always()
         uses: actions/github-script@v7  # v6 → v7로 업데이트
         with:
+          github_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           script: |
             const status = '${{ steps.claude.outcome }}' === 'success' ? '✅ 완료' : '❌ 실패';
             const body = `Claude Code Action ${status}\n\n실행 시간: ${{ steps.claude.outputs.execution_time || '정보 없음' }}`;
