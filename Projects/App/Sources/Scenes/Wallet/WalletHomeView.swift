@@ -42,6 +42,8 @@ struct WalletHomeView: View {
                         ) {
                             navigationPath.append(SendDestination.selectRecipient)
                         }
+                        .accessibilityLabel("이더리움 보내기")
+                        .accessibilityHint("탭하여 이더리움을 다른 주소로 전송합니다")
                         
                         ActionButton(
                             title: "받기",
@@ -54,6 +56,8 @@ struct WalletHomeView: View {
                         ) {
                             showReceiveView = true
                         }
+                        .accessibilityLabel("이더리움 받기")
+                        .accessibilityHint("탭하여 내 지갑 주소와 QR 코드를 확인합니다")
                     }
                     
                     // 최근 거래
@@ -168,9 +172,6 @@ struct SendRecipientNavigationView: View {
                         .onChange(of: recipientAddress) { _, newValue in
                             validateAddress(newValue)
                         }
-//                        .onChange(of: recipientAddress) { newValue in
-//                            validateAddress(newValue)
-//                        }
                         
                         Button {
                             // QR 스캔
@@ -437,4 +438,20 @@ struct ActionButton: View {
             .cornerRadius(16)
         }
     }
+}
+
+// MARK: - Previews
+#Preview("WalletHomeView") {
+    WalletHomeView(
+        showTabBar: .constant(true),
+        showReceiveView: .constant(false)
+    )
+}
+
+#Preview("WalletHomeView - Dark Mode") {
+    WalletHomeView(
+        showTabBar: .constant(true),
+        showReceiveView: .constant(false)
+    )
+    .preferredColorScheme(.dark)
 }

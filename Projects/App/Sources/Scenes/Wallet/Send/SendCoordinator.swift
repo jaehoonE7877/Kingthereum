@@ -1,54 +1,54 @@
 import SwiftUI
 import Combine
-
-
 import Entity
+import Core
 
 @MainActor
-final class SendCoordinator: ObservableObject {
+@Observable
+final class SendCoordinator {
     
-    // MARK: - Published Properties
+    // MARK: - Observable Properties
     
-    @Published var recipientAddress = ""
-    @Published var amountText = ""
-    @Published var availableBalance = "0.00 ETH"
-    @Published var amountInUSD: String?
+    var recipientAddress = ""
+    var amountText = ""
+    var availableBalance = "0.00 ETH"
+    var amountInUSD: String?
     
-    // Validation States
-    @Published var isAddressValid = false
-    @Published var isAmountValid = false
-    @Published var showAddressError = false
-    @Published var showAmountError = false
-    @Published var addressErrorMessage = ""
-    @Published var amountErrorMessage = ""
+    // Validation States using new Validation system
+    var addressValidation: ValidationState = .none
+    var amountValidation: ValidationState = .none
+    
+    // Computed properties for backward compatibility
+    var isAddressValid: Bool { addressValidation.isValid }
+    var isAmountValid: Bool { amountValidation.isValid }
     
     // Gas Fee States
-    @Published var showGasOptions = false
-    @Published var gasOptions: GasOptions?
-    @Published var selectedGasPriority: GasPriority?
-    @Published var selectedGasFee: GasFee?
+    var showGasOptions = false
+    var gasOptions: GasOptions?
+    var selectedGasPriority: GasPriority?
+    var selectedGasFee: GasFee?
     
     // Transaction States
-    @Published var isReadyToSend = false
-    @Published var isSending = false
-    @Published var formattedRecipientAddress = ""
-    @Published var formattedAmount = ""
-    @Published var totalAmount = ""
-    @Published var totalAmountUSD: String?
+    var isReadyToSend = false
+    var isSending = false
+    var formattedRecipientAddress = ""
+    var formattedAmount = ""
+    var totalAmount = ""
+    var totalAmountUSD: String?
     
     // UI States
-    @Published var showErrorAlert = false
-    @Published var showSuccessView = false
-    @Published var errorMessage = ""
-    @Published var errorSuggestion: String?
-    @Published var transactionHash: String?
+    var showErrorAlert = false
+    var showSuccessView = false
+    var errorMessage = ""
+    var errorSuggestion: String?
+    var transactionHash: String?
     
     // MARK: - Private Properties
     
-    private var interactor: SendBusinessLogic?
-    private let priceProvider: PriceProviderProtocol = MockPriceProvider()
-    private var cancellables = Set<AnyCancellable>()
-    private var lastAction: (() -> Void)?
+    @ObservationIgnored private var interactor: SendBusinessLogic?
+    @ObservationIgnored private let priceProvider: PriceProviderProtocol = MockPriceProvider()
+    @ObservationIgnored private var cancellables = Set<AnyCancellable>()
+    @ObservationIgnored private var lastAction: (() -> Void)?
     
     // MARK: - Initialization
     
@@ -98,11 +98,32 @@ final class SendCoordinator: ObservableObject {
     }
     
     func validateRecipientAddress(_ address: String) {
+        let rule = EthereumAddressValidationRule()
+        let result = rule.validate(address)
+        
+        if result.isValid {
+            addressValidation = .valid
+        } else {
+            addressValidation = .invalid(result.message ?? "유효하지 않은 주소입니다")
+        }
+        
+        // VIP 아키텍처도 유지
         let request = SendScene.ValidateAddress.Request(address: address)
         interactor?.validateAddress(request: request)
     }
     
     func validateAmount(_ amount: String) {
+        let balance = getCurrentBalanceDecimal()
+        let rule = AmountValidationRule(balance: NSDecimalNumber(decimal: balance).doubleValue)
+        let result = rule.validate(amount)
+        
+        if result.isValid {
+            amountValidation = .valid
+        } else {
+            amountValidation = .invalid(result.message ?? "유효하지 않은 금액입니다")
+        }
+        
+        // VIP 아키텍처도 유지
         let request = SendScene.ValidateAmount.Request(
             amount: amount,
             availableBalance: getCurrentBalanceValue()

@@ -215,10 +215,12 @@ struct AuthenticationView: View {
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .foregroundStyle(LinearGradient.primaryGradient)
+                    .accessibilityLabel("Kingthereum 지갑")
                 
                 Text("안전하고 쉬운 이더리움 지갑")
                     .font(.body)
                     .foregroundColor(.secondary)
+                    .accessibilityLabel("안전하고 쉬운 이더리움 지갑")
             }
         }
         .padding(.top, DesignTokens.Spacing.xl)
@@ -238,6 +240,8 @@ struct AuthenticationView: View {
                 ) {
                     authenticateWithBiometrics()
                 }
+                .accessibilityLabel("생체 인증으로 시작")
+                .accessibilityHint("Face ID 또는 Touch ID를 사용하여 지갑에 접근합니다")
             }
             
             // PIN 인증 섹션
@@ -265,7 +269,21 @@ struct AuthenticationView: View {
                 ) {
                     authenticateWithPIN()
                 }
+                .accessibilityLabel("PIN으로 잠금 해제")
+                .accessibilityHint("6자리 PIN 코드를 입력하여 지갑에 접근합니다")
             }
         }
     }
+}
+
+// MARK: - Previews
+#Preview("AuthenticationView") {
+    AuthenticationView()
+        .environmentObject(AppCoordinator())
+}
+
+#Preview("AuthenticationView - Dark Mode") {
+    AuthenticationView()
+        .environmentObject(AppCoordinator())
+        .preferredColorScheme(.dark)
 }

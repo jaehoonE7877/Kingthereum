@@ -1,22 +1,61 @@
 import SwiftUI
 import Core
 
-/// 글래스모피즘 효과를 가진 커스텀 버튼 컴포넌트
+/// 글래스모피즘 효과를 가진 SwiftUI ButtonStyle
 /// 속이 비치는 유리 질감과 뉴모피즘 효과를 제공
+public struct GlassButtonStyle: ButtonStyle {
+    let styleConfig: GlassButtonStyleConfig
+    let isLoading: Bool
+    
+    public init(
+        config: GlassButtonStyleConfig = .primary,
+        isLoading: Bool = false
+    ) {
+        self.styleConfig = config
+        self.isLoading = isLoading
+    }
+    
+    public func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(styleConfig.font)
+            .fontWeight(styleConfig.fontWeight)
+            .foregroundStyle(
+                styleConfig.id == "wallet" ? 
+                AnyShapeStyle(LinearGradient.primaryGradient) : 
+                AnyShapeStyle(styleConfig.foregroundColor)
+            )
+            .frame(maxWidth: .infinity)
+            .frame(height: Constants.UI.buttonHeight)
+            .background(styleConfig.backgroundColor, in: RoundedRectangle(cornerRadius: styleConfig.cornerRadius))
+            .overlay(
+                RoundedRectangle(cornerRadius: styleConfig.cornerRadius)
+                    .stroke(styleConfig.borderColor, lineWidth: styleConfig.borderWidth)
+            )
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .shadow(
+                color: styleConfig.shadowColor,
+                radius: styleConfig.shadowRadius,
+                x: 0,
+                y: styleConfig.shadowOffset
+            )
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+            .opacity(isLoading ? 0.7 : 1.0)
+    }
+}
+
+/// 편의를 위한 래퍼 컴포넌트 (기존 API 호환성 유지)
 public struct GlassButton: View {
     let title: String?
     let icon: String?
     let action: () -> Void
-    let style: GlassButtonStyle
+    let style: GlassButtonStyleConfig
     let isEnabled: Bool
     let isLoading: Bool
-    
-    @State private var isPressed = false
     
     /// 텍스트 버튼 초기화
     public init(
         _ title: String,
-        style: GlassButtonStyle = .primary,
+        style: GlassButtonStyleConfig = .primary,
         isEnabled: Bool = true,
         isLoading: Bool = false,
         action: @escaping () -> Void
@@ -33,7 +72,7 @@ public struct GlassButton: View {
     public init(
         icon: String,
         title: String? = nil,
-        style: GlassButtonStyle = .icon,
+        style: GlassButtonStyleConfig = .icon,
         isEnabled: Bool = true,
         isLoading: Bool = false,
         action: @escaping () -> Void
@@ -56,56 +95,25 @@ public struct GlassButton: View {
                 } else {
                     if let icon = icon {
                         Image(systemName: icon)
-                            .font(style.font)
-                            .fontWeight(style.fontWeight)
                     }
                     
                     if let title = title {
                         Text(title)
-                            .font(style.font)
-                            .fontWeight(style.fontWeight)
                     }
                 }
             }
-            .foregroundStyle(
-                style.id == "wallet" ? 
-                AnyShapeStyle(LinearGradient.primaryGradient) : 
-                AnyShapeStyle(style.foregroundColor)
-            )
             .frame(maxWidth: title != nil ? .infinity : nil)
-            .frame(height: Constants.UI.buttonHeight)
             .frame(minWidth: icon != nil && title == nil ? Constants.UI.buttonHeight : nil)
-            .background(style.backgroundColor, in: RoundedRectangle(cornerRadius: style.cornerRadius))
-            .overlay(
-                RoundedRectangle(cornerRadius: style.cornerRadius)
-                    .stroke(style.borderColor, lineWidth: style.borderWidth)
-            )
-            .scaleEffect(isPressed ? 0.95 : 1.0)
-            .opacity(isEnabled ? 1.0 : 0.6)
-            .shadow(
-                color: style.shadowColor,
-                radius: style.shadowRadius,
-                x: 0,
-                y: style.shadowOffset
-            )
         }
+        .buttonStyle(GlassButtonStyle(config: style, isLoading: isLoading))
         .disabled(!isEnabled || isLoading)
-        .onLongPressGesture(
-            minimumDuration: 0,
-            maximumDistance: .infinity,
-            pressing: { pressing in
-                withAnimation(.easeInOut(duration: 0.1)) {
-                    isPressed = pressing
-                }
-            },
-            perform: {}
-        )
+        .opacity(isEnabled ? 1.0 : 0.6)
     }
 }
 
 /// GlassButton의 시각적 스타일을 정의하는 구조체
 /// 배경, 텍스트, 음영, 그림자 등의 시각적 속성들을 설정
-public struct GlassButtonStyle: Sendable {
+public struct GlassButtonStyleConfig: Sendable {
     let id: String
     let backgroundColor: Material
     let foregroundColor: Color
@@ -157,7 +165,7 @@ public struct GlassButtonStyle: Sendable {
     }
     
     /// 주요 액션용 기본 스타일
-    public static let primary = GlassButtonStyle(
+    public static let primary = GlassButtonStyleConfig(
         id: "primary",
         backgroundColor: .ultraThickMaterial,
         foregroundColor: .systemLabel,
@@ -168,7 +176,7 @@ public struct GlassButtonStyle: Sendable {
     )
     
     /// 보조 액션용 보조 스타일
-    public static let secondary = GlassButtonStyle(
+    public static let secondary = GlassButtonStyleConfig(
         id: "secondary",
         backgroundColor: .thinMaterial,
         foregroundColor: .systemLabel,
@@ -179,7 +187,7 @@ public struct GlassButtonStyle: Sendable {
     )
     
     /// 위험한 액션용 경고 스타일
-    public static let destructive = GlassButtonStyle(
+    public static let destructive = GlassButtonStyleConfig(
         id: "destructive",
         backgroundColor: .thickMaterial,
         foregroundColor: .systemRed,
@@ -193,7 +201,8 @@ public struct GlassButtonStyle: Sendable {
     )
     
     /// 지갑 관련 액션용 스타일 (그라데이션 효과)
-    public static let wallet = GlassButtonStyle(
+    public static let wallet = GlassButtonStyleConfig(
+        id: "wallet",
         backgroundColor: .thickMaterial,
         foregroundColor: .kingBlue, // 그라데이션은 View에서 직접 적용
         borderColor: Color.adaptive(
@@ -208,7 +217,7 @@ public struct GlassButtonStyle: Sendable {
     )
     
     /// 암호화폐 거래용 스타일
-    public static let crypto = GlassButtonStyle(
+    public static let crypto = GlassButtonStyleConfig(
         id: "crypto",
         backgroundColor: .regularMaterial,
         foregroundColor: .kingGold,
@@ -224,7 +233,8 @@ public struct GlassButtonStyle: Sendable {
     )
     
     /// 아이콘 전용 버튼 스타일
-    public static let icon = GlassButtonStyle(
+    public static let icon = GlassButtonStyleConfig(
+        id: "icon",
         backgroundColor: .thinMaterial,
         foregroundColor: .systemLabel,
         borderColor: .glassBorderSecondary,
@@ -236,7 +246,8 @@ public struct GlassButtonStyle: Sendable {
     )
     
     /// 플로팅 액션 버튼 스타일
-    public static let floating = GlassButtonStyle(
+    public static let floating = GlassButtonStyleConfig(
+        id: "floating",
         backgroundColor: .ultraThickMaterial,
         foregroundColor: Color.adaptive(
             light: Color.systemLabel,
@@ -251,7 +262,8 @@ public struct GlassButtonStyle: Sendable {
     )
     
     /// 성공 상태 스타일
-    public static let success = GlassButtonStyle(
+    public static let success = GlassButtonStyleConfig(
+        id: "success",
         backgroundColor: .thickMaterial,
         foregroundColor: .systemGreen,
         borderColor: Color.adaptive(
@@ -264,7 +276,8 @@ public struct GlassButtonStyle: Sendable {
     )
     
     /// 경고 상태 스타일
-    public static let warning = GlassButtonStyle(
+    public static let warning = GlassButtonStyleConfig(
+        id: "warning",
         backgroundColor: .thickMaterial,
         foregroundColor: .systemOrange,
         borderColor: Color.adaptive(
@@ -277,7 +290,8 @@ public struct GlassButtonStyle: Sendable {
     )
     
     /// 에러 상태 스타일
-    public static let error = GlassButtonStyle(
+    public static let error = GlassButtonStyleConfig(
+        id: "error",
         backgroundColor: .thickMaterial,
         foregroundColor: .systemRed,
         borderColor: Color.adaptive(

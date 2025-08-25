@@ -39,7 +39,7 @@ jobs:
 
       - name: Run Claude Code
         id: claude
-        uses: anthropics/claude-code-action@v1  # beta -> v1으로 업데이트
+        uses: anthropics/claude-code-action@v0.8  # v1 → v0.8로 수정
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
 
@@ -52,7 +52,8 @@ jobs:
             actions: read
 
           # 모델 설정 (기본값: Claude Sonnet 4)
-          # model: "claude-opus-4-1-20250805"  # 필요시 주석 해제
+          model: "claude-sonnet-4-20250514"  # 필요시 주석 해제
+
 
           # 트리거 문구 커스터마이징 (선택사항)
           # trigger_phrase: "@claude"
@@ -60,36 +61,45 @@ jobs:
           # 특정 사용자 할당 시 트리거 (선택사항)
           # assignee_trigger: "claude-bot"
 
-          # 허용된 도구 제한 (보안 강화)
-          allowed_tools: "Bash(npm install),Bash(npm run build),Bash(npm run test*),Bash(npm run lint*),Bash(git status),Bash(git log --oneline -10)"
+          # 허용된 도구 제한 (iOS 프로젝트용으로 수정)
+          allowed_tools: "Bash(xcodebuild),Bash(tuist),Bash(swift test),Bash(swift build),Bash(swiftformat),Bash(swiftlint),Bash(git status),Bash(git log --oneline -10)"
 
-          # 프로젝트별 커스텀 지침
+          # 프로젝트별 커스텀 지침 (iOS Swift 프로젝트용)
           custom_instructions: |
-            **코딩 표준:**
-            - 명확하고 간결한 코드 작성
-            - 모든 새로운 함수에 JSDoc/docstring 추가
-            - 에러 핸들링 포함
+            **iOS Swift 프로젝트 코딩 표준:**
+            - Clean Swift (VIP) 아키텍처 준수
+            - Swift 6.0+ 및 iOS 18+ 최신 API 사용
+            - SwiftUI 네이티브 패턴 적용
+            - SOLID 원칙 엄격 준수
+            
+            **코드 품질:**
+            - 모든 새로운 클래스/함수에 문서화 주석 추가
+            - 에러 핸들링 및 방어적 프로그래밍
+            - Swift Testing 프레임워크 사용 (@Suite, @Test)
+            - 접근성 (VoiceOver) 지원 필수
             
             **리뷰 기준:**
-            - 보안 취약점 확인
-            - 성능 고려사항 검토
-            - 테스트 코드 작성 권장
-            - 코드 스타일 일관성 유지
+            - 보안 취약점 확인 (API Key, 민감정보 하드코딩 금지)
+            - 성능 고려사항 검토 (메모리 누수, 동시성)
+            - 테스트 코드 작성 권장 (TDD 방식)
+            - 코드 스타일 일관성 (SwiftFormat, SwiftLint)
             
             **PR 생성 규칙:**
             - 명확한 제목과 상세한 설명
             - 작은 단위의 의미있는 커밋
+            - VIP 패턴 준수 여부 확인
             - 관련 이슈 번호 연결
 
-          # 환경 변수 설정 (선택사항)
+          # 환경 변수 설정
           claude_env: |
-            NODE_ENV: development
-            DEBUG: false
+            DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
+            SWIFT_VERSION: 6.0
+            IOS_DEPLOYMENT_TARGET: 18.0
 
-      # 실행 결과 알림 (선택사항)
+      # 실행 결과 알림
       - name: Comment on completion
         if: always()
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7  # v6 → v7로 업데이트
         with:
           script: |
             const status = '${{ steps.claude.outcome }}' === 'success' ? '✅ 완료' : '❌ 실패';

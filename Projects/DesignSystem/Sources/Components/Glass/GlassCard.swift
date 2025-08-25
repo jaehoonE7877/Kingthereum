@@ -1,9 +1,40 @@
 import SwiftUI
 import Core
 
+/// 테마를 지원하는 환경 키
+public struct GlassThemeKey: EnvironmentKey {
+    public static let defaultValue = GlassTheme.system
+}
+
+public extension EnvironmentValues {
+    var glassTheme: GlassTheme {
+        get { self[GlassThemeKey.self] }
+        set { self[GlassThemeKey.self] = newValue }
+    }
+}
+
+/// Glass 컴포넌트의 테마
+public enum GlassTheme: String, CaseIterable {
+    case system = "system"
+    case light = "light" 
+    case dark = "dark"
+    case vibrant = "vibrant"
+    
+    public var displayName: String {
+        switch self {
+        case .system: return "시스템"
+        case .light: return "라이트"
+        case .dark: return "다크"
+        case .vibrant: return "생생한"
+        }
+    }
+}
+
 public struct GlassCard<Content: View>: View {
     let content: Content
     let style: GlassCardStyle
+    @Environment(\.glassTheme) private var theme
+    @Environment(\.colorScheme) private var colorScheme
     
     public init(
         style: GlassCardStyle = .default,
@@ -15,17 +46,71 @@ public struct GlassCard<Content: View>: View {
     
     public var body: some View {
         content
-            .background(style.material, in: RoundedRectangle(cornerRadius: style.cornerRadius))
+            .background(effectiveMaterial, in: RoundedRectangle(cornerRadius: style.cornerRadius))
             .overlay(
                 RoundedRectangle(cornerRadius: style.cornerRadius)
-                    .stroke(style.borderColor, lineWidth: style.borderWidth)
+                    .stroke(effectiveBorderColor, lineWidth: style.borderWidth)
             )
             .shadow(
-                color: style.shadowColor,
-                radius: style.shadowRadius,
+                color: effectiveShadowColor,
+                radius: effectiveShadowRadius,
                 x: 0,
                 y: style.shadowOffset
             )
+    }
+    
+    // MARK: - Theme-aware Properties
+    
+    private var effectiveMaterial: Material {
+        switch theme {
+        case .system:
+            return style.material
+        case .light:
+            return .regularMaterial
+        case .dark:
+            return .thickMaterial
+        case .vibrant:
+            return colorScheme == .dark ? .ultraThickMaterial : .ultraThinMaterial
+        }
+    }
+    
+    private var effectiveBorderColor: Color {
+        switch theme {
+        case .system:
+            return style.borderColor
+        case .light:
+            return style.borderColor.opacity(0.6)
+        case .dark:
+            return style.borderColor.opacity(0.8)
+        case .vibrant:
+            return LinearGradient.primaryGradient.opacity(0.7)
+        }
+    }
+    
+    private var effectiveShadowColor: Color {
+        switch theme {
+        case .system:
+            return style.shadowColor
+        case .light:
+            return style.shadowColor.opacity(0.4)
+        case .dark:
+            return Color.black.opacity(0.6)
+        case .vibrant:
+            return style.shadowColor.opacity(0.8)
+        }
+    }
+    
+    private var effectiveShadowRadius: CGFloat {
+        switch theme {
+        case .system:
+            return style.shadowRadius
+        case .light:
+            return style.shadowRadius * 0.7
+        case .dark:
+            return style.shadowRadius * 1.2
+        case .vibrant:
+            return style.shadowRadius * 1.5
+        }
     }
 }
 
@@ -363,7 +448,7 @@ public struct InfoCard: View {
     }
 }
 
-#Preview {
+#Preview("Default Theme") {
     ScrollView {
         VStack(spacing: 20) {
             BalanceCard(balance: "2.5", symbol: "ETH", usdValue: "$4,250.00")
@@ -381,14 +466,6 @@ public struct InfoCard: View {
                 .init(icon: "arrow.down.circle.fill", title: "수신") { },
                 .init(icon: "qrcode", title: "QR코드") { }
             ])
-            
-            InfoCard(
-                icon: "network",
-                title: "네트워크",
-                subtitle: "이더리움 메인넷",
-                value: "ETH",
-                style: .default
-            )
         }
         .padding()
     }
@@ -399,4 +476,58 @@ public struct InfoCard: View {
             endPoint: .bottomTrailing
         )
     )
+    .environment(\.glassTheme, .system)
+}
+
+#Preview("Vibrant Theme") {
+    ScrollView {
+        VStack(spacing: 20) {
+            BalanceCard(balance: "2.5", symbol: "ETH", usdValue: "$4,250.00")
+            
+            TransactionCard(
+                type: .send,
+                amount: "1.2",
+                symbol: "ETH",
+                timestamp: "방금 전",
+                status: .pending
+            )
+            
+            InfoCard(
+                icon: "network",
+                title: "네트워크",
+                subtitle: "이더리움 메인넷",
+                value: "ETH",
+                style: .success
+            )
+        }
+        .padding()
+    }
+    .background(
+        LinearGradient(
+            colors: [.systemPink, .systemOrange],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    )
+    .environment(\.glassTheme, .vibrant)
+}
+
+#Preview("Dark Theme") {
+    ScrollView {
+        VStack(spacing: 20) {
+            BalanceCard(balance: "2.5", symbol: "ETH", usdValue: "$4,250.00")
+            
+            TransactionCard(
+                type: .receive,
+                amount: "0.5",
+                symbol: "ETH",
+                timestamp: "5분 전",
+                status: .confirmed
+            )
+        }
+        .padding()
+    }
+    .background(Color.black)
+    .preferredColorScheme(.dark)
+    .environment(\.glassTheme, .dark)
 }

@@ -1,6 +1,7 @@
 import SwiftUI
 import DesignSystem
 import Entity
+import Core
 
 @MainActor
 protocol SendDisplayLogic: AnyObject {
@@ -12,7 +13,7 @@ protocol SendDisplayLogic: AnyObject {
 }
 
 struct SendView: View {
-    @StateObject private var coordinator = SendCoordinator()
+    @State private var coordinator = SendCoordinator()
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -134,54 +135,34 @@ extension SendView {
                 Spacer()
             }
             
-            VStack(spacing: 12) {
-                HStack {
-                    TextField("이더리움 주소 입력", text: $coordinator.recipientAddress)
-                        .font(.system(.body, design: .monospaced))
-                        .textFieldStyle(PlainTextFieldStyle())
-                        .onChange(of: coordinator.recipientAddress) { _, newValue in
-                            coordinator.validateRecipientAddress(newValue)
-                        }
-                    
-                    Spacer()
-                    
-                    HStack(spacing: 8) {
-                        GlassButton(icon: "qrcode.viewfinder", style: .icon) {
-                            coordinator.showQRScanner()
-                        }
-                        
-                        GlassButton(icon: "person.2.fill", style: .icon) {
-                            coordinator.showAddressBook()
-                        }
-                    }
-                }
-                .padding(16)
-                .background(.ultraThinMaterial)
-                .cornerRadius(12)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(
-                            coordinator.isAddressValid ? 
-                            LinearGradient.primaryGradient : 
-                            LinearGradient(colors: [.clear], startPoint: .leading, endPoint: .trailing),
-                            lineWidth: coordinator.isAddressValid ? 1 : 0
-                        )
+            HStack(spacing: 8) {
+                GlassTextField(
+                    text: $coordinator.recipientAddress,
+                    placeholder: "이더리움 주소 입력",
+                    style: .default,
+                    keyboardType: .default,
+                    validation: coordinator.addressValidation,
+                    onEditingChanged: { _ in },
+                    onSubmit: { }
                 )
-                
-                if coordinator.showAddressError {
-                    HStack {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.caption)
-                            .foregroundColor(.red)
-                        
-                        Text(coordinator.addressErrorMessage)
-                            .font(.caption)
-                            .foregroundColor(.red)
-                        
-                        Spacer()
-                    }
-                    .padding(.horizontal, 4)
+                .onChange(of: coordinator.recipientAddress) { _, newValue in
+                    coordinator.validateRecipientAddress(newValue)
                 }
+                
+                HStack(spacing: 8) {
+                    GlassButton(icon: "qrcode.viewfinder", style: .icon) {
+                        coordinator.showQRScanner()
+                    }
+                    .accessibilityLabel("QR 스캔")
+                    .accessibilityHint("QR 코드를 스캔하여 주소를 입력합니다")
+                    
+                    GlassButton(icon: "person.2.fill", style: .icon) {
+                        coordinator.showAddressBook()
+                    }
+                    .accessibilityLabel("주소록")
+                    .accessibilityHint("저장된 주소 목록을 확인합니다")
+                }
+            }
             }
         }
         .glassCard(style: .default)
