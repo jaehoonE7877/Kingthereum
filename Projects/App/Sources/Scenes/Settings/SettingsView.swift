@@ -324,6 +324,9 @@ extension SettingsView {
                 ) {
                     toggleNotification()
                 }
+                .accessibilityLabel("알림 설정")
+                .accessibilityValue(viewStore.notificationStatus)
+                .accessibilityHint("탭하여 알림을 켜거나 끕니다")
                 
                 Divider()
                     .padding(.leading, DesignTokens.Spacing.xxl + DesignTokens.Spacing.xl)
@@ -336,6 +339,9 @@ extension SettingsView {
                 ) {
                     selectSecurity()
                 }
+                .accessibilityLabel("보안 설정")
+                .accessibilityValue(viewStore.securityMode)
+                .accessibilityHint("탭하여 보안 설정을 변경합니다")
                 
                 Divider()
                     .padding(.leading, DesignTokens.Spacing.xxl + DesignTokens.Spacing.xl)
@@ -434,3 +440,13 @@ extension SettingsView {
 }
 
 // MARK: - Legacy SettingsViewModel removed - now using VIP + @Observable pattern
+
+// MARK: - Previews
+#Preview("SettingsView") {
+    SettingsView(showTabBar: .constant(true))
+}
+
+#Preview("SettingsView - Dark Mode") {
+    SettingsView(showTabBar: .constant(true))
+        .preferredColorScheme(.dark)
+}
