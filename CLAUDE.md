@@ -1224,3 +1224,231 @@ tuist test --skip-ui-tests
 tuist test
 ```
 
+## 8. 🎨 디자인 시스템 사용 가이드
+
+### 필수 사용 규칙
+모든 SwiftUI View를 생성할 때 반드시 다음 디자인 시스템을 활용해야 합니다:
+
+#### 8.1 컬러 시스템
+- **`KingthereumColors`** 사용 필수
+- 하드코딩된 색상값 절대 금지
+- 시스템 다크모드 자동 대응
+
+```swift
+// ✅ 좋은 예
+Text("제목")
+    .foregroundColor(KingthereumColors.primaryText)
+    .background(KingthereumColors.surface)
+
+Button("확인") { }
+    .foregroundColor(KingthereumColors.onPrimary)
+    .background(KingthereumColors.primary)
+
+// ❌ 나쁜 예
+Text("제목")
+    .foregroundColor(.white)        // 하드코딩 금지
+    .background(Color(hex: "#123")) // 직접 색상값 금지
+```
+
+#### 8.2 타이포그래피 시스템
+- **`KingthereumTypography`** 사용 필수
+- 폰트 크기, 굵기, 줄간격 일관성 보장
+- 접근성 고려한 동적 타입 지원
+
+```swift
+// ✅ 좋은 예
+Text("타이틀")
+    .font(KingthereumTypography.headlineLarge)
+
+Text("본문 내용")
+    .font(KingthereumTypography.bodyMedium)
+
+Text("캡션")
+    .font(KingthereumTypography.captionSmall)
+
+// ❌ 나쁜 예
+Text("타이틀")
+    .font(.system(size: 24, weight: .bold))  // 직접 폰트 설정 금지
+
+Text("본문")
+    .font(.title2)  // 시스템 기본 폰트 사용 금지
+```
+
+#### 8.3 그라데이션 시스템
+- **`KingthereumGradients`** 사용 필수
+- Metal Liquid Glass 브랜드 아이덴티티 유지
+- 일관된 시각적 효과 제공
+
+```swift
+// ✅ 좋은 예
+Rectangle()
+    .fill(KingthereumGradients.metalLiquid)
+
+Button("시작하기") { }
+    .background(KingthereumGradients.primaryGlow)
+
+VStack { }
+    .background(KingthereumGradients.surfaceGradient)
+
+// ❌ 나쁜 예
+Rectangle()
+    .fill(LinearGradient(
+        colors: [.blue, .purple],  // 직접 그라데이션 생성 금지
+        startPoint: .top,
+        endPoint: .bottom
+    ))
+```
+
+### 8.4 디자인 시스템 적용 템플릿
+
+#### 기본 View 구조
+```swift
+struct MyCustomView: View {
+    var body: some View {
+        VStack(spacing: 16) {
+            // Header
+            Text("페이지 제목")
+                .font(KingthereumTypography.headlineLarge)
+                .foregroundColor(KingthereumColors.primaryText)
+            
+            // Content
+            VStack(spacing: 12) {
+                Text("설명 텍스트")
+                    .font(KingthereumTypography.bodyMedium)
+                    .foregroundColor(KingthereumColors.secondaryText)
+                    .multilineTextAlignment(.center)
+            }
+            .padding()
+            .background(KingthereumColors.surface)
+            .cornerRadius(16)
+            
+            // Action Button
+            Button("액션 버튼") {
+                // Action
+            }
+            .font(KingthereumTypography.labelLarge)
+            .foregroundColor(KingthereumColors.onPrimary)
+            .padding()
+            .background(KingthereumGradients.primaryGlow)
+            .cornerRadius(12)
+        }
+        .padding()
+        .background(KingthereumColors.background)
+    }
+}
+```
+
+#### 카드 컴포넌트 템플릿
+```swift
+struct KingthereumCard<Content: View>: View {
+    let content: () -> Content
+    
+    init(@ViewBuilder content: @escaping () -> Content) {
+        self.content = content
+    }
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            content()
+        }
+        .padding()
+        .background(KingthereumColors.surface)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(KingthereumGradients.borderGradient, lineWidth: 1)
+        )
+        .cornerRadius(16)
+        .shadow(
+            color: KingthereumColors.shadow.opacity(0.1),
+            radius: 8,
+            x: 0,
+            y: 4
+        )
+    }
+}
+```
+
+#### 입력 필드 템플릿
+```swift
+struct KingthereumTextField: View {
+    @Binding var text: String
+    let placeholder: String
+    
+    var body: some View {
+        TextField(placeholder, text: $text)
+            .font(KingthereumTypography.bodyMedium)
+            .foregroundColor(KingthereumColors.primaryText)
+            .padding()
+            .background(KingthereumColors.surfaceVariant)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(KingthereumColors.outline, lineWidth: 1)
+            )
+            .cornerRadius(12)
+    }
+}
+```
+
+### 8.5 디자인 시스템 검증 체크리스트
+
+새로운 View 작성 시 반드시 확인:
+
+#### 컬러 시스템 ✅
+- [ ] 모든 색상이 `KingthereumColors`에서 가져왔는가?
+- [ ] 하드코딩된 색상값이 없는가?
+- [ ] 다크모드에서 적절한 대비를 가지는가?
+
+#### 타이포그래피 ✅
+- [ ] 모든 텍스트가 `KingthereumTypography`를 사용하는가?
+- [ ] 텍스트 계층구조가 올바른가?
+- [ ] 동적 타입을 고려했는가?
+
+#### 그라데이션 ✅
+- [ ] 그라데이션이 `KingthereumGradients`에서 가져왔는가?
+- [ ] 브랜드 아이덴티티를 유지하는가?
+- [ ] 성능에 영향을 주지 않는가?
+
+#### 일관성 ✅
+- [ ] 기존 컴포넌트와 시각적 일관성을 가지는가?
+- [ ] 간격(spacing)이 디자인 토큰을 따르는가?
+- [ ] 둥근 모서리(corner radius)가 일관된가?
+
+### 8.6 금지 사항
+
+#### 절대 사용하면 안 되는 것들
+```swift
+// ❌ 절대 금지
+.foregroundColor(.red)           // 시스템 색상 직접 사용
+.foregroundColor(Color.blue)     // 하드코딩된 색상
+.font(.system(size: 16))         // 직접 폰트 크기 지정
+.background(Color(red: 0.5, green: 0.5, blue: 0.5)) // RGB 직접 설정
+
+// ✅ 반드시 이렇게
+.foregroundColor(KingthereumColors.error)
+.font(KingthereumTypography.bodyMedium)
+.background(KingthereumGradients.errorGradient)
+```
+
+### 8.7 디자인 시스템 확장
+
+새로운 디자인 토큰이 필요한 경우:
+1. **디자이너와 협의** 후 추가
+2. **네이밍 컨벤션** 준수
+3. **다크모드 대응** 필수
+4. **문서화** 업데이트
+
+```swift
+// 새로운 컬러 추가 예시
+extension KingthereumColors {
+    static let newSemanticColor = Color("NewSemanticColor")
+}
+
+// 새로운 타이포그래피 추가 예시
+extension KingthereumTypography {
+    static let newTextStyle = Font.custom("SpoqaHanSansNeo", size: 18)
+        .weight(.medium)
+}
+```
+
+이 디자인 시스템을 통해 일관된 사용자 경험과 브랜드 아이덴티티를 유지하며, 유지보수성과 확장성을 보장합니다.
+
