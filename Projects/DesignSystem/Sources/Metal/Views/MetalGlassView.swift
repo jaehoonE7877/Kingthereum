@@ -62,7 +62,7 @@ public final class MetalGlassView: UIView {
         metalView.framebufferOnly = false
         
         // Metal 렌더러 설정
-        renderer = MetalGlassRenderer()
+        renderer = MetalGlassRenderer.shared
         metalView.device = renderer?.device
         metalView.delegate = self
         
@@ -174,28 +174,28 @@ public extension MetalGlassView {
                 settings.refractionStrength = 0.1
                 settings.reflectionStrength = 0.1
                 settings.opacity = 0.6
-                settings.tintColor = (0.95, 0.98, 1.0)
+                settings.tintColor = LiquidGlassSettings.TintColor(r: 0.95, g: 0.98, b: 1.0)
                 
             case .medium:
                 settings.thickness = 0.5
                 settings.refractionStrength = 0.3
                 settings.reflectionStrength = 0.2
                 settings.opacity = 0.8
-                settings.tintColor = (0.9, 0.95, 1.0)
+                settings.tintColor = LiquidGlassSettings.TintColor(r: 0.9, g: 0.95, b: 1.0)
                 
             case .strong:
                 settings.thickness = 0.8
                 settings.refractionStrength = 0.5
                 settings.reflectionStrength = 0.4
                 settings.opacity = 0.9
-                settings.tintColor = (0.85, 0.9, 0.95)
+                settings.tintColor = LiquidGlassSettings.TintColor(r: 0.85, g: 0.9, b: 0.95)
                 
             case .ethereal:
                 settings.thickness = 0.3
                 settings.refractionStrength = 0.4
                 settings.reflectionStrength = 0.6
                 settings.opacity = 0.7
-                settings.tintColor = (0.9, 0.95, 1.0)
+                settings.tintColor = LiquidGlassSettings.TintColor(r: 0.9, g: 0.95, b: 1.0)
                 settings.edgeFade = 0.3
                 
             case .vibrant:
@@ -203,7 +203,7 @@ public extension MetalGlassView {
                 settings.refractionStrength = 0.4
                 settings.reflectionStrength = 0.3
                 settings.opacity = 0.85
-                settings.tintColor = (0.8, 0.9, 1.0)
+                settings.tintColor = LiquidGlassSettings.TintColor(r: 0.8, g: 0.9, b: 1.0)
                 settings.chromaticAberration = 0.2
                 
             case .crystal:
@@ -211,7 +211,7 @@ public extension MetalGlassView {
                 settings.refractionStrength = 0.6
                 settings.reflectionStrength = 0.5
                 settings.opacity = 0.9
-                settings.tintColor = (0.95, 0.98, 1.0)
+                settings.tintColor = LiquidGlassSettings.TintColor(r: 0.95, g: 0.98, b: 1.0)
                 settings.distortionStrength = 0.2
             }
             
@@ -236,11 +236,11 @@ public extension MetalGlassView {
     func setColorTemperature(_ temperature: ColorTemperature) {
         switch temperature {
         case .cool:
-            glassSettings.tintColor = (0.85, 0.9, 1.0)
+            glassSettings.tintColor = LiquidGlassSettings.TintColor(r: 0.85, g: 0.9, b: 1.0)
         case .neutral:
-            glassSettings.tintColor = (0.9, 0.95, 1.0)
+            glassSettings.tintColor = LiquidGlassSettings.TintColor(r: 0.9, g: 0.95, b: 1.0)
         case .warm:
-            glassSettings.tintColor = (1.0, 0.95, 0.85)
+            glassSettings.tintColor = LiquidGlassSettings.TintColor(r: 1.0, g: 0.95, b: 0.85)
         }
     }
     

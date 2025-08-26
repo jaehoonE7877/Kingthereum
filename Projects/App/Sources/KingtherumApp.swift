@@ -7,7 +7,7 @@ import Factory
 @main
 struct KingthereumApp: App {
     @StateObject private var appCoordinator = AppCoordinator()
-    @MainActor @Injected(\.displayModeService) private var displayModeService
+    @StateObject private var displayModeService = DisplayModeService()
     
     init() {
         // Factory는 lazy loading이므로 별도 초기화 불필요

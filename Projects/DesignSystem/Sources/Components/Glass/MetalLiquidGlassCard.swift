@@ -28,7 +28,7 @@ public struct MetalLiquidGlassCard<Content: View>: View {
     
     public var body: some View {
         content
-            .metalLiquidGlass(settings: $glassSettings)
+            .safeMetalLiquidGlass(settings: $glassSettings)
             .overlay(
                 RoundedRectangle(cornerRadius: style.cornerRadius)
                     .stroke(style.borderColor, lineWidth: style.borderWidth)
@@ -76,16 +76,16 @@ public struct MetalLiquidGlassCard<Content: View>: View {
         case .light:
             adaptedSettings.thickness *= 0.8
             adaptedSettings.opacity *= 0.9
-            adaptedSettings.tintColor = (0.98, 0.99, 1.0)
+            adaptedSettings.tintColor = LiquidGlassSettings.TintColor(r: 0.98, g: 0.99, b: 1.0)
         case .dark:
             adaptedSettings.thickness *= 1.2
             adaptedSettings.reflectionStrength *= 1.3
-            adaptedSettings.tintColor = (0.85, 0.9, 0.95)
+            adaptedSettings.tintColor = LiquidGlassSettings.TintColor(r: 0.85, g: 0.9, b: 0.95)
         case .vibrant:
             adaptedSettings.thickness *= 1.1
             adaptedSettings.reflectionStrength *= 1.4
             adaptedSettings.chromaticAberration *= 1.5
-            adaptedSettings.tintColor = colorScheme == .dark ? (0.8, 0.9, 1.0) : (0.9, 0.95, 1.0)
+            adaptedSettings.tintColor = colorScheme == .dark ? LiquidGlassSettings.TintColor(r: 0.8, g: 0.9, b: 1.0) : LiquidGlassSettings.TintColor(r: 0.9, g: 0.95, b: 1.0)
         }
         
         withAnimation(.easeInOut(duration: 0.5)) {
@@ -116,70 +116,76 @@ public struct MetalGlassCardStyle: Sendable {
     
     // MARK: - Predefined Styles
     
-    /// 기본 카드 스타일
+    /// 기본 카드 스타일 (향상됨)
     public static let `default` = MetalGlassCardStyle(
         cornerRadius: Constants.UI.cornerRadius,
         borderColor: .glassBorderSecondary,
         borderWidth: 1,
         baseGlassSettings: {
             var settings = LiquidGlassSettings()
-            settings.thickness = 0.4
-            settings.refractionStrength = 0.2
-            settings.reflectionStrength = 0.15
-            settings.opacity = 0.75
-            settings.tintColor = (0.95, 0.98, 1.0)
-            settings.edgeFade = 0.1
+            settings.thickness = 0.7                    // 0.4 → 0.7
+            settings.refractionStrength = 0.4           // 0.2 → 0.4
+            settings.reflectionStrength = 0.3           // 0.15 → 0.3
+            settings.distortionStrength = 0.15          // 추가
+            settings.chromaticAberration = 0.12         // 추가
+            settings.opacity = 0.85                     // 0.75 → 0.85
+            settings.tintColor = LiquidGlassSettings.TintColor(r: 0.95, g: 0.98, b: 1.0)
+            settings.edgeFade = 0.15                    // 0.1 → 0.15
             return settings
         }()
     )
     
-    /// 은은한 카드 스타일
+    /// 은은한 카드 스타일 (향상됨)
     public static let subtle = MetalGlassCardStyle(
         cornerRadius: Constants.UI.cornerRadius,
         borderColor: .glassBorderSecondary,
         borderWidth: 0.7,
         baseGlassSettings: {
             var settings = LiquidGlassSettings()
-            settings.thickness = 0.25
-            settings.refractionStrength = 0.1
-            settings.reflectionStrength = 0.08
-            settings.opacity = 0.65
-            settings.tintColor = (0.98, 0.99, 1.0)
+            settings.thickness = 0.5                    // 0.25 → 0.5
+            settings.refractionStrength = 0.25          // 0.1 → 0.25
+            settings.reflectionStrength = 0.2           // 0.08 → 0.2
+            settings.distortionStrength = 0.1           // 추가
+            settings.chromaticAberration = 0.08         // 추가
+            settings.opacity = 0.75                     // 0.65 → 0.75
+            settings.tintColor = LiquidGlassSettings.TintColor(r: 0.98, g: 0.99, b: 1.0)
             return settings
         }()
     )
     
-    /// 지갑 카드 스타일
+    /// 지갑 카드 스타일 (최고 강도)
     public static let wallet = MetalGlassCardStyle(
         cornerRadius: Constants.UI.cornerRadius + 4,
         borderColor: .glassBorderAccent,
-        borderWidth: 1.1,
+        borderWidth: 1.2,
         baseGlassSettings: {
             var settings = LiquidGlassSettings()
-            settings.thickness = 0.8
-            settings.refractionStrength = 0.5
-            settings.reflectionStrength = 0.4
-            settings.distortionStrength = 0.2
-            settings.opacity = 0.9
-            settings.tintColor = (0.85, 0.9, 1.0)
-            settings.chromaticAberration = 0.15
-            settings.edgeFade = 0.25
+            settings.thickness = 1.0                    // 0.8 → 1.0 (최대치)
+            settings.refractionStrength = 0.8           // 0.5 → 0.8
+            settings.reflectionStrength = 0.6           // 0.4 → 0.6
+            settings.distortionStrength = 0.35          // 0.2 → 0.35
+            settings.chromaticAberration = 0.3          // 0.15 → 0.3
+            settings.opacity = 0.95                     // 0.9 → 0.95
+            settings.tintColor = LiquidGlassSettings.TintColor(r: 0.85, g: 0.9, b: 1.0)
+            settings.edgeFade = 0.4                     // 0.25 → 0.4
             return settings
         }()
     )
     
-    /// 거래 내역 카드 스타일
+    /// 거래 내역 카드 스타일 (향상됨)
     public static let transaction = MetalGlassCardStyle(
         cornerRadius: Constants.UI.cornerRadius - 2,
         borderColor: .glassBorderSecondary,
-        borderWidth: 0.6,
+        borderWidth: 0.8,
         baseGlassSettings: {
             var settings = LiquidGlassSettings()
-            settings.thickness = 0.3
-            settings.refractionStrength = 0.15
-            settings.reflectionStrength = 0.12
-            settings.opacity = 0.7
-            settings.tintColor = (0.96, 0.98, 1.0)
+            settings.thickness = 0.6                    // 0.3 → 0.6
+            settings.refractionStrength = 0.35          // 0.15 → 0.35
+            settings.reflectionStrength = 0.25          // 0.12 → 0.25
+            settings.distortionStrength = 0.12          // 추가
+            settings.chromaticAberration = 0.1          // 추가
+            settings.opacity = 0.8                      // 0.7 → 0.8
+            settings.tintColor = LiquidGlassSettings.TintColor(r: 0.96, g: 0.98, b: 1.0)
             return settings
         }()
     )

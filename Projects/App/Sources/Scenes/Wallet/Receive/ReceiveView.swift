@@ -168,7 +168,7 @@ extension ReceiveView {
                     }
                 }
             }
-            .glassCard(style: .wallet)
+            .metalLiquidGlassCard(style: .wallet)
         }
     }
 }
@@ -225,7 +225,7 @@ extension ReceiveView {
                     }
                 }
                 .padding(16)
-                .glassCard(style: .default)
+                .metalLiquidGlassCard(style: .default)
             }
         }
     }
@@ -271,7 +271,7 @@ extension ReceiveView {
                 .background(.ultraThinMaterial)
                 .foregroundStyle(LinearGradient.primaryGradient)
                 .cornerRadius(12)
-                .glassCard(style: .prominent)
+                .metalLiquidGlassCard(style: .wallet)
             }
             .scaleEffect(coordinator.isRefreshing ? 0.95 : 1.0)
             .animation(.easeInOut(duration: 0.1), value: coordinator.isRefreshing)
@@ -314,7 +314,7 @@ extension ReceiveView {
                 )
             }
             .padding(16)
-            .glassCard(style: .default)
+            .metalLiquidGlassCard(style: .default)
         }
         .padding(.bottom, 40)
     }
@@ -526,7 +526,7 @@ struct ToastView: View {
         .padding(.vertical, 14)
         .background(.ultraThinMaterial)
         .cornerRadius(12)
-        .glassCard(style: .default)
+        .metalLiquidGlassCard(style: .default)
         .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
     }
 }

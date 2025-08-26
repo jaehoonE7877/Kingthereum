@@ -102,11 +102,11 @@ public enum DesignTokens {
         }
         
         public static let none = ShadowStyle(color: .clear, radius: 0, x: 0, y: 0)
-        public static let subtle = ShadowStyle(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
-        public static let light = ShadowStyle(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-        public static let medium = ShadowStyle(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
-        public static let heavy = ShadowStyle(color: .black.opacity(0.2), radius: 16, x: 0, y: 8)
-        public static let card = ShadowStyle(color: .black.opacity(0.08), radius: 6, x: 0, y: 3)
+        public static let subtle = ShadowStyle(color: KingthereumColors.cardShadow.opacity(0.5), radius: 2, x: 0, y: 1)
+        public static let light = ShadowStyle(color: KingthereumColors.cardShadow.opacity(0.8), radius: 4, x: 0, y: 2)
+        public static let medium = ShadowStyle(color: KingthereumColors.cardShadow, radius: 8, x: 0, y: 4)
+        public static let heavy = ShadowStyle(color: KingthereumColors.cardShadow.opacity(1.5), radius: 16, x: 0, y: 8)
+        public static let card = ShadowStyle(color: KingthereumColors.cardShadow, radius: 6, x: 0, y: 3)
     }
     
     // MARK: - Opacity
@@ -150,42 +150,42 @@ public enum DesignTokens {
     }
 }
 
-// MARK: - Semantic Color Tokens
+// MARK: - Semantic Color Tokens (Kingthereum Integration)
 
 public extension Color {
     
     // MARK: - Status Colors
     
-    static let success = Color.green
-    static let warning = Color.orange
-    static let error = Color.red
-    static let info = Color.blue
+    static let success = KingthereumColors.success
+    static let warning = KingthereumColors.warning
+    static let error = KingthereumColors.error
+    static let info = KingthereumColors.info
     
     // MARK: - Surface Colors
     
-    static let surfacePrimary = Color(UIColor.systemBackground)
-    static let surfaceSecondary = Color(UIColor.secondarySystemBackground)
-    static let surfaceTertiary = Color(UIColor.tertiarySystemBackground)
+    static let surfacePrimary = KingthereumColors.backgroundPrimary
+    static let surfaceSecondary = KingthereumColors.backgroundSecondary
+    static let surfaceTertiary = KingthereumColors.backgroundTertiary
     
     // MARK: - Border Colors
     
-    static let borderPrimary = Color(UIColor.separator)
-    static let borderSecondary = Color(UIColor.separator).opacity(0.5)
-    static let borderFocus = Color.blue
+    static let borderPrimary = KingthereumColors.border
+    static let borderSecondary = KingthereumColors.borderSubtle
+    static let borderFocus = KingthereumColors.focus
     
     // MARK: - Text Colors
     
-    static let textPrimary = Color(UIColor.label)
-    static let textSecondary = Color(UIColor.secondaryLabel)
-    static let textTertiary = Color(UIColor.tertiaryLabel)
-    static let textDisabled = Color(UIColor.quaternaryLabel)
+    static let textPrimary = KingthereumColors.textPrimary
+    static let textSecondary = KingthereumColors.textSecondary
+    static let textTertiary = KingthereumColors.textTertiary
+    static let textDisabled = KingthereumColors.textPlaceholder
     
     // MARK: - Interactive Colors
     
-    static let interactive = Color.blue
-    static let interactiveHover = Color.blue.opacity(0.8)
-    static let interactivePressed = Color.blue.opacity(0.6)
-    static let interactiveDisabled = Color.gray
+    static let interactive = KingthereumColors.accent
+    static let interactiveHover = KingthereumColors.accent.opacity(0.8)
+    static let interactivePressed = KingthereumColors.accent.opacity(0.6)
+    static let interactiveDisabled = KingthereumColors.buttonDisabled
 }
 
 // MARK: - Typography Scale
