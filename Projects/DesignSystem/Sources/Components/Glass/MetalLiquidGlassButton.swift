@@ -66,11 +66,13 @@ public struct MetalLiquidGlassButton: View {
         .animation(.easeInOut(duration: 0.1), value: isPressed)
         .simultaneousGesture(
             DragGesture(minimumDistance: 0)
-                .onChanged { _ in
+                .onChanged { value in
                     if !isPressed {
                         withAnimation(.easeOut(duration: 0.1)) {
                             isPressed = true
                         }
+                        // 터치 위치에서 ripple 효과
+                        handleTouchRipple(at: value.startLocation)
                     }
                 }
                 .onEnded { _ in
@@ -109,9 +111,7 @@ public struct MetalLiquidGlassButton: View {
         .frame(minWidth: icon != nil && title == nil ? Constants.UI.buttonHeight : nil)
         .frame(height: Constants.UI.buttonHeight)
         .padding(.horizontal, style.horizontalPadding)
-        .metalLiquidGlass(settings: $glassSettings) { touchPoint in
-            handleTouchRipple(at: touchPoint)
-        }
+        .metalLiquidGlass(settings: $glassSettings)
         .overlay(
             RoundedRectangle(cornerRadius: style.cornerRadius)
                 .stroke(style.borderColor, lineWidth: style.borderWidth)
@@ -135,7 +135,8 @@ public struct MetalLiquidGlassButton: View {
             glassSettings.reflectionStrength = min(1.0, originalReflection * 1.5)
         }
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        Task { @MainActor in
+            try await Task.sleep(nanoseconds: 300_000_000) // 0.3초
             withAnimation(.easeInOut(duration: 0.4)) {
                 glassSettings.reflectionStrength = originalReflection
             }
@@ -146,7 +147,7 @@ public struct MetalLiquidGlassButton: View {
 // MARK: - MetalGlassButtonStyle
 
 /// Metal Liquid Glass 버튼 스타일
-public struct MetalGlassButtonStyle {
+public struct MetalGlassButtonStyle: Sendable {
     let foregroundColor: Color
     let borderColor: Color
     let borderWidth: CGFloat

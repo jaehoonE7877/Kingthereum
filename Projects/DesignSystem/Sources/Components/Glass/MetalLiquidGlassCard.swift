@@ -28,14 +28,15 @@ public struct MetalLiquidGlassCard<Content: View>: View {
     
     public var body: some View {
         content
-            .metalLiquidGlass(settings: $glassSettings) { touchPoint in
-                handleTouchInteraction(at: touchPoint)
-            }
+            .metalLiquidGlass(settings: $glassSettings)
             .overlay(
                 RoundedRectangle(cornerRadius: style.cornerRadius)
                     .stroke(style.borderColor, lineWidth: style.borderWidth)
             )
             .clipShape(RoundedRectangle(cornerRadius: style.cornerRadius))
+            .onTapGesture { location in
+                handleTouchInteraction(at: location)
+            }
             .onAppear {
                 setupThemeAdaptiveGlass()
             }
@@ -56,7 +57,8 @@ public struct MetalLiquidGlassCard<Content: View>: View {
             glassSettings.reflectionStrength = min(1.0, originalReflection * 1.5)
         }
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+        Task { @MainActor in
+            try await Task.sleep(nanoseconds: 400_000_000) // 0.4초
             withAnimation(.easeInOut(duration: 0.6)) {
                 glassSettings.distortionStrength = originalDistortion
                 glassSettings.reflectionStrength = originalReflection
@@ -94,7 +96,7 @@ public struct MetalLiquidGlassCard<Content: View>: View {
 
 // MARK: - MetalGlassCardStyle
 
-public struct MetalGlassCardStyle {
+public struct MetalGlassCardStyle: Sendable {
     let cornerRadius: CGFloat
     let borderColor: Color
     let borderWidth: CGFloat
@@ -305,7 +307,7 @@ public struct MetalTransactionCard: View {
             
             VStack(alignment: .leading, spacing: 2) {
                 HStack {
-                    Text("\\(type == .send ? "-" : "+")\\(amount) \\(symbol)")
+                    Text("\(type == .send ? "-" : "+")\(amount) \(symbol)")
                         .font(.body)
                         .fontWeight(.medium)
                         .foregroundColor(type.color)
@@ -349,5 +351,5 @@ public struct MetalTransactionCard: View {
             endPoint: .bottomTrailing
         )
     )
-    .environment(\\.glassTheme, .vibrant)
+    .environment(\.glassTheme, .vibrant)
 }

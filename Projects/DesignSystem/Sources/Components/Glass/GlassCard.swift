@@ -14,7 +14,7 @@ public extension EnvironmentValues {
 }
 
 /// Glass 컴포넌트의 테마
-public enum GlassTheme: String, CaseIterable {
+public enum GlassTheme: String, CaseIterable, Sendable {
     case system = "system"
     case light = "light" 
     case dark = "dark"
@@ -83,7 +83,7 @@ public struct GlassCard<Content: View>: View {
         case .dark:
             return style.borderColor.opacity(0.8)
         case .vibrant:
-            return LinearGradient.primaryGradient.opacity(0.7)
+            return style.borderColor.opacity(0.7)
         }
     }
     
@@ -114,8 +114,7 @@ public struct GlassCard<Content: View>: View {
     }
 }
 
-@MainActor
-public struct GlassCardStyle {
+public struct GlassCardStyle: Sendable {
     public static let `default` = GlassCardStyle(
         material: .ultraThinMaterial,
         cornerRadius: Constants.UI.cornerRadius,

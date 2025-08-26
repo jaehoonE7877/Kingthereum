@@ -139,6 +139,7 @@ private extension UITapGestureRecognizer {
     }
 }
 
+@MainActor
 private class TapGestureTarget: NSObject {
     private let action: (UITapGestureRecognizer) -> Void
     

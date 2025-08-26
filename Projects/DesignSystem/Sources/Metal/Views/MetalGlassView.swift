@@ -4,7 +4,8 @@ import MetalKit
 import QuartzCore
 
 /// UIView 기반의 Metal Liquid Glass 효과 뷰
-public class MetalGlassView: UIView {
+@MainActor
+public final class MetalGlassView: UIView {
     
     // MARK: - Properties
     
@@ -46,6 +47,10 @@ public class MetalGlassView: UIView {
         setupMetalView()
     }
     
+    deinit {
+        // Cleanup handled automatically when view is deallocated
+    }
+    
     // MARK: - Setup
     
     private func setupMetalView() {
@@ -79,10 +84,11 @@ public class MetalGlassView: UIView {
     // MARK: - Public Methods
     
     /// 백그라운드 뷰 스냅샷 업데이트
+    @MainActor
     public func updateBackgroundSnapshot() {
         guard let backgroundView = backgroundView else { return }
         
-        DispatchQueue.main.async { [weak self] in
+        Task { @MainActor in
             // 백그라운드 뷰의 스냅샷 생성
             UIGraphicsBeginImageContextWithOptions(backgroundView.bounds.size, false, UIScreen.main.scale)
             defer { UIGraphicsEndImageContext() }
@@ -91,7 +97,7 @@ public class MetalGlassView: UIView {
             backgroundView.layer.render(in: context)
             
             let snapshot = UIGraphicsGetImageFromCurrentImageContext()
-            self?.currentBackgroundImage = snapshot
+            self.currentBackgroundImage = snapshot
         }
     }
     
@@ -107,7 +113,8 @@ public class MetalGlassView: UIView {
         glassSettings.refractionStrength = min(1.0, originalRefraction * 1.5)
         
         // 0.5초 후 원래 상태로 복구
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        Task { @MainActor in
+            try await Task.sleep(nanoseconds: 500_000_000) // 0.5초
             UIView.animate(withDuration: 0.3) {
                 self.glassSettings.refractionStrength = originalRefraction
             }

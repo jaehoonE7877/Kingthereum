@@ -4,12 +4,10 @@ import simd
 import UIKit
 
 /// Metal을 사용한 Liquid Glass 렌더러
+@MainActor
 public class MetalGlassRenderer: NSObject {
     
     // MARK: - Properties
-    
-    /// Metal 디바이스
-    private let device: MTLDevice
     
     /// Metal 명령 큐
     private let commandQueue: MTLCommandQueue
@@ -43,6 +41,9 @@ public class MetalGlassRenderer: NSObject {
     
     // MARK: - Initialization
     
+    /// Metal 디바이스
+    let device: MTLDevice
+    
     public init?(device: MTLDevice? = nil) {
         // Metal 디바이스 초기화
         if let device = device {
@@ -71,7 +72,7 @@ public class MetalGlassRenderer: NSObject {
     }
     
     deinit {
-        displayLink?.invalidate()
+        // displayLink cleanup handled by stopAnimation
     }
     
     // MARK: - Setup Methods
@@ -160,6 +161,12 @@ public class MetalGlassRenderer: NSObject {
     }
     
     // MARK: - Public Methods
+    
+    /// 애니메이션 중지
+    public func stopAnimation() {
+        displayLink?.invalidate()
+        displayLink = nil
+    }
     
     /// 렌더링 수행
     public func render(in view: MTKView, backgroundImage: UIImage? = nil) {
@@ -329,7 +336,7 @@ struct LiquidGlassUniforms {
 }
 
 /// Liquid Glass 설정
-public struct LiquidGlassSettings {
+public struct LiquidGlassSettings: Sendable {
     public var renderingMode: RenderingMode = .liquidGlass
     public var thickness: Float = 0.5
     public var refractionStrength: Float = 0.3
@@ -341,7 +348,7 @@ public struct LiquidGlassSettings {
     public var tintColor: (Float, Float, Float) = (0.9, 0.95, 1.0)
     public var chromaticAberration: Float = 0.1
     
-    public enum RenderingMode {
+    public enum RenderingMode: Sendable {
         case liquidGlass
         case distortion
         case blur
