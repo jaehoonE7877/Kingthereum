@@ -155,7 +155,7 @@ extension ReceiveView {
                         .interpolation(.none)
                         .resizable()
                         .frame(width: 200, height: 200)
-                        .cornerRadius(12)
+                        .cornerRadius(DesignTokens.CornerRadius.md)
                 } else {
                     VStack(spacing: 8) {
                         Image(systemName: "qrcode")
@@ -203,7 +203,7 @@ extension ReceiveView {
                 }
                 .padding(16)
                 .background(.ultraThinMaterial)
-                .cornerRadius(12)
+                .cornerRadius(DesignTokens.CornerRadius.md)
                 
                 // 축약된 주소와 복사 버튼
                 HStack {
@@ -267,10 +267,10 @@ extension ReceiveView {
                         .font(.system(size: 16, weight: .medium))
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: 50)
+                .frame(height: DesignTokens.Size.Button.md)
                 .background(.ultraThinMaterial)
                 .foregroundStyle(LinearGradient.primaryGradient)
-                .cornerRadius(12)
+                .cornerRadius(DesignTokens.CornerRadius.md)
                 .metalLiquidGlassCard(style: .wallet)
             }
             .scaleEffect(coordinator.isRefreshing ? 0.95 : 1.0)
@@ -525,7 +525,7 @@ struct ToastView: View {
         .padding(.horizontal, 20)
         .padding(.vertical, 14)
         .background(.ultraThinMaterial)
-        .cornerRadius(12)
+        .cornerRadius(DesignTokens.CornerRadius.md)
         .metalLiquidGlassCard(style: .default)
         .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
     }

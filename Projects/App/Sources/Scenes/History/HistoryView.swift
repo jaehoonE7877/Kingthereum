@@ -192,7 +192,7 @@ struct HistoryView: View {
                 }
                 
                 // 추가 스크롤 여백
-                Color.clear.frame(height: 120)
+                Color.clear.frame(height: DesignTokens.Spacing.scrollBottomPadding)
             }
             .padding(.top, DesignTokens.Spacing.lg)
         }
@@ -223,7 +223,7 @@ struct HistoryView: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
             .background(Color.systemBlue.opacity(0.1))
-            .cornerRadius(16)
+            .cornerRadius(DesignTokens.CornerRadius.lg)
             
             Spacer()
             
