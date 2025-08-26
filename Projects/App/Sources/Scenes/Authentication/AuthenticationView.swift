@@ -229,9 +229,9 @@ struct AuthenticationView: View {
     @ViewBuilder
     private var contentSection: some View {
         VStack(spacing: DesignTokens.Spacing.xl) {
-            // 생체인증 버튼
+            // Metal Liquid Glass 생체인증 버튼
             if viewStore.biometricAvailable {
-                GlassButton(
+                MetalLiquidGlassButton(
                     icon: "faceid",
                     title: "생체 인증으로 시작",
                     style: .success,
@@ -246,7 +246,7 @@ struct AuthenticationView: View {
             
             // PIN 인증 섹션
             VStack(spacing: DesignTokens.Spacing.lg) {
-                // PIN Input Card (간소화)
+                // Metal Liquid Glass PIN Input Card
                 HStack(spacing: 12) {
                     Image(systemName: "key.fill")
                         .font(.title3)
@@ -257,10 +257,10 @@ struct AuthenticationView: View {
                         .foregroundColor(.secondary)
                 }
                 .padding(DesignTokens.Spacing.lg)
-                .glassCard(style: .subtle)
+                .metalLiquidGlassCard(style: .subtle)
                 
-                // PIN Auth Button
-                GlassButton(
+                // Metal Liquid Glass PIN Auth Button
+                MetalLiquidGlassButton(
                     icon: "lock.open.fill",
                     title: "PIN으로 잠금 해제",
                     style: .primary,

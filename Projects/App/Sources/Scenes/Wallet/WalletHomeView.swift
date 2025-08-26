@@ -17,63 +17,71 @@ struct WalletHomeView: View {
     @State private var lastScrollOffset: CGFloat = 0
     @State private var isScrollingDown = false
     @State private var navigationPath = NavigationPath()
+    @State private var glassTheme: GlassTheme = .vibrant
     
     var body: some View {
         NavigationStack(path: $navigationPath) {
             ScrollView {
                 VStack(spacing: 20) {
-                    // 잔액 카드
-                    BalanceCard(
+                    // Metal Liquid Glass 잔액 카드
+                    MetalBalanceCard(
                         balance: "2.5",
                         symbol: "ETH",
                         usdValue: "$4,250.00"
                     )
+                    .scaleEffect(isScrollingDown ? 0.95 : 1.0)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isScrollingDown)
                     
-                    // 액션 버튼들
-                    HStack(spacing: 12) {
-                        ActionButton(
-                            title: "보내기",
+                    // Metal Liquid Glass 액션 버튼들
+                    HStack(spacing: 16) {
+                        MetalLiquidGlassButton(
                             icon: "arrow.up.circle.fill",
-                            gradient: LinearGradient(
-                                colors: [.blue, .purple],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                            title: "보내기",
+                            style: .crypto
                         ) {
                             navigationPath.append(SendDestination.selectRecipient)
                         }
                         .accessibilityLabel("이더리움 보내기")
                         .accessibilityHint("탭하여 이더리움을 다른 주소로 전송합니다")
                         
-                        ActionButton(
-                            title: "받기",
+                        MetalLiquidGlassButton(
                             icon: "arrow.down.circle.fill",
-                            gradient: LinearGradient(
-                                colors: [.green, .mint],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                            title: "받기",
+                            style: .success
                         ) {
                             showReceiveView = true
                         }
                         .accessibilityLabel("이더리움 받기")
                         .accessibilityHint("탭하여 내 지갑 주소와 QR 코드를 확인합니다")
                     }
+                    .padding(.horizontal, 8)
                     
-                    // 최근 거래
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("최근 거래")
-                            .font(.headline)
-                            .padding(.horizontal)
+                    // Metal Liquid Glass 최근 거래
+                    VStack(alignment: .leading, spacing: 16) {
+                        HStack {
+                            Text("최근 거래")
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.primary)
+                            Spacer()
+                            MetalLiquidGlassButton(
+                                icon: "arrow.right",
+                                style: .icon
+                            ) {
+                                // 모든 거래 내역으로 이동
+                            }
+                        }
+                        .padding(.horizontal)
                         
-                        ForEach(0..<3) { _ in
-                            TransactionCard(
-                                type: .receive,
-                                amount: "0.5",
+                        ForEach(0..<3, id: \.self) { index in
+                            MetalTransactionCard(
+                                type: index % 2 == 0 ? .receive : .send,
+                                amount: index == 0 ? "0.5" : index == 1 ? "1.2" : "0.8",
                                 symbol: "ETH",
-                                timestamp: "5분 전",
-                                status: .confirmed
+                                timestamp: index == 0 ? "5분 전" : index == 1 ? "1시간 전" : "3시간 전",
+                                status: index == 1 ? .pending : .confirmed
                             )
+                            .padding(.horizontal, 4)
                         }
                     }
                     
@@ -104,6 +112,36 @@ struct WalletHomeView: View {
                 lastScrollOffset = value
             }
             .navigationTitle("지갑")
+            .environment(\.glassTheme, glassTheme)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Menu {
+                        Button("시스템 테마") {
+                            withAnimation(.easeInOut(duration: 0.5)) {
+                                glassTheme = .system
+                            }
+                        }
+                        Button("밝은 테마") {
+                            withAnimation(.easeInOut(duration: 0.5)) {
+                                glassTheme = .light
+                            }
+                        }
+                        Button("어두운 테마") {
+                            withAnimation(.easeInOut(duration: 0.5)) {
+                                glassTheme = .dark
+                            }
+                        }
+                        Button("생동감 테마") {
+                            withAnimation(.easeInOut(duration: 0.5)) {
+                                glassTheme = .vibrant
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "sparkles")
+                            .foregroundColor(.primary)
+                    }
+                }
+            }
             .navigationDestination(for: SendDestination.self) { destination in
                 switch destination {
                 case .selectRecipient:
