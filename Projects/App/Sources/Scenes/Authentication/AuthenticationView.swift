@@ -128,7 +128,7 @@ struct AuthenticationView: View {
             .padding(.horizontal, DesignTokens.Spacing.xl)
             .padding(.vertical, DesignTokens.Spacing.xxl)
         }
-        .background(LinearGradient.enhancedBackgroundGradient.ignoresSafeArea())
+        .background(KingthereumGradients.background.ignoresSafeArea())
         .alert("오류", isPresented: Binding<Bool>(
             get: { viewStore.errorMessage != nil },
             set: { _ in viewStore.clearError() }
@@ -193,16 +193,16 @@ struct AuthenticationView: View {
                     .fill(.ultraThickMaterial)
                     .overlay(
                         Circle()
-                            .stroke(Color.glassBorderPrimary, lineWidth: 2)
+                            .stroke(KingthereumColors.accent, lineWidth: 2)
                     )
                     .frame(width: 120, height: 120)
-                    .shadow(color: .glassShadowMedium, radius: 15, x: 0, y: 8)
+                    .shadow(color: KingthereumColors.cardShadow, radius: 15, x: 0, y: 8)
                 
                 Image(systemName: "crown.fill")
                     .font(.system(size: 48, weight: .medium))
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [.kingGold, .systemYellow],
+                            colors: [KingthereumColors.warning, Color.yellow],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -212,14 +212,15 @@ struct AuthenticationView: View {
             // Title and Subtitle
             VStack(spacing: DesignTokens.Spacing.sm) {
                 Text("Kingthereum")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .foregroundStyle(LinearGradient.primaryGradient)
+                    .kingStyle(KingthereumTextStyle(
+                        font: KingthereumTypography.displayLarge,
+                        color: KingthereumColors.textPrimary
+                    ))
+                    .foregroundStyle(KingthereumGradients.accent)
                     .accessibilityLabel("Kingthereum 지갑")
                 
                 Text("안전하고 쉬운 이더리움 지갑")
-                    .font(.body)
-                    .foregroundColor(.secondary)
+                    .kingStyle(.bodySecondary)
                     .accessibilityLabel("안전하고 쉬운 이더리움 지갑")
             }
         }
@@ -250,11 +251,11 @@ struct AuthenticationView: View {
                 HStack(spacing: 12) {
                     Image(systemName: "key.fill")
                         .font(.title3)
-                        .foregroundStyle(LinearGradient.primaryGradient)
+                        .foregroundStyle(KingthereumGradients.accent)
                         .frame(width: 24)
                     
                     Text("PIN을 입력하세요")
-                        .foregroundColor(.secondary)
+                        .kingStyle(.bodySecondary)
                 }
                 .padding(DesignTokens.Spacing.lg)
                 .metalLiquidGlassCard(style: .subtle)

@@ -60,9 +60,7 @@ struct WalletHomeView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         HStack {
                             Text("최근 거래")
-                                .font(.headline)
-                                .fontWeight(.semibold)
-                                .foregroundColor(.primary)
+                                .kingStyle(.headlinePrimary)
                             Spacer()
                             MetalLiquidGlassButton(
                                 icon: "arrow.right",
@@ -194,8 +192,7 @@ struct SendRecipientNavigationView: View {
                 // 주소 입력 섹션
                 VStack(alignment: .leading, spacing: 12) {
                     Text("받는 사람")
-                        .font(.headline)
-                        .foregroundColor(.primary)
+                        .kingStyle(.headlinePrimary)
                     
                     HStack {
                         GlassTextField(
@@ -216,7 +213,7 @@ struct SendRecipientNavigationView: View {
                         } label: {
                             Image(systemName: "qrcode.viewfinder")
                                 .font(.title2)
-                                .foregroundStyle(LinearGradient.primaryGradient)
+                                .foregroundStyle(KingthereumGradients.accent)
                                 .frame(width: 48, height: 48)
                                 .background(.ultraThinMaterial)
                                 .cornerRadius(12)
@@ -228,9 +225,12 @@ struct SendRecipientNavigationView: View {
                             Image(systemName: isAddressValid ? "checkmark.circle.fill" : "xmark.circle.fill")
                                 .font(.caption)
                             Text(isAddressValid ? "유효한 주소입니다" : "올바른 주소 형식이 아닙니다")
-                                .font(.caption)
+                                .kingStyle(KingthereumTextStyle(
+                                    font: KingthereumTypography.caption,
+                                    color: isAddressValid ? KingthereumColors.success : KingthereumColors.error
+                                ))
                         }
-                        .foregroundColor(isAddressValid ? .green : .red)
+                        .foregroundColor(isAddressValid ? KingthereumColors.success : KingthereumColors.error)
                     }
                 }
                 .padding()
@@ -280,23 +280,20 @@ struct SendAmountNavigationView: View {
                 // 받는 사람 정보
                 VStack(alignment: .leading, spacing: 8) {
                     Text("받는 사람")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .kingStyle(.captionPrimary)
                     
                     HStack {
                         Image(systemName: "person.circle.fill")
                             .font(.title2)
-                            .foregroundColor(.kingBlue)
+                            .foregroundColor(KingthereumColors.accent)
                         
                         VStack(alignment: .leading, spacing: 2) {
                             if let name = recipientData.name {
                                 Text(name)
-                                    .font(.body)
-                                    .fontWeight(.medium)
+                                    .kingStyle(.bodyPrimary)
                             }
                             Text(formatAddress(recipientData.address))
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                                .kingStyle(.captionPrimary)
                         }
                         
                         Spacer()
@@ -309,7 +306,7 @@ struct SendAmountNavigationView: View {
                 VStack(spacing: 20) {
                     VStack(spacing: 8) {
                         Text("보낼 금액")
-                            .font(.headline)
+                            .kingStyle(.headlinePrimary)
                         
                         HStack(alignment: .firstTextBaseline, spacing: 8) {
                             TextField("0", text: $amount)
@@ -322,21 +319,20 @@ struct SendAmountNavigationView: View {
                                 }
                             
                             Text("ETH")
-                                .font(.title2)
-                                .fontWeight(.medium)
-                                .foregroundColor(.secondary)
+                                .kingStyle(.bodySecondary)
                         }
                     }
                     
                     // 잔액 정보
                     HStack {
                         Text("사용 가능")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                            .kingStyle(.captionPrimary)
                         Spacer()
                         Text("\(balance) ETH")
-                            .font(.caption)
-                            .fontWeight(.medium)
+                            .kingStyle(KingthereumTextStyle(
+                                font: KingthereumTypography.caption,
+                                color: KingthereumColors.textPrimary
+                            ))
                     }
                 }
                 .padding()
@@ -396,12 +392,13 @@ struct SendConfirmNavigationView: View {
                 // 거래 요약
                 VStack(spacing: 20) {
                     Text("거래 확인")
-                        .font(.title2)
-                        .fontWeight(.bold)
+                        .kingStyle(.headlinePrimary)
                     
                     Text("\(transactionData.amount) ETH")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
+                        .kingStyle(KingthereumTextStyle(
+                            font: KingthereumTypography.cryptoBalanceLarge,
+                            color: KingthereumColors.textPrimary
+                        ))
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
@@ -418,13 +415,14 @@ struct SendConfirmNavigationView: View {
                         } else {
                             Image(systemName: "paperplane.fill")
                             Text("전송하기")
+                                .kingStyle(.buttonPrimary)
                         }
                     }
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundColor(KingthereumColors.textInverse)
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
-                    .background(LinearGradient.primaryGradient)
+                    .background(KingthereumGradients.buttonPrimary)
                     .cornerRadius(16)
                 }
                 .disabled(isProcessing)
