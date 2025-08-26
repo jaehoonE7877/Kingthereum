@@ -113,9 +113,17 @@ public struct SafeGlassView<Content: View>: View {
     // MARK: - Animation
     
     private func startContinuousAnimation() {
-        withAnimation {
+        // 성능 관리자의 품질 설정에 따라 애니메이션 강도 조정
+        let performanceManager = MetalPerformanceManager.shared
+        let animationIntensity = performanceManager.currentQuality.animationSmoothing
+        
+        withAnimation(
+            .easeInOut(duration: 2.0 / Double(animationIntensity))
+            .repeatForever(autoreverses: true)
+        ) {
             isAnimating = true
-            animationOffset = CGSize(width: 200, height: 200)
+            let offsetDistance = 200.0 * Double(animationIntensity)
+            animationOffset = CGSize(width: offsetDistance, height: offsetDistance)
         }
     }
 }
@@ -124,13 +132,16 @@ public struct SafeGlassView<Content: View>: View {
 public extension View {
     /// Safe Metal Liquid Glass 효과 적용
     /// Metal이 실패하면 자동으로 SwiftUI 네이티브 효과로 대체
+    /// 성능 관리자를 통해 디바이스 성능에 맞는 품질 자동 조정
     func safeMetalLiquidGlass(settings: Binding<LiquidGlassSettings>) -> AnyView {
-        // Metal 지원 여부 확인
-        if MetalDeviceChecker.isMetalSupported {
-            // Metal 지원: 원래 Metal Glass 사용
-            return AnyView(self.metalLiquidGlass(settings: settings))
+        let performanceManager = MetalPerformanceManager.shared
+        
+        // Metal 지원 여부 및 성능 상태 확인
+        if MetalDeviceChecker.isMetalSupported && performanceManager.deviceTier != .minimal {
+            // Metal 지원 + 성능 양호: 최적화된 Metal Glass 사용
+            return AnyView(self.optimizedMetalLiquidGlass(settings: settings))
         } else {
-            // Metal 미지원: Fallback Glass 사용
+            // Metal 미지원 또는 성능 부족: Fallback Glass 사용
             return AnyView(
                 SafeGlassView(glassSettings: settings.wrappedValue) {
                     self
@@ -138,9 +149,17 @@ public extension View {
             )
         }
     }
+    
+    /// 최적화된 Metal Liquid Glass 효과 (내부 사용)
+    private func optimizedMetalLiquidGlass(settings: Binding<LiquidGlassSettings>) -> some View {
+        // TODO: OptimizedMetalGlassView 구현 시 연결
+        // 현재는 기본 Metal Glass로 폴백
+        return self.metalLiquidGlass(settings: settings)
+    }
 }
 
 /// Metal 디바이스 지원 여부를 확인하는 유틸리티
+/// 성능 관리자와 연동하여 더 정교한 지원 여부 판단
 public enum MetalDeviceChecker {
     
     /// 현재 디바이스에서 Metal을 지원하는지 확인
@@ -150,11 +169,23 @@ public enum MetalDeviceChecker {
         return false
         #else
         // 실제 디바이스에서 Metal 지원 여부 확인
-        guard let _ = MTLCreateSystemDefaultDevice() else {
+        guard let device = MTLCreateSystemDefaultDevice() else {
             print("⚠️ [MetalDeviceChecker] Metal is not available on this device")
             return false
         }
-        return true
+        
+        // 기본적인 Metal 기능 확인
+        guard canLoadMetalLibrary() else {
+            print("⚠️ [MetalDeviceChecker] Metal library cannot be loaded")
+            return false
+        }
+        
+        // GPU 성능 확인 (최소 Apple GPU 필요)
+        let supportsBasicGPU = device.supportsFamily(.apple3) || 
+                              device.supportsFamily(.mac1) ||
+                              device.supportsFamily(.common1)
+        
+        return supportsBasicGPU
         #endif
     }
     
@@ -165,12 +196,35 @@ public enum MetalDeviceChecker {
         }
         
         // 기본 라이브러리 로드 시도
-        guard let _ = device.makeDefaultLibrary() else {
+        guard let library = device.makeDefaultLibrary() else {
             print("⚠️ [MetalDeviceChecker] Cannot load default Metal library")
             return false
         }
         
-        return true
+        // 셰이더 함수 로드 테스트
+        let hasOptimizedShaders = library.makeFunction(name: "optimizedLiquidGlassVertex") != nil &&
+                                  library.makeFunction(name: "optimizedLiquidGlassFragment") != nil
+        
+        let hasMinimalShaders = library.makeFunction(name: "minimalLiquidGlassFragment") != nil
+        
+        return hasOptimizedShaders || hasMinimalShaders
+    }
+    
+    /// 현재 디바이스의 Metal 성능 등급을 반환
+    public static func getMetalPerformanceTier() -> MetalPerformanceManager.DevicePerformanceTier {
+        guard let device = MTLCreateSystemDefaultDevice() else {
+            return .minimal
+        }
+        
+        if device.supportsFamily(.apple7) || device.supportsFamily(.apple8) || device.supportsFamily(.apple9) {
+            return .high
+        } else if device.supportsFamily(.apple5) || device.supportsFamily(.apple6) {
+            return .medium
+        } else if device.supportsFamily(.apple3) || device.supportsFamily(.apple4) {
+            return .low
+        } else {
+            return .minimal
+        }
     }
 }
 
