@@ -7,20 +7,19 @@ import Factory
 @main
 struct KingthereumApp: App {
     @StateObject private var appCoordinator = AppCoordinator()
-    @StateObject private var displayModeService = DisplayModeService()
+    @StateObject private var displayModeService = Container.shared.displayModeService()
     
     init() {
-        // Factory는 lazy loading이므로 별도 초기화 불필요
         configureNavigationBar()
-        
-        // DisplayModeService는 Factory @Injected로 자동 주입
     }
     
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(appCoordinator)
+                .environmentObject(displayModeService) // 환경 객체로도 전달
                 .preferredColorScheme(displayModeService.effectiveColorScheme)
+                .animation(.easeInOut(duration: 0.3), value: displayModeService.effectiveColorScheme)
         }
     }
     

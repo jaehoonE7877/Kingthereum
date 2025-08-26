@@ -46,18 +46,25 @@ public final class DisplayModeService: DisplayModeServiceProtocol, ObservableObj
     
     /// 실제로 디스플레이 모드를 시스템에 적용하는 내부 메서드
     private func applyDisplayMode(_ mode: DisplayMode) {
-        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let window = windowScene.windows.first else {
-            return
+        // 모든 연결된 윈도우 씬에 적용
+        for scene in UIApplication.shared.connectedScenes {
+            guard let windowScene = scene as? UIWindowScene else { continue }
+            
+            for window in windowScene.windows {
+                switch mode {
+                case .system:
+                    window.overrideUserInterfaceStyle = .unspecified
+                case .light:
+                    window.overrideUserInterfaceStyle = .light
+                case .dark:
+                    window.overrideUserInterfaceStyle = .dark
+                }
+            }
         }
         
-        switch mode {
-        case .system:
-            window.overrideUserInterfaceStyle = .unspecified
-        case .light:
-            window.overrideUserInterfaceStyle = .light
-        case .dark:
-            window.overrideUserInterfaceStyle = .dark
+        // 메인 쓰레드에서 UI 업데이트 강제 실행
+        DispatchQueue.main.async { [weak self] in
+            self?.objectWillChange.send()
         }
     }
 }

@@ -120,6 +120,7 @@ final class SettingsViewStore: SettingsDisplayLogic {
 struct SettingsView: View {
     @State private var viewStore = SettingsViewStore()
     @Binding var showTabBar: Bool
+    @EnvironmentObject private var displayModeService: DisplayModeService
     
     // MARK: - VIP Architecture Components
     private let interactor: SettingsBusinessLogic
@@ -170,6 +171,7 @@ struct SettingsView: View {
             .navigationTitle("설정")
             .sheet(isPresented: $viewStore.showDisplayModeSelector) {
                 DisplayModeSelectorView()
+                    .environmentObject(displayModeService)
             }
             .alert("알림", isPresented: Binding<Bool>(
                 get: { viewStore.alertMessage != nil },
