@@ -7,7 +7,7 @@ public enum ValidationState {
     case valid
     case invalid(String)
     
-    var isValid: Bool {
+    public var isValid: Bool {
         switch self {
         case .none, .valid: return true
         case .invalid: return false

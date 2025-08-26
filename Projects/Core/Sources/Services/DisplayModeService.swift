@@ -5,9 +5,16 @@ import Entity
 /// DisplayModeServiceProtocol의 구현체
 /// 기존 DisplayModeManager를 프로토콜 기반으로 리팩토링
 @MainActor
-public final class DisplayModeService: DisplayModeServiceProtocol {
+public final class DisplayModeService: DisplayModeServiceProtocol, ObservableObject {
     
-    @Published public private(set) var currentMode: DisplayMode = .system
+    @Published public private(set) var currentMode: DisplayMode = .system {
+        didSet {
+            // currentMode가 변경될 때마다 effectiveColorScheme도 업데이트
+            effectiveColorScheme = currentMode.colorScheme
+        }
+    }
+    
+    @Published public private(set) var effectiveColorScheme: ColorScheme?
     
     private let userDefaults = UserDefaults.standard
     private let displayModeKey = "DisplayMode"
@@ -15,10 +22,14 @@ public final class DisplayModeService: DisplayModeServiceProtocol {
     public init() {
         // UserDefaults에서 저장된 값 로드, 기본값은 system
         let savedMode = userDefaults.string(forKey: displayModeKey) ?? DisplayMode.system.rawValue
-        self.currentMode = DisplayMode(rawValue: savedMode) ?? .system
+        let mode = DisplayMode(rawValue: savedMode) ?? .system
+        
+        // 초기값 설정
+        self.currentMode = mode
+        self.effectiveColorScheme = mode.colorScheme
         
         // 초기 설정 적용
-        applyDisplayMode(currentMode)
+        applyDisplayMode(mode)
     }
     
     public func setDisplayMode(_ mode: DisplayMode) {
@@ -31,10 +42,6 @@ public final class DisplayModeService: DisplayModeServiceProtocol {
         
         // 실제 시스템에 적용
         applyDisplayMode(mode)
-    }
-    
-    public var effectiveColorScheme: ColorScheme? {
-        return currentMode.colorScheme
     }
     
     /// 실제로 디스플레이 모드를 시스템에 적용하는 내부 메서드

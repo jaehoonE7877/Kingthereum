@@ -163,7 +163,6 @@ extension SendView {
                     .accessibilityHint("저장된 주소 목록을 확인합니다")
                 }
             }
-            }
         }
         .glassCard(style: .default)
     }

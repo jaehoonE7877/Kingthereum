@@ -17,63 +17,69 @@ struct WalletHomeView: View {
     @State private var lastScrollOffset: CGFloat = 0
     @State private var isScrollingDown = false
     @State private var navigationPath = NavigationPath()
+    @State private var glassTheme: GlassTheme = .vibrant
     
     var body: some View {
         NavigationStack(path: $navigationPath) {
             ScrollView {
                 VStack(spacing: 20) {
-                    // 잔액 카드
-                    BalanceCard(
+                    // Metal Liquid Glass 잔액 카드
+                    MetalBalanceCard(
                         balance: "2.5",
                         symbol: "ETH",
                         usdValue: "$4,250.00"
                     )
+                    .scaleEffect(isScrollingDown ? 0.95 : 1.0)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isScrollingDown)
                     
-                    // 액션 버튼들
-                    HStack(spacing: 12) {
-                        ActionButton(
-                            title: "보내기",
+                    // Metal Liquid Glass 액션 버튼들
+                    HStack(spacing: 16) {
+                        MetalLiquidGlassButton(
                             icon: "arrow.up.circle.fill",
-                            gradient: LinearGradient(
-                                colors: [.blue, .purple],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                            title: "보내기",
+                            style: .crypto
                         ) {
                             navigationPath.append(SendDestination.selectRecipient)
                         }
                         .accessibilityLabel("이더리움 보내기")
                         .accessibilityHint("탭하여 이더리움을 다른 주소로 전송합니다")
                         
-                        ActionButton(
-                            title: "받기",
+                        MetalLiquidGlassButton(
                             icon: "arrow.down.circle.fill",
-                            gradient: LinearGradient(
-                                colors: [.green, .mint],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                            title: "받기",
+                            style: .success
                         ) {
                             showReceiveView = true
                         }
                         .accessibilityLabel("이더리움 받기")
                         .accessibilityHint("탭하여 내 지갑 주소와 QR 코드를 확인합니다")
                     }
+                    .padding(.horizontal, 8)
                     
-                    // 최근 거래
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("최근 거래")
-                            .font(.headline)
-                            .padding(.horizontal)
+                    // Metal Liquid Glass 최근 거래
+                    VStack(alignment: .leading, spacing: 16) {
+                        HStack {
+                            Text("최근 거래")
+                                .kingStyle(.headlinePrimary)
+                            Spacer()
+                            MetalLiquidGlassButton(
+                                icon: "arrow.right",
+                                style: .icon
+                            ) {
+                                // 모든 거래 내역으로 이동
+                            }
+                        }
+                        .padding(.horizontal)
                         
-                        ForEach(0..<3) { _ in
-                            TransactionCard(
-                                type: .receive,
-                                amount: "0.5",
+                        ForEach(0..<3, id: \.self) { index in
+                            MetalTransactionCard(
+                                type: index % 2 == 0 ? .receive : .send,
+                                amount: index == 0 ? "0.5" : index == 1 ? "1.2" : "0.8",
                                 symbol: "ETH",
-                                timestamp: "5분 전",
-                                status: .confirmed
+                                timestamp: index == 0 ? "5분 전" : index == 1 ? "1시간 전" : "3시간 전",
+                                status: index == 1 ? .pending : .confirmed
                             )
+                            .padding(.horizontal, 4)
                         }
                     }
                     
@@ -104,6 +110,36 @@ struct WalletHomeView: View {
                 lastScrollOffset = value
             }
             .navigationTitle("지갑")
+            .environment(\.glassTheme, glassTheme)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Menu {
+                        Button("시스템 테마") {
+                            withAnimation(.easeInOut(duration: 0.5)) {
+                                glassTheme = .system
+                            }
+                        }
+                        Button("밝은 테마") {
+                            withAnimation(.easeInOut(duration: 0.5)) {
+                                glassTheme = .light
+                            }
+                        }
+                        Button("어두운 테마") {
+                            withAnimation(.easeInOut(duration: 0.5)) {
+                                glassTheme = .dark
+                            }
+                        }
+                        Button("생동감 테마") {
+                            withAnimation(.easeInOut(duration: 0.5)) {
+                                glassTheme = .vibrant
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "sparkles")
+                            .foregroundColor(.primary)
+                    }
+                }
+            }
             .navigationDestination(for: SendDestination.self) { destination in
                 switch destination {
                 case .selectRecipient:
@@ -156,8 +192,7 @@ struct SendRecipientNavigationView: View {
                 // 주소 입력 섹션
                 VStack(alignment: .leading, spacing: 12) {
                     Text("받는 사람")
-                        .font(.headline)
-                        .foregroundColor(.primary)
+                        .kingStyle(.headlinePrimary)
                     
                     HStack {
                         GlassTextField(
@@ -178,7 +213,7 @@ struct SendRecipientNavigationView: View {
                         } label: {
                             Image(systemName: "qrcode.viewfinder")
                                 .font(.title2)
-                                .foregroundStyle(LinearGradient.primaryGradient)
+                                .foregroundStyle(KingthereumGradients.accent)
                                 .frame(width: 48, height: 48)
                                 .background(.ultraThinMaterial)
                                 .cornerRadius(12)
@@ -190,9 +225,12 @@ struct SendRecipientNavigationView: View {
                             Image(systemName: isAddressValid ? "checkmark.circle.fill" : "xmark.circle.fill")
                                 .font(.caption)
                             Text(isAddressValid ? "유효한 주소입니다" : "올바른 주소 형식이 아닙니다")
-                                .font(.caption)
+                                .kingStyle(KingthereumTextStyle(
+                                    font: KingthereumTypography.caption,
+                                    color: isAddressValid ? KingthereumColors.success : KingthereumColors.error
+                                ))
                         }
-                        .foregroundColor(isAddressValid ? .green : .red)
+                        .foregroundColor(isAddressValid ? KingthereumColors.success : KingthereumColors.error)
                     }
                 }
                 .padding()
@@ -242,23 +280,20 @@ struct SendAmountNavigationView: View {
                 // 받는 사람 정보
                 VStack(alignment: .leading, spacing: 8) {
                     Text("받는 사람")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                        .kingStyle(.captionPrimary)
                     
                     HStack {
                         Image(systemName: "person.circle.fill")
                             .font(.title2)
-                            .foregroundColor(.kingBlue)
+                            .foregroundColor(KingthereumColors.accent)
                         
                         VStack(alignment: .leading, spacing: 2) {
                             if let name = recipientData.name {
                                 Text(name)
-                                    .font(.body)
-                                    .fontWeight(.medium)
+                                    .kingStyle(.bodyPrimary)
                             }
                             Text(formatAddress(recipientData.address))
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                                .kingStyle(.captionPrimary)
                         }
                         
                         Spacer()
@@ -271,7 +306,7 @@ struct SendAmountNavigationView: View {
                 VStack(spacing: 20) {
                     VStack(spacing: 8) {
                         Text("보낼 금액")
-                            .font(.headline)
+                            .kingStyle(.headlinePrimary)
                         
                         HStack(alignment: .firstTextBaseline, spacing: 8) {
                             TextField("0", text: $amount)
@@ -284,21 +319,20 @@ struct SendAmountNavigationView: View {
                                 }
                             
                             Text("ETH")
-                                .font(.title2)
-                                .fontWeight(.medium)
-                                .foregroundColor(.secondary)
+                                .kingStyle(.bodySecondary)
                         }
                     }
                     
                     // 잔액 정보
                     HStack {
                         Text("사용 가능")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                            .kingStyle(.captionPrimary)
                         Spacer()
                         Text("\(balance) ETH")
-                            .font(.caption)
-                            .fontWeight(.medium)
+                            .kingStyle(KingthereumTextStyle(
+                                font: KingthereumTypography.caption,
+                                color: KingthereumColors.textPrimary
+                            ))
                     }
                 }
                 .padding()
@@ -358,12 +392,13 @@ struct SendConfirmNavigationView: View {
                 // 거래 요약
                 VStack(spacing: 20) {
                     Text("거래 확인")
-                        .font(.title2)
-                        .fontWeight(.bold)
+                        .kingStyle(.headlinePrimary)
                     
                     Text("\(transactionData.amount) ETH")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
+                        .kingStyle(KingthereumTextStyle(
+                            font: KingthereumTypography.cryptoBalanceLarge,
+                            color: KingthereumColors.textPrimary
+                        ))
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
@@ -380,13 +415,14 @@ struct SendConfirmNavigationView: View {
                         } else {
                             Image(systemName: "paperplane.fill")
                             Text("전송하기")
+                                .kingStyle(.buttonPrimary)
                         }
                     }
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundColor(KingthereumColors.textInverse)
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
-                    .background(LinearGradient.primaryGradient)
+                    .background(KingthereumGradients.buttonPrimary)
                     .cornerRadius(16)
                 }
                 .disabled(isProcessing)
