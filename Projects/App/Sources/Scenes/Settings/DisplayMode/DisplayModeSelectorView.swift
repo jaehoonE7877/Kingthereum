@@ -44,7 +44,7 @@ struct DisplayModeSelectorView: View {
                     Text("적용")
                         .kingStyle(.buttonPrimary)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 48)
+                        .frame(height: DesignTokens.Size.Button.md)
                         .background(KingthereumGradients.buttonPrimary)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                 }

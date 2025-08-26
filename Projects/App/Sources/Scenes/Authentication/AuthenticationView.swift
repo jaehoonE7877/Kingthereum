@@ -145,7 +145,7 @@ struct AuthenticationView: View {
                         authenticationOptionsSection
                         
                         // 하단 여백
-                        Color.clear.frame(height: 40)
+                        Color.clear.frame(height: DesignTokens.Spacing.xl)
                     }
                     .padding(.horizontal, DesignTokens.Spacing.xl)
                     .padding(.vertical, DesignTokens.Spacing.xxl)
@@ -317,7 +317,7 @@ struct AuthenticationView: View {
                     // 언더라인 효과
                     Rectangle()
                         .fill(KingthereumGradients.accent)
-                        .frame(height: 2)
+                        .frame(height: DesignTokens.Size.Divider.thick)
                         .frame(width: 120)
                         .blur(radius: 1)
                 }
@@ -598,7 +598,7 @@ struct AuthenticationView: View {
                         ))
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: 56)
+                .frame(height: DesignTokens.Size.Button.lg)
                 .background(KingthereumGradients.buttonPrimary)
                 .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg))
                 .shadow(color: KingthereumColors.accent.opacity(0.3), radius: 8, x: 0, y: 4)
@@ -617,7 +617,7 @@ struct AuthenticationView: View {
             HStack {
                 Rectangle()
                     .fill(KingthereumColors.textTertiary.opacity(0.3))
-                    .frame(height: 1)
+                    .frame(height: DesignTokens.Size.Divider.thin)
                 
                 Text("또는")
                     .kingStyle(KingthereumTextStyle(
@@ -628,7 +628,7 @@ struct AuthenticationView: View {
                 
                 Rectangle()
                     .fill(KingthereumColors.textTertiary.opacity(0.3))
-                    .frame(height: 1)
+                    .frame(height: DesignTokens.Size.Divider.thin)
             }
             
             // 추가 옵션들

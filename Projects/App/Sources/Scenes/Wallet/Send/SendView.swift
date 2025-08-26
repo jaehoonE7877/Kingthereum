@@ -209,9 +209,9 @@ extension SendView {
                 }
                 .padding(20)
                 .background(.ultraThinMaterial)
-                .cornerRadius(16)
+                .cornerRadius(DesignTokens.CornerRadius.lg)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 16)
+                    RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
                         .stroke(
                             coordinator.isAmountValid ? 
                             LinearGradient.primaryGradient : 
@@ -313,7 +313,7 @@ extension SendView {
                 }
                 .padding(16)
                 .background(.ultraThinMaterial)
-                .cornerRadius(12)
+                .cornerRadius(DesignTokens.CornerRadius.md)
             }
         }
         .glassCard(style: .default)
@@ -391,14 +391,14 @@ extension SendView {
                         .font(.system(size: 16, weight: .semibold))
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: 56)
+                .frame(height: DesignTokens.Size.Button.lg)
                 .background(
                     coordinator.isSending ? 
                     AnyShapeStyle(Color.secondary.opacity(0.3)) : 
                     AnyShapeStyle(LinearGradient.primaryGradient)
                 )
                 .foregroundColor(.white)
-                .cornerRadius(16)
+                .cornerRadius(DesignTokens.CornerRadius.lg)
                 .shadow(
                     color: coordinator.isSending ? .clear : .kingBlue.opacity(0.3), 
                     radius: coordinator.isSending ? 0 : 8, 

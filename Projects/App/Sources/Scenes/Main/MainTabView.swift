@@ -107,7 +107,7 @@ struct MainTabView: View {
             // 커스텀 Tab Bar
             if showTabBar {
                 CustomTabBar(selectedTab: $selectedTab)
-                    .frame(height: 83) // Tab bar 높이
+                    .frame(height: DesignTokens.Size.TabBar.height) // Tab bar 높이
                     .frame(maxHeight: .infinity, alignment: .bottom)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }

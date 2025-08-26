@@ -84,7 +84,7 @@ struct WalletHomeView: View {
                     }
                     
                     // 추가 스크롤 여백
-                    Color.clear.frame(height: 120)
+                    Color.clear.frame(height: DesignTokens.Spacing.scrollBottomPadding)
                 }
                 .padding()
                 .background(
@@ -216,7 +216,7 @@ struct SendRecipientNavigationView: View {
                                 .foregroundStyle(KingthereumGradients.accent)
                                 .frame(width: 48, height: 48)
                                 .background(.ultraThinMaterial)
-                                .cornerRadius(12)
+                                .cornerRadius(DesignTokens.CornerRadius.md)
                         }
                     }
                     
@@ -421,9 +421,9 @@ struct SendConfirmNavigationView: View {
                     .font(.headline)
                     .foregroundColor(KingthereumColors.textInverse)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 56)
+                    .frame(height: DesignTokens.Size.Button.lg)
                     .background(KingthereumGradients.buttonPrimary)
-                    .cornerRadius(16)
+                    .cornerRadius(DesignTokens.CornerRadius.lg)
                 }
                 .disabled(isProcessing)
                 
@@ -469,9 +469,9 @@ struct ActionButton: View {
             }
             .foregroundColor(.white)
             .frame(maxWidth: .infinity)
-            .frame(height: 80)
+            .frame(height: DesignTokens.Size.Card.prominentHeight)
             .background(gradient)
-            .cornerRadius(16)
+            .cornerRadius(DesignTokens.CornerRadius.lg)
         }
     }
 }

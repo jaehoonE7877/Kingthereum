@@ -154,7 +154,7 @@ struct SettingsView: View {
                         aboutSection
                         
                         // 추가 스크롤 여백
-                        Color.clear.frame(height: 120)
+                        Color.clear.frame(height: DesignTokens.Spacing.scrollBottomPadding)
                     }
                     .padding(DesignTokens.Spacing.lg)
                 }

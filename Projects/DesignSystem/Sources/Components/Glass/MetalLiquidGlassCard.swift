@@ -155,7 +155,7 @@ public struct MetalGlassCardStyle: Sendable {
     
     /// 지갑 카드 스타일 (최고 강도)
     public static let wallet = MetalGlassCardStyle(
-        cornerRadius: Constants.UI.cornerRadius + 4,
+        cornerRadius: DesignTokens.MetalGlass.Card.prominentCornerRadius,
         borderColor: .glassBorderAccent,
         borderWidth: 1.2,
         baseGlassSettings: {
@@ -174,7 +174,7 @@ public struct MetalGlassCardStyle: Sendable {
     
     /// 거래 내역 카드 스타일 (향상됨)
     public static let transaction = MetalGlassCardStyle(
-        cornerRadius: Constants.UI.cornerRadius - 2,
+        cornerRadius: DesignTokens.MetalGlass.Card.subtleCornerRadius,
         borderColor: .glassBorderSecondary,
         borderWidth: 0.8,
         baseGlassSettings: {
@@ -245,7 +245,7 @@ public struct MetalBalanceCard: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(20)
+        .padding(DesignTokens.Spacing.lg)
         .metalLiquidGlassCard(style: .wallet)
     }
 }
@@ -309,7 +309,7 @@ public struct MetalTransactionCard: View {
             Image(systemName: type.icon)
                 .font(.title2)
                 .foregroundColor(type.color)
-                .frame(width: 32, height: 32)
+                .frame(width: DesignTokens.Size.Icon.lg, height: DesignTokens.Size.Icon.lg)
             
             VStack(alignment: .leading, spacing: 2) {
                 HStack {
@@ -330,7 +330,7 @@ public struct MetalTransactionCard: View {
                     .foregroundColor(.secondary)
             }
         }
-        .padding(16)
+        .padding(DesignTokens.Spacing.lg)
         .metalLiquidGlassCard(style: .transaction)
     }
 }
