@@ -21,6 +21,8 @@ public enum DesignTokens {
         public static let xxl: CGFloat = 32
         /// 점보 간격 (48pt)
         public static let jumbo: CGFloat = 48
+        /// 스크롤 하단 여백 (100pt)
+        public static let scrollBottomPadding: CGFloat = 100
         
         /// 패딩 프리셋
         public enum Padding {
@@ -71,6 +73,7 @@ public enum DesignTokens {
         public enum Card {
             public static let minHeight: CGFloat = 120
             public static let maxWidth: CGFloat = 400
+            public static let prominentHeight: CGFloat = 200
         }
         
         /// 입력 필드 높이
@@ -78,6 +81,21 @@ public enum DesignTokens {
             public static let sm: CGFloat = 36
             public static let md: CGFloat = 44
             public static let lg: CGFloat = 52
+        }
+        
+        /// 구분선 높이
+        public enum Divider {
+            public static let thin: CGFloat = 1
+            public static let normal: CGFloat = 2
+            public static let thick: CGFloat = 4
+            public static let heavy: CGFloat = 8
+        }
+        
+        /// 탭바 크기
+        public enum TabBar {
+            public static let height: CGFloat = 83
+            public static let iconSize: CGFloat = 24
+            public static let selectedIconSize: CGFloat = 26
         }
     }
     
@@ -489,7 +507,7 @@ public extension View {
     
     func cryptoAddressStyle() -> some View {
         self
-            .font(.system(size: DesignTokens.Crypto.Address.fontSize, family: .monospaced))
+            .font(.system(size: DesignTokens.Crypto.Address.fontSize, weight: .regular, design: .monospaced))
             .kerning(DesignTokens.Crypto.Address.letterSpacing)
             .padding(DesignTokens.Crypto.Address.padding)
             .background(.ultraThinMaterial)
