@@ -1,4 +1,4 @@
-name: Claude Code
+name: Claude Code Review
 
 on:
   issue_comment:
@@ -9,6 +9,8 @@ on:
     types: [opened, assigned]
   pull_request_review:
     types: [submitted]
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
   claude:
@@ -19,98 +21,222 @@ jobs:
         (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
         (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
         (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude'))) ||
-        (github.event_name == 'pull_request')
+        (github.event_name == 'pull_request' && github.event.action == 'opened')
       ) &&
       (
-        github.repository_owner == github.actor
+        github.repository_owner == github.actor ||
+        github.actor == 'jaehoonE7877'
       )
+    
     runs-on: ubuntu-latest
+    
     permissions:
-      contents: write
+      contents: read
       pull-requests: write
       issues: write
       id-token: write
-      actions: read # Required for Claude to read CI results on PRs
+      actions: read
+      checks: read
+      statuses: read
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          # PR의 경우 변경사항을 모두 가져오기 위해 fetch-depth 증가
+          fetch-depth: 0
+          # PR의 head ref를 체크아웃
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Setup Git for PR analysis
+        if: github.event_name == 'pull_request' || github.event.pull_request
+        run: |
+          # PR 정보 설정
+          echo "PR_NUMBER=${{ github.event.pull_request.number || github.event.issue.number }}" >> $GITHUB_ENV
+          echo "BASE_SHA=${{ github.event.pull_request.base.sha }}" >> $GITHUB_ENV
+          echo "HEAD_SHA=${{ github.event.pull_request.head.sha }}" >> $GITHUB_ENV
+          
+          # Git 설정
+          git config --global user.name "Claude Code Review"
+          git config --global user.email "claude-code@anthropic.com"
+          
+          # Base 브랜치 정보 가져오기
+          git fetch origin ${{ github.event.pull_request.base.ref }}:${{ github.event.pull_request.base.ref }}
+          
+          # 변경된 파일 목록 생성
+          git diff --name-only ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} > changed_files.txt || true
+          echo "Changed files:"
+          cat changed_files.txt || echo "No changed files detected"
 
       - name: Run Claude Code
         id: claude
-        uses: anthropics/claude-code-action@beta  # v1 → v0.8로 수정
+        uses: anthropics/claude-code-action@beta
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-
-          # 성능 최적화: 실행 시간 제한
-          max_turns: 3
-          timeout_minutes: 10
-
-          # CI 결과 읽기 권한
-          additional_permissions: |
-            actions: read
-
-          # 모델 설정 (기본값: Claude Sonnet 4)
-          model: "claude-sonnet-4-20250514"  # 필요시 주석 해제
-
-
-          # 트리거 문구 커스터마이징 (선택사항)
-          # trigger_phrase: "@claude"
-
-          # 특정 사용자 할당 시 트리거 (선택사항)
-          # assignee_trigger: "claude-bot"
-
-          # 허용된 도구 제한 (iOS 프로젝트용으로 수정)
-          allowed_tools: "Bash(xcodebuild),Bash(tuist),Bash(swift test),Bash(swift build),Bash(swiftformat),Bash(swiftlint),Bash(git status),Bash(git log --oneline -10)"
-
-          # 프로젝트별 커스텀 지침 (iOS Swift 프로젝트용)
+          
+          # 성능 최적화
+          max_turns: 5
+          timeout_minutes: 15
+          
+          # 모델 설정
+          model: "claude-sonnet-4-20250514"
+          
+          # 허용된 도구들 (iOS 개발용)
+          allowed_tools: |
+            Bash(find),
+            Bash(cat),
+            Bash(head),
+            Bash(tail),
+            Bash(grep),
+            Bash(git log),
+            Bash(git show),
+            Bash(git diff),
+            Bash(git status),
+            Bash(xcodebuild -list),
+            Bash(swift --version),
+            Bash(tuist --version),
+            Bash(swiftlint version),
+            Bash(swiftformat --version)
+          
+          # 프로젝트별 커스텀 지침
           custom_instructions: |
-            **iOS Swift 프로젝트 코딩 표준:**
-            - Clean Swift (VIP) 아키텍처 준수
-            - Swift 6.0+ 및 iOS 18+ 최신 API 사용
-            - SwiftUI 네이티브 패턴 적용
-            - SOLID 원칙 엄격 준수
+            # iOS Swift 프로젝트 전문 코드 리뷰어
             
-            **코드 품질:**
-            - 모든 새로운 클래스/함수에 문서화 주석 추가
-            - 에러 핸들링 및 방어적 프로그래밍
-            - Swift Testing 프레임워크 사용 (@Suite, @Test)
-            - 접근성 (VoiceOver) 지원 필수
+            당신은 iOS Swift 개발 전문가로서 다음 기준에 따라 코드 리뷰를 수행합니다:
             
-            **리뷰 기준:**
-            - 보안 취약점 확인 (API Key, 민감정보 하드코딩 금지)
-            - 성능 고려사항 검토 (메모리 누수, 동시성)
-            - 테스트 코드 작성 권장 (TDD 방식)
-            - 코드 스타일 일관성 (SwiftFormat, SwiftLint)
+            ## 🎯 리뷰 목표
+            - **완전한 코드 리뷰 제공**: 단순한 진행상황이 아닌 구체적인 피드백
+            - **실행 가능한 개선사항 제시**: 코드 예제와 함께 명확한 가이드라인
+            - **아키텍처 및 디자인 패턴 검증**: Clean Swift (VIP) 아키텍처 준수
             
-            **PR 생성 규칙:**
-            - 명확한 제목과 상세한 설명
-            - 작은 단위의 의미있는 커밋
-            - VIP 패턴 준수 여부 확인
-            - 관련 이슈 번호 연결
+            ## 📋 체크리스트
+            
+            ### 1. 코드 품질
+            - [ ] Swift 6.0+ 최신 기능 활용 여부
+            - [ ] iOS 18+ API 적절한 사용
+            - [ ] SOLID 원칙 준수
+            - [ ] 에러 핸들링 및 방어적 프로그래밍
+            - [ ] 메모리 관리 (강한 참조 순환 방지)
+            
+            ### 2. 아키텍처
+            - [ ] Clean Swift (VIP) 패턴 준수
+            - [ ] 책임 분리 (SRP) 적용
+            - [ ] 의존성 주입 패턴 사용
+            - [ ] Protocol 기반 설계
+            
+            ### 3. SwiftUI
+            - [ ] SwiftUI 네이티브 패턴 사용
+            - [ ] 성능 최적화 (불필요한 리렌더링 방지)
+            - [ ] 접근성 (VoiceOver) 지원
+            - [ ] 상태 관리 (@State, @StateObject, @ObservableObject)
+            
+            ### 4. 보안
+            - [ ] 하드코딩된 API Key, 민감정보 확인
+            - [ ] 데이터 유효성 검증
+            - [ ] 네트워크 통신 보안 (HTTPS, Certificate Pinning)
+            
+            ### 5. 테스트
+            - [ ] Swift Testing 프레임워크 사용 (@Suite, @Test)
+            - [ ] 단위 테스트 커버리지
+            
+            ### 6. 코드 스타일
+            - [ ] SwiftFormat 일관성
+            - [ ] 네이밍 컨벤션 (camelCase, PascalCase)
+            - [ ] 문서화 주석 (/// 방식)
+            
+            ## 📝 리뷰 형식
+            
+            다음과 같은 구조로 리뷰를 작성하세요:
+            
+            ```markdown
+            # 🔍 Code Review Summary
+            
+            ## ✅ 잘 구현된 부분
+            - 구체적인 코드 위치와 함께 칭찬할 점들
+            
+            ## ⚠️ 개선이 필요한 부분
+            
+            ### 🔧 Critical Issues (즉시 수정 필요)
+            - **파일명:라인번호**: 문제점 설명
+            - **수정 방안**: 코드 예제와 함께
+            
+            ### 💡 Suggestions (권장사항)
+            - **성능 최적화**
+            - **코드 가독성**
+            - **아키텍처 개선**
+            
+            ## 🧪 테스트 권장사항
+            - 추가해야 할 테스트 케이스들
+            
+            ## 📚 추가 학습 자료
+            - 관련 Apple 문서 링크
+            - Swift Evolution 제안서 등
+            ```
+            
+            ## 🚀 실행 지침
+            
+            1. **전체 PR 분석**: 모든 변경된 파일을 체크
+            2. **상세한 피드백**: 일반적인 조언이 아닌 구체적인 개선점
+            3. **코드 예제 제공**: 문제점과 해결방안을 코드로 보여주기
+            4. **우선순위 구분**: Critical/Important/Nice-to-have 구분
+            5. **건설적인 톤**: 비판적이지 않고 도움이 되는 방향으로
 
-          # 환경 변수 설정
-          claude_env: |
-            DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
-            SWIFT_VERSION: 6.0
-            IOS_DEPLOYMENT_TARGET: 18.0
+      - name: Get PR Details
+        if: github.event_name == 'pull_request' || github.event.pull_request
+        id: pr_details
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number || context.payload.pull_request.number
+            });
+            
+            core.setOutput('pr_title', pr.title);
+            core.setOutput('pr_body', pr.body);
+            core.setOutput('pr_author', pr.user.login);
 
-      # 실행 결과 알림
       - name: Comment on completion
         if: always()
-        uses: actions/github-script@v7  # v6 → v7로 업데이트
+        uses: actions/github-script@v7
         with:
-          github_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const status = '${{ steps.claude.outcome }}' === 'success' ? '✅ 완료' : '❌ 실패';
-            const body = `Claude Code Action ${status}\n\n실행 시간: ${{ steps.claude.outputs.execution_time || '정보 없음' }}`;
+            const executionTime = '${{ steps.claude.outputs.execution_time }}' || '정보 없음';
             
-            if (context.eventName === 'issue_comment' || context.eventName === 'issues') {
-              github.rest.issues.createComment({
-                issue_number: context.issue.number,
+            let body = `<!-- claude-code-review-status -->
+            ## 🤖 Claude Code Review ${status}
+            
+            **실행 시간**: ${executionTime}
+            **모델**: Claude Sonnet 4
+            **리뷰 대상**: iOS Swift 프로젝트
+            
+            `;
+            
+            if ('${{ steps.claude.outcome }}' === 'failure') {
+              body += `
+            ⚠️ **오류가 발생했습니다**
+            - 워크플로우 로그를 확인해주세요
+            - @claude를 다시 멘션하여 재실행할 수 있습니다
+            `;
+            } else {
+              body += `
+            ✨ **코드 리뷰가 완료되었습니다**
+            - 위의 피드백을 확인해주세요
+            - 추가 질문이 있으면 @claude를 멘션해주세요
+            `;
+            }
+            
+            const issueNumber = context.issue?.number || context.payload.pull_request?.number;
+            
+            if (issueNumber) {
+              await github.rest.issues.createComment({
+                issue_number: issueNumber,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                body: `<!-- claude-status -->\n${body}`
+                body: body
               });
             }
