@@ -164,7 +164,7 @@ extension SendView {
                 }
             }
         }
-        .glassCard(style: .default)
+        .glassCard(level: .standard, context: .card)
     }
 }
 
@@ -255,7 +255,7 @@ extension SendView {
                 }
             }
         }
-        .glassCard(style: .default)
+        .glassCard(level: .standard, context: .card)
     }
 }
 
@@ -316,7 +316,7 @@ extension SendView {
                 .cornerRadius(DesignTokens.CornerRadius.md)
             }
         }
-        .glassCard(style: .default)
+        .glassCard(level: .standard, context: .card)
     }
 }
 
@@ -410,7 +410,7 @@ extension SendView {
             .scaleEffect(coordinator.isSending ? 0.98 : 1.0)
             .animation(.easeInOut(duration: 0.1), value: coordinator.isSending)
         }
-        .glassCard(style: .prominent)
+        .glassCard(level: .prominent, context: .card)
     }
 }
 

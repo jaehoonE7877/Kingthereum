@@ -373,7 +373,7 @@ struct TransactionRowView: View {
             }
         }
         .padding(DesignTokens.Spacing.lg)
-        .glassCard()
+        .glassCard(level: .standard, context: .card)
     }
 }
 

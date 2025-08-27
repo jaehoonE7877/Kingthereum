@@ -15,6 +15,9 @@ public struct GlassCard<Content: View>: View {
     @Environment(\.glassEffectLevel) private var environmentEffectLevel
     @Environment(\.colorScheme) private var colorScheme
     
+    // 2024 접근성 지원을 위한 기본 설정
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    
     /// 효과 레벨을 명시적으로 지정하여 초기화
     public init(
         level: GlassTokens.EffectLevel,
@@ -56,19 +59,22 @@ public struct GlassCard<Content: View>: View {
                 x: 0,
                 y: effectiveShadowOffset
             )
+            .drawingGroup() // 성능 최적화: 복합 렌더링을 단일 레이어로 합성
     }
     
     // MARK: - Dynamic Properties
     
-    /// 테마와 효과 레벨에 따른 Material 결정
+    /// 테마와 효과 레벨에 따른 Material 결정 (2024 최적화)
     private var effectiveMaterial: Material {
+        // 기본 Material 효과
         let baseMaterial = effectLevel.material
         
+        // 테마별 로직
         switch theme {
         case .system:
             return baseMaterial
         case .light:
-            return .regularMaterial
+            return baseMaterial
         case .dark:
             return .thickMaterial
         case .vibrant:
@@ -81,7 +87,7 @@ public struct GlassCard<Content: View>: View {
         customCornerRadius ?? context.defaultCornerRadius
     }
     
-    /// 테마와 효과 레벨에 따른 테두리 색상
+    /// 테마와 효과 레벨에 따른 테두리 색상 (2024 최적화)
     private var effectiveBorderColor: Color {
         let adaptation = GlassTokens.ColorAdaptation.border
         let baseColor = KingColors.glassBorder
@@ -103,20 +109,23 @@ public struct GlassCard<Content: View>: View {
         effectLevel.borderWidth
     }
     
-    /// 테마와 효과 레벨에 따른 그림자 색상
+    /// 테마와 효과 레벨에 따른 그림자 색상 (2024 최적화)
     private var effectiveShadowColor: Color {
         let adaptation = GlassTokens.ColorAdaptation.shadow
         let baseColor = KingColors.glassShadow
         
+        // 모션 감소 설정 시 그림자 효과 최소화
+        let motionMultiplier = reduceMotion ? 0.5 : 1.0
+        
         switch theme {
         case .system:
-            return baseColor.opacity(effectLevel.opacity * 0.3)
+            return baseColor.opacity(effectLevel.opacity * 0.3 * motionMultiplier)
         case .light:
-            return baseColor.opacity(adaptation.light)
+            return baseColor.opacity(adaptation.light * motionMultiplier)
         case .dark:
-            return Color.black.opacity(adaptation.dark)
+            return Color.black.opacity(adaptation.dark * motionMultiplier)
         case .vibrant:
-            return baseColor.opacity(adaptation.vibrant)
+            return baseColor.opacity(adaptation.vibrant * motionMultiplier)
         }
     }
     
@@ -142,120 +151,6 @@ public struct GlassCard<Content: View>: View {
     }
 }
 
-// MARK: - Legacy GlassCardStyle (하위 호환성)
-
-/// 기존 GlassCardStyle (하위 호환성을 위해 유지)
-@available(*, deprecated, message: "Use GlassCard with GlassTokens.EffectLevel instead")
-public struct GlassCardStyle: Sendable {
-    public static let `default` = GlassCardStyle(
-        material: .ultraThinMaterial,
-        cornerRadius: Constants.UI.cornerRadius,
-        borderColor: .glassBorderSecondary,
-        borderWidth: 1,
-        shadowColor: .glassShadowLight,
-        shadowRadius: 8,
-        shadowOffset: 4
-    )
-    
-    public static let prominent = GlassCardStyle(
-        material: .thickMaterial,
-        cornerRadius: Constants.UI.cornerRadius,
-        borderColor: .glassBorderPrimary,
-        borderWidth: 1.2,
-        shadowColor: .glassShadowMedium,
-        shadowRadius: 16,
-        shadowOffset: 8
-    )
-    
-    public static let subtle = GlassCardStyle(
-        material: .ultraThinMaterial,
-        cornerRadius: Constants.UI.cornerRadius,
-        borderColor: .glassBorderSecondary,
-        borderWidth: 0.7,
-        shadowColor: .glassShadowLight,
-        shadowRadius: 6,
-        shadowOffset: 3
-    )
-    
-    public static let wallet = GlassCardStyle(
-        material: .regularMaterial,
-        cornerRadius: DesignTokens.CornerRadius.lg,
-        borderColor: .glassBorderAccent,
-        borderWidth: 1.1,
-        shadowColor: .glassShadowMedium,
-        shadowRadius: 14,
-        shadowOffset: 7
-    )
-    
-    public static let transaction = GlassCardStyle(
-        material: .thinMaterial,
-        cornerRadius: DesignTokens.CornerRadius.md,
-        borderColor: .glassBorderSecondary,
-        borderWidth: 0.6,
-        shadowColor: .glassShadowLight,
-        shadowRadius: 6,
-        shadowOffset: 3
-    )
-    
-    let material: Material
-    let cornerRadius: CGFloat
-    let borderColor: Color
-    let borderWidth: CGFloat
-    let shadowColor: Color
-    let shadowRadius: CGFloat
-    let shadowOffset: CGFloat
-    
-    public init(
-        material: Material,
-        cornerRadius: CGFloat, 
-        borderColor: Color,
-        borderWidth: CGFloat,
-        shadowColor: Color,
-        shadowRadius: CGFloat,
-        shadowOffset: CGFloat
-    ) {
-        self.material = material
-        self.cornerRadius = cornerRadius
-        self.borderColor = borderColor
-        self.borderWidth = borderWidth
-        self.shadowColor = shadowColor
-        self.shadowRadius = shadowRadius
-        self.shadowOffset = shadowOffset
-    }
-    
-    /// GlassCardStyle을 EffectLevel로 변환
-    var toEffectLevel: GlassTokens.EffectLevel {
-        switch shadowRadius {
-        case 0..<7: return .subtle
-        case 7..<12: return .standard
-        case 12..<18: return .prominent
-        default: return .intense
-        }
-    }
-}
-
-/// 하위 호환성을 위한 레거시 GlassCard
-@available(*, deprecated, message: "Use new GlassCard(level:context:) initializer")
-public struct LegacyGlassCard<Content: View>: View {
-    let content: Content
-    let style: GlassCardStyle
-    @Environment(\.glassTheme) private var theme
-    @Environment(\.colorScheme) private var colorScheme
-    
-    public init(
-        style: GlassCardStyle = .default,
-        @ViewBuilder content: () -> Content
-    ) {
-        self.content = content()
-        self.style = style
-    }
-    
-    public var body: some View {
-        GlassCard(level: style.toEffectLevel, context: .card) {
-            content
-        }
-    }
-}
 
 // MARK: - Convenience Extensions
 
@@ -271,13 +166,6 @@ public extension View {
         }
     }
     
-    /// 하위 호환성을 위한 기존 방식 (deprecated)
-    @available(*, deprecated, message: "Use glassCard(level:context:) instead")
-    func glassCard(style: GlassCardStyle = .default) -> some View {
-        LegacyGlassCard(style: style) {
-            self
-        }
-    }
     
     /// 컨텍스트 기반 기본 Glass Card
     func glassCard(context: GlassTokens.Context = .card) -> some View {
@@ -531,6 +419,168 @@ public struct InfoCard: View {
         }
         .padding(DesignTokens.Spacing.lg)
         .glassCard(level: .subtle, context: .card)
+    }
+}
+
+// MARK: - Advanced Glass Components (2024 최적화)
+
+/// 성능 최적화된 Glass 컴포넌트 
+public struct OptimizedGlassCard<Content: View>: View {
+    let content: Content
+    let level: GlassTokens.EffectLevel
+    let context: GlassTokens.Context
+    
+    @State private var isVisible = true
+    @Environment(\.scenePhase) private var scenePhase
+    
+    public init(
+        level: GlassTokens.EffectLevel,
+        context: GlassTokens.Context = .card,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.content = content()
+        self.level = level
+        self.context = context
+    }
+    
+    public var body: some View {
+        content
+            .background {
+                if isVisible {
+                    RoundedRectangle(cornerRadius: context.defaultCornerRadius)
+                        .fill(level.material)
+                }
+            }
+            .drawingGroup() // GPU 가속 렌더링
+            .onChange(of: scenePhase) { _, newPhase in
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    isVisible = newPhase == .active
+                }
+            }
+    }
+}
+
+/// Vibrancy 효과가 있는 동적 Glass 카드
+public struct VibrancyGlassCard<Content: View>: View {
+    let content: Content
+    let level: GlassTokens.EffectLevel
+    
+    @State private var animationPhase: CGFloat = 0
+    @State private var isPressed = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    
+    public init(
+        level: GlassTokens.EffectLevel,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.content = content()
+        self.level = level
+    }
+    
+    public var body: some View {
+        content
+            .background(
+                ZStack {
+                    // 기본 Material
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(level.material)
+                    
+                    // 동적 Vibrancy 레이어 (모션 감소 설정 시 비활성화)
+                    if !reduceMotion {
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        KingColors.glassVibrancy.opacity(0.4 + animationPhase * 0.2),
+                                        Color.clear,
+                                        KingColors.glassVibrancy.opacity(0.2 + animationPhase * 0.1)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                    }
+                }
+            )
+            .scaleEffect(isPressed ? 0.95 : 1.0)
+            .onAppear {
+                if !reduceMotion {
+                    withAnimation(.easeInOut(duration: 3.0).repeatForever(autoreverses: true)) {
+                        animationPhase = 1.0
+                    }
+                }
+            }
+            .onTapGesture {
+                if !reduceMotion {
+                    withAnimation(.spring(duration: 0.2)) {
+                        isPressed.toggle()
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                        withAnimation(.spring(duration: 0.2)) {
+                            isPressed = false
+                        }
+                    }
+                }
+            }
+            .drawingGroup()
+    }
+}
+
+/// Apple Vision Pro 최적화 Glass 카드
+@available(iOS 17.0, *)
+public struct VisionProGlassCard<Content: View>: View {
+    let content: Content
+    let level: GlassTokens.EffectLevel
+    
+    public init(
+        level: GlassTokens.EffectLevel,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.content = content()
+        self.level = level
+    }
+    
+    public var body: some View {
+        content
+            .background(level.material, in: .rect(cornerRadius: 16))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .strokeBorder(KingColors.glassVisionProBorder, lineWidth: level.borderWidth)
+            )
+            .shadow(color: .black.opacity(0.3), radius: level.shadowRadius * 1.5, y: level.shadowOffset * 1.2)
+            .hoverEffect(.lift) // Vision Pro 전용 호버 효과
+            .scaleEffect(1.0)
+            .animation(.interactiveSpring(response: 0.4, dampingFraction: 0.8), value: level)
+            .drawingGroup()
+    }
+}
+
+// MARK: - Convenience Extensions for New Components
+
+public extension View {
+    /// 성능 최적화된 Glass Card 적용
+    func optimizedGlassCard(
+        level: GlassTokens.EffectLevel,
+        context: GlassTokens.Context = .card
+    ) -> some View {
+        OptimizedGlassCard(level: level, context: context) {
+            self
+        }
+    }
+    
+    /// Vibrancy 효과가 있는 Glass Card 적용
+    func vibrancyGlassCard(level: GlassTokens.EffectLevel) -> some View {
+        VibrancyGlassCard(level: level) {
+            self
+        }
+    }
+    
+    /// Apple Vision Pro 최적화 Glass Card 적용
+    @available(iOS 17.0, *)
+    func visionProGlassCard(level: GlassTokens.EffectLevel) -> some View {
+        VisionProGlassCard(level: level) {
+            self
+        }
     }
 }
 

@@ -32,6 +32,45 @@ public struct GlassTokens {
             }
         }
         
+        /// 접근성 설정에 따른 적응형 Material (2024 최적화)
+        @MainActor
+        public func accessibilityAdaptedMaterial(
+            reduceTransparency: Bool = false,
+            increaseContrast: Bool = false
+        ) -> Material {
+            // 투명도 감소 설정이 켜져 있으면 더 두꺼운 Material 사용
+            if reduceTransparency {
+                switch self {
+                case .subtle: return .regularMaterial
+                case .standard: return .thickMaterial
+                case .prominent: return .ultraThickMaterial
+                case .intense: return .ultraThickMaterial
+                }
+            }
+            
+            // 대비 증가 설정이 켜져 있으면 한 단계 두꺼운 Material 사용
+            if increaseContrast {
+                switch self {
+                case .subtle: return .regularMaterial
+                case .standard: return .thickMaterial
+                case .prominent: return .ultraThickMaterial
+                case .intense: return .ultraThickMaterial
+                }
+            }
+            
+            return material
+        }
+        
+        /// Material (향후 확장)
+        public var modernMaterial: Material {
+            switch self {
+            case .subtle: return .bar  // iOS 18+ 새로운 Material
+            case .standard: return .regularMaterial
+            case .prominent: return .thickMaterial  // iOS 18+ 새로운 Material
+            case .intense: return .ultraThickMaterial
+            }
+        }
+        
         /// 각 레벨별 블러 반경
         public var blurRadius: CGFloat {
             switch self {

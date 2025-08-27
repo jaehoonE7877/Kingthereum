@@ -200,7 +200,7 @@ struct MnemonicView: View {
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
-                    .glassCard(style: .subtle)
+                    .glassCard(level: .subtle, context: .card)
                 }
             }
         }
@@ -234,7 +234,7 @@ struct MnemonicView: View {
             }
         }
         .padding(20)
-        .glassCard(style: .prominent)
+        .glassCard(level: .prominent, context: .card)
         .overlay(
             RoundedRectangle(cornerRadius: Constants.UI.cornerRadius)
                 .stroke(Color.systemOrange.opacity(0.3), lineWidth: 1)
@@ -421,7 +421,7 @@ struct MnemonicView: View {
                     }
                 }
                 .padding(12)
-                .glassCard(style: .subtle)
+                .glassCard(level: .subtle, context: .card)
             }
             
             if !pastedMnemonic.isEmpty {
@@ -441,7 +441,7 @@ struct MnemonicView: View {
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
-                .glassCard(style: .subtle)
+                .glassCard(level: .subtle, context: .card)
             }
         }
         .padding(.horizontal, 4)

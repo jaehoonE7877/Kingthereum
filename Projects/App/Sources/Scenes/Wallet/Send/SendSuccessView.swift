@@ -120,7 +120,7 @@ struct SendSuccessView: View {
                 .buttonStyle(PlainButtonStyle())
             }
         }
-        .glassCard(style: .default)
+        .glassCard(level: .standard, context: .card)
     }
     
     private var actionButtons: some View {
@@ -140,7 +140,7 @@ struct SendSuccessView: View {
                 .background(.ultraThinMaterial)
                 .foregroundStyle(LinearGradient.primaryGradient)
                 .cornerRadius(DesignTokens.CornerRadius.md)
-                .glassCard(style: .subtle)
+                .glassCard(level: .subtle, context: .button)
             }
             
             Button {
