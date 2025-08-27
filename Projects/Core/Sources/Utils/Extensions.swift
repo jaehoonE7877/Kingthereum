@@ -61,16 +61,6 @@ public extension View {
     }
 }
 
-// MARK: - Color Extensions
-public extension Color {
-    static let ethereumBlue = Color(red: 0.38, green: 0.74, blue: 0.99)
-    static let successGreen = Color(red: 0.18, green: 0.8, blue: 0.44)
-    static let warningOrange = Color(red: 1.0, green: 0.59, blue: 0.0)
-    static let errorRed = Color(red: 0.96, green: 0.26, blue: 0.21)
-    
-    static let glassBorder = Color.white.opacity(0.2)
-    static let glassBackground = Color.white.opacity(0.1)
-}
 
 // MARK: - Data Extensions
 public extension Data {
