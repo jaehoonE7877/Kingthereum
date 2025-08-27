@@ -4,6 +4,10 @@ import Core
 import Entity
 import Factory
 
+/// Phase 2.2: SettingsView 프리미엄 피나테크 재설계 (v2.0)
+/// 3가지 핵심 키워드: Modern Minimalism + Premium Fintech + Glassmorphism
+/// 프리미엄 피나테크 앱(Revolut, N26) 수준의 럭셔리 디자인
+
 @MainActor
 protocol SettingsDisplayLogic: AnyObject {
     func displaySettings(viewModel: SettingsScene.LoadSettings.ViewModel)
@@ -42,7 +46,7 @@ final class SettingsViewStore: SettingsDisplayLogic {
     var profileData = ProfileData(
         displayName: "Kingthereum Wallet",
         formattedAddress: "0x742d...9aE3",
-        avatarInitials: "K"
+        avatarInitials: "KW"
     )
     var showDisplayModeSelector = false
     var alertMessage: String?
@@ -143,32 +147,60 @@ struct SettingsView: View {
     
     var body: some View {
         NavigationView {
-            ScrollView {
+            ZStack {
+                // 프리미엄 피나테크 배경 - 다크모드 가독성 개선 그라데이션
+                LinearGradient(
+                    colors: [
+                        KingColors.backgroundPrimary,
+                        KingColors.backgroundSecondary,
+                        KingColors.trustPurple.opacity(0.85)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+                
                 if viewStore.isLoading {
-                    LoadingView(style: .spinner, size: .medium)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    VStack(spacing: DesignTokens.Spacing.xl) {
-                        profileSection
-                        displaySection
-                        generalSection
-                        aboutSection
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .scaleEffect(1.4)
+                            .tint(KingColors.exclusiveGold)
                         
-                        // 추가 스크롤 여백
-                        Color.clear.frame(height: DesignTokens.Spacing.scrollBottomPadding)
+                        Text("설정 로드 중...")
+                            .font(KingTypography.bodyMedium)
+                            .foregroundColor(KingColors.textSecondary)
                     }
-                    .padding(DesignTokens.Spacing.lg)
-                }
-            }
-            .onScrollGeometryChange(for: CGFloat.self) { geometry in
-                geometry.contentOffset.y
-            } action: { _, newValue in
-                let threshold: CGFloat = 50
-                withAnimation(.easeInOut(duration: 0.3)) {
-                    showTabBar = newValue < threshold
+                    .padding(32)
+                    .trustGlassCard(level: .standard, cornerRadius: 20)
+                } else {
+                    ScrollView(showsIndicators: false) {
+                        LazyVStack(spacing: 32) {
+                            // 1. 프리미엄 프로필 히어로 섹션
+                            premiumProfileHero
+                            
+                            // 2. 핵심 보안 설정 (신뢰성 강조)
+                            coreSecuritySection
+                            
+                            // 3. 개인화 설정 그리드
+                            preferencesGridSection
+                            
+                            // 4. 프로페셔널 지원 섹션
+                            professionalSupportSection
+                            
+                            // 5. 프리미엄 브랜딩 푸터
+                            premiumBrandingFooter
+                            
+                            // 하단 여백 (탭바 여유공간)
+                            Color.clear.frame(height: 100)
+                        }
+                        .padding(.horizontal, 24)
+                        .padding(.top, 32)
+                    }
                 }
             }
             .navigationTitle("설정")
+            .navigationBarTitleDisplayMode(.large)
+            .toolbarBackground(.hidden, for: .navigationBar)
             .sheet(isPresented: $viewStore.showDisplayModeSelector) {
                 DisplayModeSelectorView()
                     .environmentObject(displayModeService)
@@ -183,11 +215,12 @@ struct SettingsView: View {
             } message: {
                 if let message = viewStore.alertMessage {
                     Text(message)
+                        .font(KingTypography.bodyMedium)
+                        .foregroundColor(KingColors.textSecondary)
                 }
             }
         }
         .onAppear {
-            // Connect presenter to viewStore after view initialization
             presenter.viewController = viewStore
             router.viewController = viewStore
             router.dataStore = interactor as? SettingsDataStore
@@ -246,815 +279,550 @@ struct SettingsView: View {
     }
 }
 
+// MARK: - 프리미엄 피나테크 디자인 컴포넌트
+
 extension SettingsView {
-    private var profileSection: some View {
-        VStack(alignment: .leading, spacing: DesignTokens.Spacing.md) {
-            Text("프로필")
-                .kingStyle(.headlinePrimary)
-                .padding(.horizontal, DesignTokens.Spacing.md)
-            
-            Button {
-                selectProfile()
-            } label: {
-                HStack(spacing: DesignTokens.Spacing.lg) {
-                    // 고급스러운 프로필 이미지
+    
+    // MARK: - 1. 프리미엄 프로필 히어로 섹션
+    
+    @ViewBuilder
+    private var premiumProfileHero: some View {
+        VStack(spacing: 24) {
+            // 럭셔리 골드 아바타
+            Button(action: selectProfile) {
+                VStack(spacing: 16) {
+                    // 프리미엄 아바타 컨테이너
                     ZStack {
-                        // 배경 그라데이션 원형
-                        Circle()
-                            .fill(KingGradients.accent)
-                            .frame(width: 80, height: 80)
-                        
-                        // Glass 효과 테두리
-                        Circle()
-                            .stroke(
-                                LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.6),
-                                        Color.clear,
-                                        KingColors.accent.opacity(0.3)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 2
-                            )
-                            .frame(width: 80, height: 80)
-                        
-                        // 내부 하이라이트 효과
+                        // 외부 골드 글로우
                         Circle()
                             .fill(
                                 RadialGradient(
                                     colors: [
-                                        Color.white.opacity(0.2),
+                                        KingColors.exclusiveGold.opacity(0.3),
+                                        KingColors.exclusiveGold.opacity(0.1),
                                         Color.clear
                                     ],
-                                    center: .init(x: 0.3, y: 0.3),
-                                    startRadius: 5,
-                                    endRadius: 30
+                                    center: .center,
+                                    startRadius: 30,
+                                    endRadius: 60
                                 )
                             )
-                            .frame(width: 78, height: 78)
+                            .frame(width: 120, height: 120)
                         
-                        // 아바타 텍스트
-                        Text(viewStore.profileData.avatarInitials)
-                            .kingStyle(KingTextStyle(
-                                font: KingTypography.headlineLarge,
-                                color: KingColors.textInverse
-                            ))
+                        // 메인 아바타 글래스
+                        ZStack {
+                            Circle()
+                                .fill(.ultraThinMaterial)
+                                .background(
+                                    Circle()
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [
+                                                    KingColors.exclusiveGold.opacity(0.6),
+                                                    KingColors.exclusiveGold.opacity(0.3)
+                                                ],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                )
+                                .frame(width: 88, height: 88)
+                            
+                            // 골드 테두리 그라데이션
+                            Circle()
+                                .stroke(
+                                    AngularGradient(
+                                        colors: [
+                                            KingColors.exclusiveGold,
+                                            KingColors.exclusiveGold.opacity(0.3),
+                                            KingColors.exclusiveGold,
+                                            KingColors.exclusiveGold.opacity(0.6),
+                                            KingColors.exclusiveGold
+                                        ],
+                                        center: .center
+                                    ),
+                                    lineWidth: 2
+                                )
+                                .frame(width: 88, height: 88)
+                            
+                            // 아바타 텍스트
+                            Text(viewStore.profileData.avatarInitials)
+                                .font(KingTypography.displaySmall)
+                                .fontWeight(.bold)
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.white,
+                                            KingColors.exclusiveGold.opacity(0.8)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                        }
+                        .shadow(color: KingColors.exclusiveGold.opacity(0.3), radius: 20, x: 0, y: 8)
                     }
                     
-                    // 프로필 정보
-                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
+                    // 프리미엄 프로필 정보
+                    VStack(spacing: 8) {
                         Text(viewStore.profileData.displayName)
-                            .kingStyle(.headlinePrimary)
+                            .font(KingTypography.displaySmall)
+                            .fontWeight(.semibold)
+                            .foregroundColor(KingColors.textPrimary)
                         
-                        HStack(spacing: DesignTokens.Spacing.xs) {
+                        // 이더리움 주소 캡슐
+                        HStack(spacing: 8) {
                             Image(systemName: "link.circle.fill")
-                                .font(.caption)
-                                .foregroundColor(KingColors.accent)
+                                .font(.body)
+                                .foregroundColor(KingColors.trustPurple)
                             
                             Text(viewStore.profileData.formattedAddress)
-                                .kingStyle(.bodySecondary)
+                                .font(KingTypography.ethereumAddress)
+                                .foregroundColor(KingColors.textSecondary)
                         }
-                        
-                        // 상태 표시 배지
-                        HStack(spacing: DesignTokens.Spacing.xs) {
-                            Circle()
-                                .fill(KingColors.success)
-                                .frame(width: 8, height: 8)
-                            
-                            Text("활성화됨")
-                                .kingStyle(KingTextStyle(
-                                    font: KingTypography.caption,
-                                    color: KingColors.success
-                                ))
-                        }
-                    }
-                    
-                    Spacer()
-                    
-                    // 우아한 화살표 아이콘
-                    ZStack {
-                        Circle()
-                            .fill(KingColors.accent.opacity(0.1))
-                            .frame(width: 32, height: 32)
-                        
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(KingColors.accent)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(
+                            Capsule()
+                                .fill(.ultraThinMaterial)
+                                .background(
+                                    Capsule()
+                                        .fill(KingColors.trustPurple.opacity(0.1))
+                                )
+                        )
+                        .overlay(
+                            Capsule()
+                                .stroke(KingColors.trustPurple.opacity(0.2), lineWidth: 1)
+                        )
                     }
                 }
-                .padding(DesignTokens.Spacing.lg)
             }
             .buttonStyle(PlainButtonStyle())
+        }
+        .padding(32)
+        .trustGlassCard(level: .prominent, cornerRadius: 24)
+        .shadow(color: KingColors.trustPurple.opacity(0.1), radius: 20, x: 0, y: 10)
+    }
+    
+    // MARK: - 2. 핵심 보안 설정 섹션
+    
+    @ViewBuilder
+    private var coreSecuritySection: some View {
+        VStack(spacing: 20) {
+            // 섹션 헤더 - 가독성 강화
+            HStack {
+                Text("보안 및 인증")
+                    .font(KingTypography.headlineSmall)
+                    .fontWeight(.bold)
+                    .foregroundColor(KingColors.textPrimary)
+                    .shadow(color: Color.black.opacity(0.3), radius: 1, x: 0, y: 1)
+                Spacer()
+            }
+            .padding(.horizontal, 4)
+            .padding(.vertical, 8)
             .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(.ultraThinMaterial)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(KingColors.glassBorder.opacity(0.1))
+                    )
+            )
+            
+            VStack(spacing: 16) {
+                // 생체인증 설정 (최우선)
+                premiumSettingCard(
+                    icon: "faceid",
+                    title: "생체 인증",
+                    value: viewStore.securityMode,
+                    accentColor: Color.green,
+                    isPrimary: true
+                ) {
+                    selectSecurity()
+                }
+                
+                // 알림 설정
+                premiumSettingCard(
+                    icon: "bell.circle.fill",
+                    title: "알림",
+                    value: viewStore.notificationStatus,
+                    accentColor: KingColors.info,
+                    isPrimary: false
+                ) {
+                    toggleNotification()
+                }
+                
+                // 네트워크 설정
+                premiumSettingCard(
+                    icon: "network",
+                    title: "네트워크",
+                    value: viewStore.network,
+                    accentColor: KingColors.trustPurple,
+                    isPrimary: false
+                ) {
+                    selectNetwork()
+                }
+                
+                // 화면 모드
+                premiumSettingCard(
+                    icon: "moon.circle.fill",
+                    title: "화면 모드",
+                    value: viewStore.displayMode,
+                    accentColor: KingColors.trustPurple,
+                    isPrimary: false
+                ) {
+                    viewStore.showDisplayModeSelector = true
+                }
+            }
+        }
+    }
+    
+    // MARK: - 3. 개인화 설정 그리드
+    
+    @ViewBuilder
+    private var preferencesGridSection: some View {
+        VStack(spacing: 20) {
+            // 섹션 헤더 - 가독성 강화
+            HStack {
+                Text("개인화")
+                    .font(KingTypography.headlineSmall)
+                    .fontWeight(.bold)
+                    .foregroundColor(KingColors.textPrimary)
+                    .shadow(color: Color.black.opacity(0.3), radius: 1, x: 0, y: 1)
+                Spacer()
+            }
+            .padding(.horizontal, 4)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(.ultraThinMaterial)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(KingColors.glassBorder.opacity(0.1))
+                    )
+            )
+            
+            // 2x2 그리드
+            HStack(spacing: 16) {
+                // 언어 설정
+                premiumQuickCard(
+                    icon: "globe",
+                    title: "언어",
+                    value: viewStore.language,
+                    accentColor: KingColors.trustPurple
+                ) {
+                    selectLanguage()
+                }
+                
+                // 통화 설정
+                premiumQuickCard(
+                    icon: "dollarsign.circle.fill",
+                    title: "통화",
+                    value: viewStore.currency,
+                    accentColor: KingColors.exclusiveGold
+                ) {
+                    selectCurrency()
+                }
+            }
+        }
+    }
+    
+    // MARK: - 4. 프로페셔널 지원 섹션
+    
+    @ViewBuilder
+    private var professionalSupportSection: some View {
+        VStack(spacing: 20) {
+            // 섹션 헤더 - 가독성 강화
+            HStack {
+                Text("지원 및 정보")
+                    .font(KingTypography.headlineSmall)
+                    .fontWeight(.bold)
+                    .foregroundColor(KingColors.textPrimary)
+                    .shadow(color: Color.black.opacity(0.3), radius: 1, x: 0, y: 1)
+                Spacer()
+            }
+            .padding(.horizontal, 4)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(.ultraThinMaterial)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(KingColors.glassBorder.opacity(0.1))
+                    )
+            )
+            
+            VStack(spacing: 12) {
+                professionalSupportRow(
+                    icon: "questionmark.circle.fill",
+                    title: "도움말 및 지원",
+                    subtitle: "24/7 프리미엄 지원",
+                    iconColor: KingColors.info
+                ) {
+                    selectHelp()
+                }
+                
+                professionalSupportRow(
+                    icon: "doc.text.fill",
+                    title: "이용약관",
+                    subtitle: "서비스 약관 및 정책",
+                    iconColor: KingColors.trustPurple
+                ) {
+                    selectTermsOfService()
+                }
+                
+                professionalSupportRow(
+                    icon: "hand.raised.fill",
+                    title: "개인정보 처리방침",
+                    subtitle: "데이터 보호 정책",
+                    iconColor: KingColors.warning
+                ) {
+                    selectPrivacyPolicy()
+                }
+            }
+        }
+        .padding(24)
+        .ultraMinimalGlass(level: .standard)
+    }
+    
+    // MARK: - 5. 프리미엄 브랜딩 푸터
+    
+    @ViewBuilder
+    private var premiumBrandingFooter: some View {
+        VStack(spacing: 16) {
+            // Kingthereum 로고
+            HStack(spacing: 12) {
                 ZStack {
-                    // 메인 배경
-                    RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xl)
-                        .fill(KingGradients.cardElevated)
-                    
-                    // 상단 하이라이트
-                    RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xl)
+                    RoundedRectangle(cornerRadius: 8)
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color.white.opacity(0.1),
-                                    Color.clear
-                                ],
-                                startPoint: .top,
-                                endPoint: .center
-                            )
-                        )
-                    
-                    // 테두리 효과
-                    RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xl)
-                        .stroke(
-                            LinearGradient(
-                                colors: [
-                                    KingColors.accent.opacity(0.2),
-                                    Color.clear,
-                                    KingColors.accentSecondary.opacity(0.1)
+                                    KingColors.exclusiveGold,
+                                    KingColors.exclusiveGold.opacity(0.8)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
+                            )
                         )
+                        .frame(width: 32, height: 32)
+                    
+                    Image(systemName: "crown.fill")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(.white)
                 }
-            )
-            .shadow(color: KingColors.cardShadow, radius: 10, x: 0, y: 4)
-            .shadow(color: KingColors.accent.opacity(0.1), radius: 20, x: 0, y: 8)
-        }
-    }
-    
-    private var displaySection: some View {
-        VStack(alignment: .leading, spacing: DesignTokens.Spacing.md) {
-            Text("디스플레이")
-                .kingStyle(.headlinePrimary)
-                .padding(.horizontal, DesignTokens.Spacing.md)
-            
-            VStack(spacing: DesignTokens.Spacing.xs) {
-                // 화면 모드 - 고급 카드
-                Button {
-                    viewStore.showDisplayModeSelector = true
-                } label: {
-                    HStack(spacing: DesignTokens.Spacing.lg) {
-                        // 아이콘 배경
-                        ZStack {
-                            Circle()
-                                .fill(KingGradients.aurora.opacity(0.3))
-                                .frame(width: 48, height: 48)
-                            
-                            Circle()
-                                .stroke(
-                                    LinearGradient(
-                                        colors: [
-                                            Color.purple.opacity(0.6),
-                                            Color.clear,
-                                            Color.indigo.opacity(0.3)
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 1.5
-                                )
-                                .frame(width: 48, height: 48)
-                            
-                            Image(systemName: "moon.circle.fill")
-                                .font(.title2)
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        colors: [Color.purple, Color.indigo],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                        }
-                        
-                        VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
-                            Text("화면 모드")
-                                .kingStyle(.bodyPrimary)
-                            
-                            Text(viewStore.displayMode)
-                                .kingStyle(KingTextStyle(
-                                    font: KingTypography.labelMedium,
-                                    color: Color.purple
-                                ))
-                        }
-                        
-                        Spacer()
-                        
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundColor(KingColors.textTertiary)
-                    }
-                    .padding(DesignTokens.Spacing.lg)
-                }
-                .buttonStyle(PlainButtonStyle())
-                .background(
-                    ZStack {
-                        // 메인 배경
-                        RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
-                            .fill(.ultraThinMaterial)
-                            .background(
-                                RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
-                                    .fill(KingGradients.aurora.opacity(0.1))
-                            )
-                        
-                        // 상단 하이라이트
-                        RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color.purple.opacity(0.1),
-                                        Color.clear
-                                    ],
-                                    startPoint: .top,
-                                    endPoint: .center
-                                )
-                            )
-                        
-                        // 테두리
-                        RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
-                            .stroke(
-                                LinearGradient(
-                                    colors: [
-                                        Color.purple.opacity(0.2),
-                                        Color.indigo.opacity(0.1),
-                                        Color.clear
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 1
-                            )
-                    }
-                )
-                .shadow(color: Color.purple.opacity(0.1), radius: 8, x: 0, y: 4)
                 
-                // 글자 크기 - 고급 카드
-                Button {
-                    selectFontSize()
-                } label: {
-                    HStack(spacing: DesignTokens.Spacing.lg) {
-                        // 아이콘 배경
-                        ZStack {
-                            Circle()
-                                .fill(KingGradients.neon.opacity(0.3))
-                                .frame(width: 48, height: 48)
-                            
-                            Circle()
-                                .stroke(
-                                    LinearGradient(
-                                        colors: [
-                                            Color.blue.opacity(0.6),
-                                            Color.clear,
-                                            Color.cyan.opacity(0.3)
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 1.5
-                                )
-                                .frame(width: 48, height: 48)
-                            
-                            Image(systemName: "textformat.size")
-                                .font(.title2)
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        colors: [Color.blue, Color.cyan],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                        }
-                        
-                        VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
-                            Text("글자 크기")
-                                .kingStyle(.bodyPrimary)
-                            
-                            Text(viewStore.fontSize)
-                                .kingStyle(KingTextStyle(
-                                    font: KingTypography.labelMedium,
-                                    color: Color.blue
-                                ))
-                        }
-                        
-                        Spacer()
-                        
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundColor(KingColors.textTertiary)
-                    }
-                    .padding(DesignTokens.Spacing.lg)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Kingthereum")
+                        .font(KingTypography.bodyLarge)
+                        .fontWeight(.semibold)
+                        .foregroundColor(KingColors.textPrimary)
+                    
+                    Text("v\(viewStore.version)")
+                        .font(KingTypography.bodySmall)
+                        .foregroundColor(KingColors.textSecondary)
                 }
-                .buttonStyle(PlainButtonStyle())
-                .background(
-                    ZStack {
-                        // 메인 배경
-                        RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
-                            .fill(.ultraThinMaterial)
-                            .background(
-                                RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
-                                    .fill(KingGradients.neon.opacity(0.1))
-                            )
-                        
-                        // 상단 하이라이트
-                        RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color.blue.opacity(0.1),
-                                        Color.clear
-                                    ],
-                                    startPoint: .top,
-                                    endPoint: .center
-                                )
-                            )
-                        
-                        // 테두리
-                        RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
-                            .stroke(
-                                LinearGradient(
-                                    colors: [
-                                        Color.blue.opacity(0.2),
-                                        Color.cyan.opacity(0.1),
-                                        Color.clear
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 1
-                            )
-                    }
-                )
-                .shadow(color: Color.blue.opacity(0.1), radius: 8, x: 0, y: 4)
+                
+                Spacer()
+                
+                Text("프리미엄 이더리움 지갑")
+                    .font(KingTypography.caption)
+                    .foregroundColor(KingColors.exclusiveGold)
             }
+            .padding(24)
+            .ultraMinimalGlass(level: .subtle)
         }
     }
     
-    private func selectFontSize() {
-        // 글자 크기 선택 로직
-        Logger.debug("Font size selection requested")
-    }
+    // MARK: - 보조 컴포넌트들
     
-    private var generalSection: some View {
-        VStack(alignment: .leading, spacing: DesignTokens.Spacing.lg) {
-            Text("일반")
-                .kingStyle(.headlinePrimary)
-                .padding(.horizontal, DesignTokens.Spacing.md)
-            
-            // 알림 - 특별한 스타일 (중요한 설정)
-            notificationCard
-            
-            // 나머지 설정들 - 그리드 형태의 컴팩트한 디자인
-            settingsGrid
+    @ViewBuilder
+    private func premiumSettingCard(
+        icon: String,
+        title: String,
+        value: String,
+        accentColor: Color,
+        isPrimary: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: 16) {
+                // 프리미엄 아이콘 컨테이너
+                ZStack {
+                    // 배경 그라데이션
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(
+                            RadialGradient(
+                                colors: [
+                                    accentColor.opacity(isPrimary ? 0.3 : 0.15),
+                                    accentColor.opacity(isPrimary ? 0.1 : 0.05)
+                                ],
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: 22
+                            )
+                        )
+                        .frame(width: 44, height: 44)
+                    
+                    // 아이콘
+                    Image(systemName: icon)
+                        .font(.title3)
+                        .fontWeight(.medium)
+                        .foregroundColor(accentColor)
+                }
+                
+                // 텍스트 정보
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .font(KingTypography.bodyLarge)
+                        .fontWeight(.semibold)
+                        .foregroundColor(KingColors.textPrimary)
+                        .shadow(color: Color.black.opacity(0.2), radius: 0.5, x: 0, y: 0.5)
+                    
+                    Text(value)
+                        .font(KingTypography.bodySmall)
+                        .foregroundColor(accentColor)
+                }
+                
+                Spacer()
+                
+                // 화살표
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundColor(KingColors.textTertiary)
+            }
+            .padding(24)
         }
+        .buttonStyle(PlainButtonStyle())
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(accentColor.opacity(isPrimary ? 0.08 : 0.03))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(
+                            accentColor.opacity(isPrimary ? 0.2 : 0.1),
+                            lineWidth: isPrimary ? 1 : 0.5
+                        )
+                )
+        )
+        .shadow(
+            color: accentColor.opacity(isPrimary ? 0.15 : 0.05),
+            radius: isPrimary ? 8 : 4,
+            x: 0,
+            y: isPrimary ? 4 : 2
+        )
     }
     
     @ViewBuilder
-    private var notificationCard: some View {
-        Button {
-            toggleNotification()
-        } label: {
-            HStack(spacing: DesignTokens.Spacing.lg) {
-                notificationIcon
-                notificationInfo
+    private func premiumQuickCard(
+        icon: String,
+        title: String,
+        value: String,
+        accentColor: Color,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            VStack(spacing: 16) {
+                // 아이콘 컨테이너
+                ZStack {
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [
+                                    accentColor.opacity(0.2),
+                                    accentColor.opacity(0.05)
+                                ],
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: 28
+                            )
+                        )
+                        .frame(width: 56, height: 56)
+                    
+                    Image(systemName: icon)
+                        .font(.title2)
+                        .fontWeight(.medium)
+                        .foregroundColor(accentColor)
+                }
+                
+                // 텍스트 정보
+                VStack(spacing: 4) {
+                    Text(title)
+                        .font(KingTypography.bodyMedium)
+                        .fontWeight(.semibold)
+                        .foregroundColor(KingColors.textPrimary)
+                        .shadow(color: Color.black.opacity(0.2), radius: 0.5, x: 0, y: 0.5)
+                    
+                    Text(value)
+                        .font(KingTypography.bodySmall)
+                        .foregroundColor(accentColor)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 24)
+            .padding(.horizontal, 16)
+        }
+        .buttonStyle(PlainButtonStyle())
+        .ultraMinimalGlass(level: .standard)
+        .shadow(color: accentColor.opacity(0.1), radius: 6, x: 0, y: 3)
+    }
+    
+    @ViewBuilder
+    private func professionalSupportRow(
+        icon: String,
+        title: String,
+        subtitle: String,
+        iconColor: Color = KingColors.textSecondary,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: 16) {
+                // 아이콘
+                Image(systemName: icon)
+                    .font(.body)
+                    .fontWeight(.medium)
+                    .foregroundColor(iconColor)
+                    .frame(width: 20)
+                
+                // 텍스트 정보
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(KingTypography.bodyMedium)
+                        .fontWeight(.semibold)
+                        .foregroundColor(KingColors.textPrimary)
+                        .shadow(color: Color.black.opacity(0.2), radius: 0.5, x: 0, y: 0.5)
+                    
+                    Text(subtitle)
+                        .font(KingTypography.bodySmall)
+                        .foregroundColor(KingColors.textTertiary)
+                }
+                
                 Spacer()
                 
+                // 화살표
                 Image(systemName: "chevron.right")
                     .font(.caption)
                     .foregroundColor(KingColors.textTertiary)
             }
-            .padding(DesignTokens.Spacing.lg)
+            .padding(.horizontal, 24)
+            .padding(.vertical, 20)
         }
         .buttonStyle(PlainButtonStyle())
-        .background(notificationBackground)
-        .shadow(color: KingColors.warning.opacity(0.1), radius: 12, x: 0, y: 6)
-        .accessibilityLabel("알림 설정")
-        .accessibilityValue(viewStore.notificationStatus)
-        .accessibilityHint("탭하여 알림을 켜거나 끕니다")
-    }
-    
-    @ViewBuilder
-    private var notificationIcon: some View {
-        ZStack {
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [
-                            KingColors.warning.opacity(0.4),
-                            KingColors.warning.opacity(0.2),
-                            Color.clear
-                        ],
-                        center: .center,
-                        startRadius: 0,
-                        endRadius: 24
-                    )
-                )
-                .frame(width: 52, height: 52)
-            
-            Circle()
-                .fill(.ultraThinMaterial)
-                .frame(width: 48, height: 48)
-            
-            Circle()
-                .stroke(
-                    AngularGradient(
-                        colors: [
-                            KingColors.warning,
-                            Color.orange,
-                            KingColors.warning
-                        ],
-                        center: .center
-                    ),
-                    lineWidth: 2
-                )
-                .frame(width: 48, height: 48)
-            
-            Image(systemName: "bell.circle.fill")
-                .font(.title2)
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [KingColors.warning, Color.orange],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-        }
-    }
-    
-    @ViewBuilder
-    private var notificationInfo: some View {
-        VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
-            Text("알림")
-                .kingStyle(.bodyPrimary)
-            
-            HStack(spacing: DesignTokens.Spacing.xs) {
-                let isEnabled = viewStore.notificationStatus == "켜짐"
-                let statusColor = isEnabled ? KingColors.success : KingColors.textTertiary
-                
-                Circle()
-                    .fill(statusColor)
-                    .frame(width: 8, height: 8)
-                
-                Text(viewStore.notificationStatus)
-                    .kingStyle(KingTextStyle(
-                        font: KingTypography.labelMedium,
-                        color: statusColor
-                    ))
-            }
-        }
-    }
-    
-    @ViewBuilder
-    private var notificationBackground: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xl)
-                .fill(.ultraThinMaterial)
-                .background(
-                    RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xl)
-                        .fill(KingGradients.warning.opacity(0.05))
-                )
-            
-            RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xl)
-                .stroke(
-                    LinearGradient(
-                        colors: [
-                            KingColors.warning.opacity(0.3),
-                            Color.clear,
-                            Color.orange.opacity(0.1)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 1
-                )
-        }
-    }
-    
-    @ViewBuilder
-    private var settingsGrid: some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: DesignTokens.Spacing.md), count: 2), spacing: DesignTokens.Spacing.md) {
-            // 보안 설정
-            SettingCompactCard(
-                icon: "lock.circle.fill",
-                title: "보안",
-                value: viewStore.securityMode,
-                accentColor: KingColors.success,
-                gradient: KingGradients.success
-            ) {
-                selectSecurity()
-            }
-            .accessibilityLabel("보안 설정")
-            .accessibilityValue(viewStore.securityMode)
-            .accessibilityHint("탭하여 보안 설정을 변경합니다")
-            
-            // 네트워크 설정
-            SettingCompactCard(
-                icon: "network",
-                title: "네트워크",
-                value: viewStore.network,
-                accentColor: KingColors.accent,
-                gradient: LinearGradient(colors: [KingColors.accent.opacity(0.1)], startPoint: .top, endPoint: .bottom)
-            ) {
-                selectNetwork()
-            }
-            
-            // 통화 설정
-            SettingCompactCard(
-                icon: "dollarsign.circle.fill",
-                title: "통화",
-                value: viewStore.currency,
-                accentColor: KingColors.bitcoin,
-                gradient: LinearGradient(colors: [KingColors.bitcoin.opacity(0.1)], startPoint: .top, endPoint: .bottom)
-            ) {
-                selectCurrency()
-            }
-            
-            // 언어 설정
-            SettingCompactCard(
-                icon: "globe",
-                title: "언어",
-                value: viewStore.language,
-                accentColor: KingColors.info,
-                gradient: KingGradients.info
-            ) {
-                selectLanguage()
-            }
-        }
-    }
-    
-    private var aboutSection: some View {
-        VStack(alignment: .leading, spacing: DesignTokens.Spacing.lg) {
-            Text("정보")
-                .kingStyle(.headlinePrimary)
-                .padding(.horizontal, DesignTokens.Spacing.md)
-            
-            VStack(spacing: DesignTokens.Spacing.sm) {
-                // 도움말 & 이용약관 - 상단 그룹
-                HStack(spacing: DesignTokens.Spacing.md) {
-                    AboutCompactCard(
-                        icon: "questionmark.circle.fill",
-                        title: "도움말",
-                        accentColor: KingColors.info
-                    ) {
-                        selectHelp()
-                    }
-                    
-                    AboutCompactCard(
-                        icon: "doc.text.fill",
-                        title: "이용약관",
-                        accentColor: KingColors.textSecondary
-                    ) {
-                        selectTermsOfService()
-                    }
-                }
-                
-                // 개인정보 처리방침 - 와이드 카드
-                Button {
-                    selectPrivacyPolicy()
-                } label: {
-                    HStack(spacing: DesignTokens.Spacing.md) {
-                        ZStack {
-                            Circle()
-                                .fill(KingGradients.holographic.opacity(0.2))
-                                .frame(width: 40, height: 40)
-                            
-                            Image(systemName: "hand.raised.fill")
-                                .font(.title3)
-                                .foregroundStyle(KingGradients.holographic)
-                        }
-                        
-                        Text("개인정보 처리방침")
-                            .kingStyle(.bodyPrimary)
-                        
-                        Spacer()
-                        
-                        Image(systemName: "chevron.right")
-                            .font(.caption2)
-                            .foregroundColor(KingColors.textTertiary)
-                    }
-                    .padding(DesignTokens.Spacing.md)
-                }
-                .buttonStyle(PlainButtonStyle())
-                .background(
-                    RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.md)
-                        .fill(.ultraThinMaterial)
-                        .background(
-                            RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.md)
-                                .fill(KingGradients.holographic.opacity(0.05))
-                        )
-                )
-                
-                // 버전 정보 - 특별한 디자인
-                HStack(spacing: DesignTokens.Spacing.lg) {
-                    ZStack {
-                        // 버전 아이콘 배경 - 홀로그래픽 효과
-                        Circle()
-                            .fill(
-                                AngularGradient(
-                                    colors: [
-                                        KingColors.accent,
-                                        KingColors.accentSecondary,
-                                        KingColors.success,
-                                        KingColors.warning,
-                                        KingColors.accent
-                                    ],
-                                    center: .center
-                                )
-                            )
-                            .frame(width: 48, height: 48)
-                        
-                        Circle()
-                            .fill(.ultraThickMaterial)
-                            .frame(width: 44, height: 44)
-                        
-                        Image(systemName: "info.circle.fill")
-                            .font(.title2)
-                            .foregroundStyle(KingGradients.accent)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
-                        Text("버전")
-                            .kingStyle(.bodyPrimary)
-                        
-                        Text("v\(viewStore.version)")
-                            .kingStyle(KingTextStyle(
-                                font: KingTypography.labelMedium,
-                                color: KingColors.accent
-                            ))
-                    }
-                    
-                    Spacer()
-                    
-                    // 앱 로고 미니어처
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(KingGradients.accent)
-                            .frame(width: 32, height: 32)
-                        
-                        Image(systemName: "crown.fill")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(KingColors.textInverse)
-                    }
-                }
-                .padding(DesignTokens.Spacing.lg)
-                .background(
-                    ZStack {
-                        RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
-                            .fill(.ultraThinMaterial)
-                            .background(
-                                RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
-                                    .fill(KingGradients.web3Rainbow.opacity(0.03))
-                            )
-                        
-                        RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
-                            .stroke(
-                                LinearGradient(
-                                    colors: [
-                                        KingColors.accent.opacity(0.2),
-                                        Color.clear,
-                                        KingColors.accentSecondary.opacity(0.1)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 1
-                            )
-                    }
-                )
-                .onTapGesture {
-                    selectVersion()
-                }
-            }
-        }
-    }
-    
-    private func selectVersion() {
-        // 버전 정보 표시 로직
-        Logger.debug("Version info requested")
     }
 }
 
-// MARK: - Helper Components
+// MARK: - Preview
 
-struct SettingCompactCard: View {
-    let icon: String
-    let title: String
-    let value: String
-    let accentColor: Color
-    let gradient: LinearGradient
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: DesignTokens.Spacing.md) {
-                // 아이콘
-                ZStack {
-                    Circle()
-                        .fill(gradient.opacity(0.3))
-                        .frame(width: 44, height: 44)
-                    
-                    Circle()
-                        .stroke(accentColor.opacity(0.4), lineWidth: 1)
-                        .frame(width: 44, height: 44)
-                    
-                    Image(systemName: icon)
-                        .font(.title3)
-                        .foregroundColor(accentColor)
-                }
-                
-                // 제목과 값
-                VStack(spacing: DesignTokens.Spacing.xs) {
-                    Text(title)
-                        .kingStyle(KingTextStyle(
-                            font: KingTypography.labelMedium,
-                            color: KingColors.textPrimary
-                        ))
-                        .lineLimit(1)
-                    
-                    Text(value)
-                        .kingStyle(KingTextStyle(
-                            font: KingTypography.caption,
-                            color: accentColor
-                        ))
-                        .lineLimit(1)
-                }
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, DesignTokens.Spacing.lg)
-            .padding(.horizontal, DesignTokens.Spacing.md)
-        }
-        .buttonStyle(PlainButtonStyle())
-        .background(
-            ZStack {
-                RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
-                    .fill(.ultraThinMaterial)
-                    .background(
-                        RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
-                            .fill(gradient.opacity(0.05))
-                    )
-                
-                RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
-                    .stroke(accentColor.opacity(0.2), lineWidth: 0.5)
-            }
-        )
-        .shadow(color: accentColor.opacity(0.1), radius: 4, x: 0, y: 2)
-    }
-}
-
-struct AboutCompactCard: View {
-    let icon: String
-    let title: String
-    let accentColor: Color
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: DesignTokens.Spacing.sm) {
-                ZStack {
-                    Circle()
-                        .fill(.ultraThinMaterial)
-                        .frame(width: 36, height: 36)
-                    
-                    Image(systemName: icon)
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(accentColor)
-                }
-                
-                Text(title)
-                    .kingStyle(KingTextStyle(
-                        font: KingTypography.caption,
-                        color: KingColors.textPrimary
-                    ))
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, DesignTokens.Spacing.md)
-            .padding(.horizontal, DesignTokens.Spacing.sm)
-        }
-        .buttonStyle(PlainButtonStyle())
-        .background(
-            RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.md)
-                .fill(.ultraThinMaterial)
-                .background(
-                    RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.md)
-                        .fill(accentColor.opacity(0.05))
-                )
-        )
-    }
-}
-
-// MARK: - Legacy SettingsViewModel removed - now using VIP + @Observable pattern
-
-// MARK: - Previews
-#Preview("SettingsView") {
-    SettingsView(showTabBar: .constant(true))
-}
-
-#Preview("SettingsView - Dark Mode") {
+#Preview("Premium SettingsView") {
     SettingsView(showTabBar: .constant(true))
         .preferredColorScheme(.dark)
+}
+
+#Preview("Premium SettingsView - Light") {
+    SettingsView(showTabBar: .constant(true))
+        .preferredColorScheme(.light)
 }
