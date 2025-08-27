@@ -29,24 +29,18 @@ struct MainTabView: View {
     private var iPadNavigationSplitView: some View {
         NavigationSplitView(columnVisibility: $columnVisibility) {
             // Sidebar
-            List {
-                ForEach(AppTab.allCases) { tab in
-                    Button {
-                        selectedTab = tab
-                    } label: {
-                        Label {
-                            Text(tab.title)
-                        } icon: {
-                            Image(systemName: tab.icon)
-                                .foregroundStyle(selectedTab == tab ? Color.kingBlue : Color.secondary)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
+            List(AppTab.allCases, selection: $selectedTab) { tab in
+                NavigationLink(value: tab) {
+                    Label {
+                        Text(tab.title)
+                    } icon: {
+                        Image(systemName: tab.icon)
+                            .foregroundStyle(selectedTab == tab ? Color.kingBlue : Color.secondary)
                     }
-                    .buttonStyle(PlainButtonStyle())
-                    .listRowBackground(
-                        selectedTab == tab ? Color.kingBlue.opacity(0.1) : Color.clear
-                    )
                 }
+                .listRowBackground(
+                    selectedTab == tab ? Color.kingBlue.opacity(0.1) : Color.clear
+                )
             }
             .navigationTitle("Kingthereum")
             .navigationSplitViewColumnWidth(min: 200, ideal: 250, max: 300)
@@ -107,7 +101,7 @@ struct MainTabView: View {
             // 커스텀 Tab Bar
             if showTabBar {
                 CustomTabBar(selectedTab: $selectedTab)
-                    .frame(height: DesignTokens.Size.TabBar.height) // Tab bar 높이
+                    .frame(height: 83) // Tab bar 높이
                     .frame(maxHeight: .infinity, alignment: .bottom)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             }

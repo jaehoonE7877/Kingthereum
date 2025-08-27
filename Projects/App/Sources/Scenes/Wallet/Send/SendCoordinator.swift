@@ -2,55 +2,6 @@ import SwiftUI
 import Combine
 import Entity
 import Core
-import DesignSystem
-
-// MARK: - Validation Rules
-
-struct EthereumAddressValidationRule {
-    func validate(_ address: String) -> ValidationResult {
-        let trimmedAddress = address.trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        if trimmedAddress.isEmpty {
-            return ValidationResult(isValid: false, message: "주소를 입력해주세요")
-        }
-        
-        let pattern = "^0x[a-fA-F0-9]{40}$"
-        let regex = try! NSRegularExpression(pattern: pattern)
-        let isValid = regex.firstMatch(in: trimmedAddress, range: NSRange(location: 0, length: trimmedAddress.count)) != nil
-        
-        return ValidationResult(
-            isValid: isValid,
-            message: isValid ? nil : "올바른 이더리움 주소를 입력해주세요"
-        )
-    }
-}
-
-struct AmountValidationRule {
-    let balance: Double
-    
-    func validate(_ amount: String) -> ValidationResult {
-        let trimmedAmount = amount.trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        if trimmedAmount.isEmpty {
-            return ValidationResult(isValid: false, message: "금액을 입력해주세요")
-        }
-        
-        guard let amountValue = Double(trimmedAmount), amountValue > 0 else {
-            return ValidationResult(isValid: false, message: "유효한 금액을 입력해주세요")
-        }
-        
-        if amountValue > balance {
-            return ValidationResult(isValid: false, message: "잔액이 부족합니다")
-        }
-        
-        return ValidationResult(isValid: true, message: nil)
-    }
-}
-
-struct ValidationResult {
-    let isValid: Bool
-    let message: String?
-}
 
 @MainActor
 @Observable
@@ -66,12 +17,6 @@ final class SendCoordinator {
     // Validation States using new Validation system
     var addressValidation: ValidationState = .none
     var amountValidation: ValidationState = .none
-    
-    // Additional error states for compatibility
-    var showAddressError = false
-    var addressErrorMessage = ""
-    var showAmountError = false
-    var amountErrorMessage = ""
     
     // Computed properties for backward compatibility
     var isAddressValid: Bool { addressValidation.isValid }
@@ -102,13 +47,14 @@ final class SendCoordinator {
     
     @ObservationIgnored private var interactor: SendBusinessLogic?
     @ObservationIgnored private let priceProvider: PriceProviderProtocol = MockPriceProvider()
-    @ObservationIgnored private var debounceTask: Task<Void, Never>?
+    @ObservationIgnored private var cancellables = Set<AnyCancellable>()
     @ObservationIgnored private var lastAction: (() -> Void)?
     
     // MARK: - Initialization
     
     init() {
         setupVIP()
+        setupBindings()
     }
     
     private func setupVIP() {
@@ -119,6 +65,30 @@ final class SendCoordinator {
         presenter.viewController = self
         
         self.interactor = interactor
+    }
+    
+    private func setupBindings() {
+        // 주소와 금액이 모두 유효할 때 가스비 계산
+        Publishers.CombineLatest($isAddressValid, $isAmountValid)
+            .removeDuplicates { $0.0 == $1.0 && $0.1 == $1.1 }
+            .sink { [weak self] addressValid, amountValid in
+                if addressValid && amountValid {
+                    self?.estimateGasFee()
+                } else {
+                    self?.showGasOptions = false
+                    self?.isReadyToSend = false
+                }
+            }
+            .store(in: &cancellables)
+        
+        // 금액 변경 시 USD 환율 계산
+        $amountText
+            .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
+            .removeDuplicates()
+            .sink { [weak self] amountText in
+                self?.updateUSDValue(amountText)
+            }
+            .store(in: &cancellables)
     }
     
     // MARK: - Public Methods
@@ -133,17 +103,9 @@ final class SendCoordinator {
         
         if result.isValid {
             addressValidation = .valid
-            showAddressError = false
-            addressErrorMessage = ""
-            formattedRecipientAddress = formatAddress(address)
         } else {
             addressValidation = .invalid(result.message ?? "유효하지 않은 주소입니다")
-            showAddressError = true
-            addressErrorMessage = result.message ?? "유효하지 않은 주소입니다"
         }
-        
-        // Check if both validations are complete and valid for gas estimation
-        checkReadyForGasEstimation()
         
         // VIP 아키텍처도 유지
         let request = SendScene.ValidateAddress.Request(address: address)
@@ -157,28 +119,9 @@ final class SendCoordinator {
         
         if result.isValid {
             amountValidation = .valid
-            showAmountError = false
-            amountErrorMessage = ""
-            
-            // Format amount
-            if let amountDecimal = Decimal(string: amount) {
-                let formatter = NumberFormatter()
-                formatter.numberStyle = .decimal
-                formatter.minimumFractionDigits = 0
-                formatter.maximumFractionDigits = 6
-                formattedAmount = (formatter.string(from: NSDecimalNumber(decimal: amountDecimal)) ?? "0") + " ETH"
-            }
         } else {
             amountValidation = .invalid(result.message ?? "유효하지 않은 금액입니다")
-            showAmountError = true
-            amountErrorMessage = result.message ?? "유효하지 않은 금액입니다"
         }
-        
-        // Update USD value
-        updateUSDValue(amount)
-        
-        // Check if both validations are complete and valid for gas estimation
-        checkReadyForGasEstimation()
         
         // VIP 아키텍처도 유지
         let request = SendScene.ValidateAmount.Request(
@@ -186,15 +129,6 @@ final class SendCoordinator {
             availableBalance: getCurrentBalanceValue()
         )
         interactor?.validateAmount(request: request)
-    }
-    
-    private func checkReadyForGasEstimation() {
-        if isAddressValid && isAmountValid && !recipientAddress.isEmpty && !amountText.isEmpty {
-            estimateGasFee()
-        } else {
-            showGasOptions = false
-            isReadyToSend = false
-        }
     }
     
     func showQRScanner() {
@@ -314,30 +248,20 @@ final class SendCoordinator {
     }
     
     private func updateUSDValue(_ amountText: String) {
-        // Cancel previous debounce task
-        debounceTask?.cancel()
-        
-        // Create new debounced task for USD value calculation
-        debounceTask = Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 300_000_000) // 300ms debounce
-            
-            guard !Task.isCancelled else { return }
-            
-            guard let amount = Decimal(string: amountText), amount > 0 else {
-                amountInUSD = nil
-                return
-            }
-            
-            let ethPrice = priceProvider.getETHPriceInUSD()
-            let usdValue = amount * ethPrice
-            
-            let formatter = NumberFormatter()
-            formatter.numberStyle = .currency
-            formatter.currencyCode = "USD"
-            formatter.locale = Locale(identifier: "en_US")
-            
-            amountInUSD = formatter.string(from: NSDecimalNumber(decimal: usdValue))
+        guard let amount = Decimal(string: amountText), amount > 0 else {
+            amountInUSD = nil
+            return
         }
+        
+        let ethPrice = priceProvider.getETHPriceInUSD()
+        let usdValue = amount * ethPrice
+        
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = "USD"
+        formatter.locale = Locale(identifier: "en_US")
+        
+        amountInUSD = formatter.string(from: NSDecimalNumber(decimal: usdValue))
     }
     
     private func showError(title: String, message: String, suggestion: String?) {
@@ -352,29 +276,17 @@ final class SendCoordinator {
 extension SendCoordinator: SendDisplayLogic {
     
     func displayAddressValidation(viewModel: SendScene.ValidateAddress.ViewModel) {
-        // Update validation state based on VIP response
-        if viewModel.isValid {
-            addressValidation = .valid
-        } else {
-            addressValidation = .invalid(viewModel.errorMessage ?? "유효하지 않은 주소입니다")
-        }
-        
+        isAddressValid = viewModel.isValid
         showAddressError = viewModel.showError
         addressErrorMessage = viewModel.errorMessage ?? ""
         
-        if viewModel.isValid {
+        if isAddressValid {
             formattedRecipientAddress = formatAddress(recipientAddress)
         }
     }
     
     func displayAmountValidation(viewModel: SendScene.ValidateAmount.ViewModel) {
-        // Update validation state based on VIP response
-        if viewModel.isValid {
-            amountValidation = .valid
-        } else {
-            amountValidation = .invalid(viewModel.errorMessage ?? "유효하지 않은 금액입니다")
-        }
-        
+        isAmountValid = viewModel.isValid
         showAmountError = viewModel.showError
         amountErrorMessage = viewModel.errorMessage ?? ""
         

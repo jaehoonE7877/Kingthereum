@@ -31,16 +31,8 @@ public extension Project {
             .merging(["GCC_OPTIMIZATION_LEVEL": "s"])
         
         // Configuration 설정
-        let debugConfiguration = Configuration.debug(
-            name: "Debug",
-            settings: debugSettings,
-            xcconfig: .relativeToRoot("Config/Development-Local.xcconfig")
-        )
-        let releaseConfiguration = Configuration.release(
-            name: "Release",
-            settings: releaseSettings,
-            xcconfig: .relativeToRoot("Config/Production-Local.xcconfig")
-        )
+        let debugConfiguration = Configuration.debug(name: "Debug", settings: debugSettings)
+        let releaseConfiguration = Configuration.release(name: "Release", settings: releaseSettings)
         
         let configurations: [Configuration] = [
             debugConfiguration,
@@ -155,16 +147,8 @@ public extension Project {
             .merging(["SWIFT_COMPILATION_MODE": "wholemodule"])
             .merging(["GCC_OPTIMIZATION_LEVEL": "s"])
         
-        let debugConfiguration = Configuration.debug(
-            name: "Debug",
-            settings: debugSettings,
-            xcconfig: .relativeToRoot("Config/Development-Local.xcconfig")
-        )
-        let releaseConfiguration = Configuration.release(
-            name: "Release",
-            settings: releaseSettings,
-            xcconfig: .relativeToRoot("Config/Production-Local.xcconfig")
-        )
+        let debugConfiguration = Configuration.debug(name: "Debug", settings: debugSettings)
+        let releaseConfiguration = Configuration.release(name: "Release", settings: releaseSettings)
         
         let appTarget = Target.target(
             name: name,
@@ -181,10 +165,7 @@ public extension Project {
                 "CFBundleDisplayName": "Kingthereum",
                 "UIUserInterfaceStyle": "Automatic",
                 "MARKETING_VERSION": .string(Environment.appVersion),
-                "CURRENT_PROJECT_VERSION": "1",
-                "INFURA_PROJECT_ID": "$(INFURA_PROJECT_ID)",
-                "INFURA_PROJECT_SECRET": "$(INFURA_PROJECT_SECRET)",
-                "ETHERSCAN_API_KEY": "$(ETHERSCAN_API_KEY)"
+                "CURRENT_PROJECT_VERSION": "1"
             ]),
             sources: ["Sources/**"],
             resources: ["Resources/**"],

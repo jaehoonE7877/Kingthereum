@@ -13,26 +13,13 @@ public struct SettingsGroup<Content: View>: View {
     }
     
     public var body: some View {
-        VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
-            // 타이틀
-            if !title.isEmpty {
-                Text(title)
-                    .kingStyle(.cardTitle)
-                    .padding(.horizontal, DesignTokens.Spacing.md)
-                    .padding(.top, DesignTokens.Spacing.sm)
-            }
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .font(.headline)
+                .foregroundColor(.primary)
+                .padding(.horizontal, 4)
             
-            // 컨텐츠
-            VStack(spacing: 0) {
-                content
-            }
+            content
         }
-        .background(KingthereumGradients.card)
-        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg))
-        .overlay(
-            RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
-                .stroke(KingthereumColors.cardBorder, lineWidth: DesignTokens.BorderWidth.normal)
-        )
-        .shadow(color: KingthereumColors.cardShadow, radius: 6, x: 0, y: 3)
     }
 }

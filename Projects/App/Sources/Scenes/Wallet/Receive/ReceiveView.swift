@@ -168,7 +168,7 @@ extension ReceiveView {
                     }
                 }
             }
-            .safeSwiftUIGlass(opacity: 0.8, tintColor: .blue.opacity(0.1), cornerRadius: 16)
+            .glassCard(style: .wallet)
         }
     }
 }
@@ -225,7 +225,7 @@ extension ReceiveView {
                     }
                 }
                 .padding(16)
-                .safeSwiftUIGlass()
+                .glassCard(style: .default)
             }
         }
     }
@@ -271,7 +271,7 @@ extension ReceiveView {
                 .background(.ultraThinMaterial)
                 .foregroundStyle(LinearGradient.primaryGradient)
                 .cornerRadius(12)
-                .safeSwiftUIGlass(opacity: 0.8, tintColor: .blue.opacity(0.1), cornerRadius: 16)
+                .glassCard(style: .prominent)
             }
             .scaleEffect(coordinator.isRefreshing ? 0.95 : 1.0)
             .animation(.easeInOut(duration: 0.1), value: coordinator.isRefreshing)
@@ -314,7 +314,7 @@ extension ReceiveView {
                 )
             }
             .padding(16)
-            .safeSwiftUIGlass()
+            .glassCard(style: .default)
         }
         .padding(.bottom, 40)
     }
@@ -526,7 +526,7 @@ struct ToastView: View {
         .padding(.vertical, 14)
         .background(.ultraThinMaterial)
         .cornerRadius(12)
-        .safeSwiftUIGlass()
+        .glassCard(style: .default)
         .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
     }
 }

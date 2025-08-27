@@ -163,6 +163,7 @@ extension SendView {
                     .accessibilityHint("저장된 주소 목록을 확인합니다")
                 }
             }
+            }
         }
         .glassCard(style: .default)
     }
@@ -209,9 +210,9 @@ extension SendView {
                 }
                 .padding(20)
                 .background(.ultraThinMaterial)
-                .cornerRadius(DesignTokens.CornerRadius.lg)
+                .cornerRadius(16)
                 .overlay(
-                    RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
+                    RoundedRectangle(cornerRadius: 16)
                         .stroke(
                             coordinator.isAmountValid ? 
                             LinearGradient.primaryGradient : 
@@ -313,7 +314,7 @@ extension SendView {
                 }
                 .padding(16)
                 .background(.ultraThinMaterial)
-                .cornerRadius(DesignTokens.CornerRadius.md)
+                .cornerRadius(12)
             }
         }
         .glassCard(style: .default)
@@ -391,14 +392,14 @@ extension SendView {
                         .font(.system(size: 16, weight: .semibold))
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: DesignTokens.Size.Button.lg)
+                .frame(height: 56)
                 .background(
                     coordinator.isSending ? 
                     AnyShapeStyle(Color.secondary.opacity(0.3)) : 
                     AnyShapeStyle(LinearGradient.primaryGradient)
                 )
                 .foregroundColor(.white)
-                .cornerRadius(DesignTokens.CornerRadius.lg)
+                .cornerRadius(16)
                 .shadow(
                     color: coordinator.isSending ? .clear : .kingBlue.opacity(0.3), 
                     radius: coordinator.isSending ? 0 : 8, 

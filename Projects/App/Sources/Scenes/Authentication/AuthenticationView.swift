@@ -117,42 +117,19 @@ struct AuthenticationView: View {
     }
     
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                // 프리미엄 배경 그라데이션
-                KingthereumGradients.backgroundAmbient
-                    .ignoresSafeArea()
+        ScrollView {
+            VStack(spacing: DesignTokens.Spacing.xxl) {
+                // Header Section
+                headerSection
                 
-                // 홀로그래픽 오버레이 효과
-                RadialGradient(
-                    colors: [
-                        KingthereumColors.accent.opacity(0.1),
-                        Color.clear,
-                        KingthereumColors.accentSecondary.opacity(0.05)
-                    ],
-                    center: .topLeading,
-                    startRadius: 100,
-                    endRadius: geometry.size.width
-                )
-                .ignoresSafeArea()
-                
-                ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: DesignTokens.Spacing.xxl) {
-                        // 프리미엄 헤더 섹션
-                        premiumHeaderSection
-                        
-                        // 고급 인증 옵션들
-                        authenticationOptionsSection
-                        
-                        // 하단 여백
-                        Color.clear.frame(height: DesignTokens.Spacing.xl)
-                    }
-                    .padding(.horizontal, DesignTokens.Spacing.xl)
-                    .padding(.vertical, DesignTokens.Spacing.xxl)
-                }
+                // Content Section
+                contentSection
             }
+            .padding(.horizontal, DesignTokens.Spacing.xl)
+            .padding(.vertical, DesignTokens.Spacing.xxl)
         }
-        .alert("알림", isPresented: Binding<Bool>(
+        .background(LinearGradient.enhancedBackgroundGradient.ignoresSafeArea())
+        .alert("오류", isPresented: Binding<Bool>(
             get: { viewStore.errorMessage != nil },
             set: { _ in viewStore.clearError() }
         )) {
@@ -162,7 +139,6 @@ struct AuthenticationView: View {
         } message: {
             if let errorMessage = viewStore.errorMessage {
                 Text(errorMessage)
-                    .kingStyle(.bodyPrimary)
             }
         }
         .onAppear {
@@ -172,7 +148,8 @@ struct AuthenticationView: View {
             checkBiometricAvailability()
         }
         .sheet(isPresented: $viewStore.showMnemonicView) {
-            premiumMnemonicView
+            // MnemonicView 구현 필요
+            Text("니모닉 뷰")
         }
     }
     
@@ -205,527 +182,97 @@ struct AuthenticationView: View {
         interactor.createWallet(request: request)
     }
     
-    // MARK: - Premium UI Components
+    // MARK: - UI Components
     
     @ViewBuilder
-    private var premiumHeaderSection: some View {
-        VStack(spacing: DesignTokens.Spacing.xxl) {
-            // 프리미엄 앱 아이콘 - 다층 구조
+    private var headerSection: some View {
+        VStack(spacing: DesignTokens.Spacing.xl) {
+            // App Icon with Glass Effect
             ZStack {
-                // 외부 홀로그래픽 링
                 Circle()
-                    .stroke(
-                        AngularGradient(
-                            colors: [
-                                KingthereumColors.accent,
-                                KingthereumColors.accentSecondary,
-                                KingthereumColors.success,
-                                KingthereumColors.warning,
-                                KingthereumColors.accent
-                            ],
-                            center: .center
-                        ),
-                        lineWidth: 3
+                    .fill(.ultraThickMaterial)
+                    .overlay(
+                        Circle()
+                            .stroke(Color.glassBorderPrimary, lineWidth: 2)
                     )
-                    .frame(width: 140, height: 140)
-                    .blur(radius: 1)
+                    .frame(width: 120, height: 120)
+                    .shadow(color: .glassShadowMedium, radius: 15, x: 0, y: 8)
                 
-                // 중간 그라데이션 원
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [
-                                KingthereumColors.accent.opacity(0.3),
-                                KingthereumColors.accent.opacity(0.1),
-                                Color.clear
-                            ],
-                            center: .center,
-                            startRadius: 20,
-                            endRadius: 65
+                Image(systemName: "crown.fill")
+                    .font(.system(size: 48, weight: .medium))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.kingGold, .systemYellow],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
                         )
                     )
-                    .frame(width: 130, height: 130)
-                
-                // 메인 아이콘 컨테이너
-                ZStack {
-                    Circle()
-                        .fill(.ultraThickMaterial)
-                        .overlay(
-                            Circle()
-                                .stroke(
-                                    LinearGradient(
-                                        colors: [
-                                            Color.white.opacity(0.6),
-                                            KingthereumColors.accent.opacity(0.3),
-                                            Color.clear
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 2
-                                )
-                        )
-                        .frame(width: 120, height: 120)
-                    
-                    // 내부 하이라이트
-                    Circle()
-                        .fill(
-                            RadialGradient(
-                                colors: [
-                                    Color.white.opacity(0.4),
-                                    Color.clear
-                                ],
-                                center: .init(x: 0.3, y: 0.3),
-                                startRadius: 10,
-                                endRadius: 50
-                            )
-                        )
-                        .frame(width: 118, height: 118)
-                    
-                    // 크라운 아이콘
-                    Image(systemName: "crown.fill")
-                        .font(.system(size: 52, weight: .bold))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [
-                                    KingthereumColors.warning,
-                                    Color.yellow,
-                                    Color.orange
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .shadow(color: KingthereumColors.warning.opacity(0.5), radius: 8, x: 0, y: 4)
-                }
-                .shadow(color: KingthereumColors.cardShadow.opacity(0.3), radius: 20, x: 0, y: 10)
-                .shadow(color: KingthereumColors.accent.opacity(0.2), radius: 40, x: 0, y: 20)
             }
             
-            // 프리미엄 타이틀 섹션
-            VStack(spacing: DesignTokens.Spacing.lg) {
-                // 메인 타이틀
-                VStack(spacing: DesignTokens.Spacing.xs) {
-                    Text("Kingthereum")
-                        .kingStyle(KingthereumTextStyle(
-                            font: KingthereumTypography.displayLarge,
-                            color: KingthereumColors.textPrimary
-                        ))
-                        .foregroundStyle(KingthereumGradients.web3Rainbow)
-                        .accessibilityLabel("Kingthereum 지갑")
-                    
-                    // 언더라인 효과
-                    Rectangle()
-                        .fill(KingthereumGradients.accent)
-                        .frame(height: DesignTokens.Size.Divider.thick)
-                        .frame(width: 120)
-                        .blur(radius: 1)
-                }
+            // Title and Subtitle
+            VStack(spacing: DesignTokens.Spacing.sm) {
+                Text("Kingthereum")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .foregroundStyle(LinearGradient.primaryGradient)
+                    .accessibilityLabel("Kingthereum 지갑")
                 
-                // 서브타이틀 & 설명
-                VStack(spacing: DesignTokens.Spacing.sm) {
-                    Text("프리미엄 이더리움 지갑")
-                        .kingStyle(KingthereumTextStyle(
-                            font: KingthereumTypography.headlineMedium,
-                            color: KingthereumColors.textSecondary
-                        ))
-                    
-                    Text("차세대 Web3 보안 기술로 당신의 자산을 보호합니다")
-                        .kingStyle(KingthereumTextStyle(
-                            font: KingthereumTypography.bodyMedium,
-                            color: KingthereumColors.textTertiary
-                        ))
-                        .multilineTextAlignment(.center)
-                        .accessibilityLabel("차세대 Web3 보안 기술로 당신의 자산을 보호합니다")
-                }
-            }
-            
-            // 보안 배지들
-            HStack(spacing: DesignTokens.Spacing.md) {
-                securityBadge(icon: "shield.checkered", text: "군사급 암호화")
-                securityBadge(icon: "key.horizontal.fill", text: "Hardware Security")
-                securityBadge(icon: "network.badge.shield.half.filled", text: "Secure Enclave")
+                Text("안전하고 쉬운 이더리움 지갑")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .accessibilityLabel("안전하고 쉬운 이더리움 지갑")
             }
         }
         .padding(.top, DesignTokens.Spacing.xl)
     }
     
     @ViewBuilder
-    private func securityBadge(icon: String, text: String) -> some View {
-        HStack(spacing: DesignTokens.Spacing.xs) {
-            Image(systemName: icon)
-                .font(.caption)
-                .foregroundColor(KingthereumColors.success)
-            
-            Text(text)
-                .kingStyle(KingthereumTextStyle(
-                    font: KingthereumTypography.helper,
-                    color: KingthereumColors.success
-                ))
-        }
-        .padding(.horizontal, DesignTokens.Spacing.sm)
-        .padding(.vertical, DesignTokens.Spacing.xs)
-        .background(
-            Capsule()
-                .fill(KingthereumColors.success.opacity(0.1))
-                .overlay(
-                    Capsule()
-                        .stroke(KingthereumColors.success.opacity(0.3), lineWidth: 0.5)
-                )
-        )
-    }
-    
-    @ViewBuilder
-    private var authenticationOptionsSection: some View {
-        VStack(spacing: DesignTokens.Spacing.xxl) {
-            // 섹션 타이틀
-            VStack(spacing: DesignTokens.Spacing.sm) {
-                Text("안전한 인증")
-                    .kingStyle(KingthereumTextStyle(
-                        font: KingthereumTypography.headlineLarge,
-                        color: KingthereumColors.textPrimary
-                    ))
-                
-                Text("원하는 인증 방법을 선택하세요")
-                    .kingStyle(KingthereumTextStyle(
-                        font: KingthereumTypography.bodyMedium,
-                        color: KingthereumColors.textSecondary
-                    ))
-            }
-            
-            // 프리미엄 생체인증 카드
+    private var contentSection: some View {
+        VStack(spacing: DesignTokens.Spacing.xl) {
+            // 생체인증 버튼
             if viewStore.biometricAvailable {
-                premiumBiometricCard
+                GlassButton(
+                    icon: "faceid",
+                    title: "생체 인증으로 시작",
+                    style: .success,
+                    isEnabled: !viewStore.isLoading,
+                    isLoading: viewStore.isLoading
+                ) {
+                    authenticateWithBiometrics()
+                }
+                .accessibilityLabel("생체 인증으로 시작")
+                .accessibilityHint("Face ID 또는 Touch ID를 사용하여 지갑에 접근합니다")
             }
             
-            // 프리미엄 PIN 인증 카드
-            premiumPINCard
-            
-            // 추가 인증 옵션들
-            additionalAuthOptions
-        }
-    }
-    
-    @ViewBuilder
-    private var premiumBiometricCard: some View {
-        Button {
-            authenticateWithBiometrics()
-        } label: {
+            // PIN 인증 섹션
             VStack(spacing: DesignTokens.Spacing.lg) {
-                // 생체인증 아이콘 섹션
-                ZStack {
-                    // 홀로그래픽 배경
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(
-                            RadialGradient(
-                                colors: [
-                                    KingthereumColors.success.opacity(0.3),
-                                    KingthereumColors.success.opacity(0.1),
-                                    Color.clear
-                                ],
-                                center: .center,
-                                startRadius: 20,
-                                endRadius: 80
-                            )
-                        )
-                        .frame(width: 100, height: 80)
-                    
-                    // 메인 아이콘
-                    Image(systemName: viewStore.isLoading ? "hourglass" : "faceid")
-                        .font(.system(size: 32, weight: .medium))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [
-                                    KingthereumColors.success,
-                                    Color.green,
-                                    KingthereumColors.success.opacity(0.8)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .symbolEffect(.variableColor, isActive: viewStore.isLoading)
-                }
-                
-                // 텍스트 정보
-                VStack(spacing: DesignTokens.Spacing.sm) {
-                    Text("생체 인증")
-                        .kingStyle(KingthereumTextStyle(
-                            font: KingthereumTypography.headlineMedium,
-                            color: KingthereumColors.textPrimary
-                        ))
-                    
-                    Text("Face ID 또는 Touch ID로 빠르고 안전하게")
-                        .kingStyle(KingthereumTextStyle(
-                            font: KingthereumTypography.bodySmall,
-                            color: KingthereumColors.textSecondary
-                        ))
-                        .multilineTextAlignment(.center)
-                }
-                
-                // 상태 인디케이터
-                HStack(spacing: DesignTokens.Spacing.xs) {
-                    Circle()
-                        .fill(KingthereumColors.success)
-                        .frame(width: 6, height: 6)
-                    
-                    Text("권장")
-                        .kingStyle(KingthereumTextStyle(
-                            font: KingthereumTypography.helper,
-                            color: KingthereumColors.success
-                        ))
-                }
-            }
-            .frame(maxWidth: .infinity)
-            .padding(DesignTokens.Spacing.xl)
-        }
-        .buttonStyle(PlainButtonStyle())
-        .disabled(viewStore.isLoading)
-        .background(
-            ZStack {
-                // 메인 배경
-                RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xl)
-                    .fill(.ultraThinMaterial)
-                    .background(
-                        RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xl)
-                            .fill(KingthereumGradients.success.opacity(0.05))
-                    )
-                
-                // 상단 하이라이트
-                RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xl)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.2),
-                                Color.clear
-                            ],
-                            startPoint: .top,
-                            endPoint: .center
-                        )
-                    )
-                
-                // 프리미엄 테두리
-                RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xl)
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                KingthereumColors.success.opacity(0.4),
-                                Color.clear,
-                                KingthereumColors.success.opacity(0.2)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 2
-                    )
-            }
-        )
-        .shadow(color: KingthereumColors.success.opacity(0.2), radius: 15, x: 0, y: 8)
-        .shadow(color: KingthereumColors.cardShadow.opacity(0.1), radius: 30, x: 0, y: 15)
-        .scaleEffect(viewStore.isLoading ? 0.98 : 1.0)
-        .animation(.easeInOut(duration: 0.2), value: viewStore.isLoading)
-        .accessibilityLabel("생체 인증으로 시작")
-        .accessibilityHint("Face ID 또는 Touch ID를 사용하여 지갑에 접근합니다")
-    }
-    
-    @ViewBuilder
-    private var premiumPINCard: some View {
-        VStack(spacing: DesignTokens.Spacing.lg) {
-            // PIN 입력 프리뷰 카드
-            HStack(spacing: DesignTokens.Spacing.lg) {
-                // PIN 아이콘
-                ZStack {
-                    Circle()
-                        .fill(KingthereumGradients.neon.opacity(0.2))
-                        .frame(width: 48, height: 48)
-                    
+                // PIN Input Card (간소화)
+                HStack(spacing: 12) {
                     Image(systemName: "key.fill")
                         .font(.title3)
-                        .foregroundStyle(KingthereumGradients.accent)
-                }
-                
-                VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
-                    Text("6자리 PIN 입력")
-                        .kingStyle(KingthereumTextStyle(
-                            font: KingthereumTypography.bodyEmphasized,
-                            color: KingthereumColors.textPrimary
-                        ))
+                        .foregroundStyle(LinearGradient.primaryGradient)
+                        .frame(width: 24)
                     
-                    Text("설정된 PIN 코드를 입력하세요")
-                        .kingStyle(KingthereumTextStyle(
-                            font: KingthereumTypography.bodySmall,
-                            color: KingthereumColors.textSecondary
-                        ))
+                    Text("PIN을 입력하세요")
+                        .foregroundColor(.secondary)
                 }
+                .padding(DesignTokens.Spacing.lg)
+                .glassCard(style: .subtle)
                 
-                Spacer()
-                
-                // PIN 도트들
-                HStack(spacing: DesignTokens.Spacing.xs) {
-                    ForEach(0..<6, id: \.self) { index in
-                        Circle()
-                            .fill(KingthereumColors.textTertiary.opacity(0.3))
-                            .frame(width: 12, height: 12)
-                            .overlay(
-                                Circle()
-                                    .stroke(KingthereumColors.accent.opacity(0.5), lineWidth: 1)
-                            )
-                    }
-                }
-            }
-            .padding(DesignTokens.Spacing.lg)
-            .background(
-                RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
-                    .fill(.ultraThinMaterial)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
-                            .stroke(KingthereumColors.accent.opacity(0.2), lineWidth: 1)
-                    )
-            )
-            
-            // PIN 인증 버튼
-            Button {
-                authenticateWithPIN()
-            } label: {
-                HStack(spacing: DesignTokens.Spacing.md) {
-                    Image(systemName: "lock.open.fill")
-                        .font(.title3)
-                    
-                    Text("PIN으로 잠금 해제")
-                        .kingStyle(KingthereumTextStyle(
-                            font: KingthereumTypography.buttonPrimary,
-                            color: KingthereumColors.textInverse
-                        ))
-                }
-                .frame(maxWidth: .infinity)
-                .frame(height: DesignTokens.Size.Button.lg)
-                .background(KingthereumGradients.buttonPrimary)
-                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg))
-                .shadow(color: KingthereumColors.accent.opacity(0.3), radius: 8, x: 0, y: 4)
-            }
-            .buttonStyle(PlainButtonStyle())
-            .disabled(viewStore.isLoading)
-            .accessibilityLabel("PIN으로 잠금 해제")
-            .accessibilityHint("6자리 PIN 코드를 입력하여 지갑에 접근합니다")
-        }
-    }
-    
-    @ViewBuilder
-    private var additionalAuthOptions: some View {
-        VStack(spacing: DesignTokens.Spacing.lg) {
-            // 구분선
-            HStack {
-                Rectangle()
-                    .fill(KingthereumColors.textTertiary.opacity(0.3))
-                    .frame(height: DesignTokens.Size.Divider.thin)
-                
-                Text("또는")
-                    .kingStyle(KingthereumTextStyle(
-                        font: KingthereumTypography.caption,
-                        color: KingthereumColors.textTertiary
-                    ))
-                    .padding(.horizontal, DesignTokens.Spacing.md)
-                
-                Rectangle()
-                    .fill(KingthereumColors.textTertiary.opacity(0.3))
-                    .frame(height: DesignTokens.Size.Divider.thin)
-            }
-            
-            // 추가 옵션들
-            HStack(spacing: DesignTokens.Spacing.md) {
-                // 지갑 생성
-                quickActionCard(
-                    icon: "plus.circle.fill",
-                    title: "새 지갑",
-                    subtitle: "생성",
-                    color: KingthereumColors.accent
+                // PIN Auth Button
+                GlassButton(
+                    icon: "lock.open.fill",
+                    title: "PIN으로 잠금 해제",
+                    style: .primary,
+                    isEnabled: !viewStore.isLoading,
+                    isLoading: viewStore.isLoading
                 ) {
-                    createWallet()
+                    authenticateWithPIN()
                 }
-                
-                // 지갑 복원
-                quickActionCard(
-                    icon: "arrow.clockwise.circle.fill",
-                    title: "지갑 복원",
-                    subtitle: "Import",
-                    color: KingthereumColors.info
-                ) {
-                    // 복원 로직 구현 예정
-                    print("지갑 복원 요청")
-                }
+                .accessibilityLabel("PIN으로 잠금 해제")
+                .accessibilityHint("6자리 PIN 코드를 입력하여 지갑에 접근합니다")
             }
         }
-    }
-    
-    @ViewBuilder
-    private func quickActionCard(
-        icon: String,
-        title: String,
-        subtitle: String,
-        color: Color,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button(action: action) {
-            VStack(spacing: DesignTokens.Spacing.sm) {
-                ZStack {
-                    Circle()
-                        .fill(color.opacity(0.2))
-                        .frame(width: 40, height: 40)
-                    
-                    Image(systemName: icon)
-                        .font(.title3)
-                        .foregroundColor(color)
-                }
-                
-                VStack(spacing: 2) {
-                    Text(title)
-                        .kingStyle(KingthereumTextStyle(
-                            font: KingthereumTypography.labelMedium,
-                            color: KingthereumColors.textPrimary
-                        ))
-                    
-                    Text(subtitle)
-                        .kingStyle(KingthereumTextStyle(
-                            font: KingthereumTypography.helper,
-                            color: color
-                        ))
-                }
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, DesignTokens.Spacing.lg)
-            .background(
-                RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.md)
-                    .fill(.ultraThinMaterial)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.md)
-                            .stroke(color.opacity(0.3), lineWidth: 1)
-                    )
-            )
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
-    
-    @ViewBuilder
-    private var premiumMnemonicView: some View {
-        VStack(spacing: DesignTokens.Spacing.xl) {
-            Text("복구 구문")
-                .kingStyle(KingthereumTextStyle(
-                    font: KingthereumTypography.headlineLarge,
-                    color: KingthereumColors.textPrimary
-                ))
-            
-            Text("지갑의 니모닉 복구 구문을 안전하게 보관하세요")
-                .kingStyle(KingthereumTextStyle(
-                    font: KingthereumTypography.bodyMedium,
-                    color: KingthereumColors.textSecondary
-                ))
-                .multilineTextAlignment(.center)
-            
-            // 향후 MnemonicView 구현 예정
-            Spacer()
-        }
-        .padding(DesignTokens.Spacing.xl)
-        .background(KingthereumGradients.backgroundAmbient)
     }
 }
 
