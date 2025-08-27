@@ -224,6 +224,20 @@ public struct KingColors {
         light: Color(hex: "#F7931A"),
         dark: Color(hex: "#FFB74D")
     )
+    
+    // MARK: - Glass Morphism Colors
+    
+    /// Glass 테두리 색상
+    public static let glassBorder = Color.kingAdaptive(
+        light: Color.white.opacity(0.3),
+        dark: Color.white.opacity(0.2)
+    )
+    
+    /// Glass 그림자 색상
+    public static let glassShadow = Color.kingAdaptive(
+        light: Color.black.opacity(0.1),
+        dark: Color.black.opacity(0.3)
+    )
 }
 
 // MARK: - Color Extensions for Hex Support

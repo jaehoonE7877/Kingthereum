@@ -1,119 +1,151 @@
 import SwiftUI
 import Core
 
-/// 테마를 지원하는 환경 키
-public struct GlassThemeKey: EnvironmentKey {
-    public static let defaultValue = GlassTheme.system
-}
+// GlassTokens는 같은 모듈 내에 있으므로 별도 import 불필요
 
-public extension EnvironmentValues {
-    var glassTheme: GlassTheme {
-        get { self[GlassThemeKey.self] }
-        set { self[GlassThemeKey.self] = newValue }
-    }
-}
-
-/// Glass 컴포넌트의 테마
-public enum GlassTheme: String, CaseIterable, Sendable {
-    case system = "system"
-    case light = "light" 
-    case dark = "dark"
-    case vibrant = "vibrant"
-    
-    public var displayName: String {
-        switch self {
-        case .system: return "시스템"
-        case .light: return "라이트"
-        case .dark: return "다크"
-        case .vibrant: return "생생한"
-        }
-    }
-}
-
+/// 4단계 GlassMorphism 효과를 지원하는 Glass Card 컴포넌트
+/// 효과 레벨과 테마에 따라 동적으로 스타일이 적용됨
 public struct GlassCard<Content: View>: View {
     let content: Content
-    let style: GlassCardStyle
+    let effectLevel: GlassTokens.EffectLevel
+    let context: GlassTokens.Context
+    let customCornerRadius: CGFloat?
+    
     @Environment(\.glassTheme) private var theme
+    @Environment(\.glassEffectLevel) private var environmentEffectLevel
     @Environment(\.colorScheme) private var colorScheme
     
+    /// 효과 레벨을 명시적으로 지정하여 초기화
     public init(
-        style: GlassCardStyle = .default,
+        level: GlassTokens.EffectLevel,
+        context: GlassTokens.Context = .card,
+        cornerRadius: CGFloat? = nil,
         @ViewBuilder content: () -> Content
     ) {
         self.content = content()
-        self.style = style
+        self.effectLevel = level
+        self.context = context
+        self.customCornerRadius = cornerRadius
+    }
+    
+    /// 환경에서 효과 레벨을 상속받아 초기화
+    public init(
+        context: GlassTokens.Context = .card,
+        cornerRadius: CGFloat? = nil,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.content = content()
+        self.effectLevel = context.defaultEffectLevel
+        self.context = context
+        self.customCornerRadius = cornerRadius
     }
     
     public var body: some View {
         content
-            .background(effectiveMaterial, in: RoundedRectangle(cornerRadius: style.cornerRadius))
+            .background(
+                effectiveMaterial,
+                in: RoundedRectangle(cornerRadius: effectiveCornerRadius)
+            )
             .overlay(
-                RoundedRectangle(cornerRadius: style.cornerRadius)
-                    .stroke(effectiveBorderColor, lineWidth: style.borderWidth)
+                RoundedRectangle(cornerRadius: effectiveCornerRadius)
+                    .stroke(effectiveBorderColor, lineWidth: effectiveBorderWidth)
             )
             .shadow(
                 color: effectiveShadowColor,
                 radius: effectiveShadowRadius,
                 x: 0,
-                y: style.shadowOffset
+                y: effectiveShadowOffset
             )
     }
     
-    // MARK: - Theme-aware Properties
+    // MARK: - Dynamic Properties
     
+    /// 테마와 효과 레벨에 따른 Material 결정
     private var effectiveMaterial: Material {
+        let baseMaterial = effectLevel.material
+        
         switch theme {
         case .system:
-            return style.material
+            return baseMaterial
         case .light:
             return .regularMaterial
         case .dark:
             return .thickMaterial
         case .vibrant:
-            return colorScheme == .dark ? .ultraThickMaterial : .ultraThinMaterial
+            return colorScheme == .dark ? .ultraThickMaterial : .thinMaterial
         }
     }
     
+    /// 효과적인 코너 반경
+    private var effectiveCornerRadius: CGFloat {
+        customCornerRadius ?? context.defaultCornerRadius
+    }
+    
+    /// 테마와 효과 레벨에 따른 테두리 색상
     private var effectiveBorderColor: Color {
+        let adaptation = GlassTokens.ColorAdaptation.border
+        let baseColor = KingColors.glassBorder
+        
         switch theme {
         case .system:
-            return style.borderColor
+            return baseColor.opacity(effectLevel.opacity * 0.5)
         case .light:
-            return style.borderColor.opacity(0.6)
+            return baseColor.opacity(adaptation.light)
         case .dark:
-            return style.borderColor.opacity(0.8)
+            return baseColor.opacity(adaptation.dark)
         case .vibrant:
-            return style.borderColor.opacity(0.7)
+            return baseColor.opacity(adaptation.vibrant)
         }
     }
     
+    /// 효과 레벨에 따른 테두리 두께
+    private var effectiveBorderWidth: CGFloat {
+        effectLevel.borderWidth
+    }
+    
+    /// 테마와 효과 레벨에 따른 그림자 색상
     private var effectiveShadowColor: Color {
+        let adaptation = GlassTokens.ColorAdaptation.shadow
+        let baseColor = KingColors.glassShadow
+        
         switch theme {
         case .system:
-            return style.shadowColor
+            return baseColor.opacity(effectLevel.opacity * 0.3)
         case .light:
-            return style.shadowColor.opacity(0.4)
+            return baseColor.opacity(adaptation.light)
         case .dark:
-            return Color.black.opacity(0.6)
+            return Color.black.opacity(adaptation.dark)
         case .vibrant:
-            return style.shadowColor.opacity(0.8)
+            return baseColor.opacity(adaptation.vibrant)
         }
     }
     
+    /// 효과 레벨에 따른 그림자 반경
     private var effectiveShadowRadius: CGFloat {
+        let baseRadius = effectLevel.shadowRadius
+        
         switch theme {
         case .system:
-            return style.shadowRadius
+            return baseRadius
         case .light:
-            return style.shadowRadius * 0.7
+            return baseRadius * 0.7
         case .dark:
-            return style.shadowRadius * 1.2
+            return baseRadius * 1.2
         case .vibrant:
-            return style.shadowRadius * 1.5
+            return baseRadius * 1.5
         }
+    }
+    
+    /// 효과 레벨에 따른 그림자 오프셋
+    private var effectiveShadowOffset: CGFloat {
+        effectLevel.shadowOffset
     }
 }
 
+// MARK: - Legacy GlassCardStyle (하위 호환성)
+
+/// 기존 GlassCardStyle (하위 호환성을 위해 유지)
+@available(*, deprecated, message: "Use GlassCard with GlassTokens.EffectLevel instead")
 public struct GlassCardStyle: Sendable {
     public static let `default` = GlassCardStyle(
         material: .ultraThinMaterial,
@@ -147,7 +179,7 @@ public struct GlassCardStyle: Sendable {
     
     public static let wallet = GlassCardStyle(
         material: .regularMaterial,
-        cornerRadius: DesignTokens.Glass.Card.prominentCornerRadius,
+        cornerRadius: DesignTokens.CornerRadius.lg,
         borderColor: .glassBorderAccent,
         borderWidth: 1.1,
         shadowColor: .glassShadowMedium,
@@ -157,7 +189,7 @@ public struct GlassCardStyle: Sendable {
     
     public static let transaction = GlassCardStyle(
         material: .thinMaterial,
-        cornerRadius: DesignTokens.Glass.Card.subtleCornerRadius,
+        cornerRadius: DesignTokens.CornerRadius.md,
         borderColor: .glassBorderSecondary,
         borderWidth: 0.6,
         shadowColor: .glassShadowLight,
@@ -190,11 +222,66 @@ public struct GlassCardStyle: Sendable {
         self.shadowRadius = shadowRadius
         self.shadowOffset = shadowOffset
     }
+    
+    /// GlassCardStyle을 EffectLevel로 변환
+    var toEffectLevel: GlassTokens.EffectLevel {
+        switch shadowRadius {
+        case 0..<7: return .subtle
+        case 7..<12: return .standard
+        case 12..<18: return .prominent
+        default: return .intense
+        }
+    }
 }
 
+/// 하위 호환성을 위한 레거시 GlassCard
+@available(*, deprecated, message: "Use new GlassCard(level:context:) initializer")
+public struct LegacyGlassCard<Content: View>: View {
+    let content: Content
+    let style: GlassCardStyle
+    @Environment(\.glassTheme) private var theme
+    @Environment(\.colorScheme) private var colorScheme
+    
+    public init(
+        style: GlassCardStyle = .default,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.content = content()
+        self.style = style
+    }
+    
+    public var body: some View {
+        GlassCard(level: style.toEffectLevel, context: .card) {
+            content
+        }
+    }
+}
+
+// MARK: - Convenience Extensions
+
 public extension View {
+    /// 새로운 4단계 Glass Card 적용 (권장)
+    func glassCard(
+        level: GlassTokens.EffectLevel,
+        context: GlassTokens.Context = .card,
+        cornerRadius: CGFloat? = nil
+    ) -> some View {
+        GlassCard(level: level, context: context, cornerRadius: cornerRadius) {
+            self
+        }
+    }
+    
+    /// 하위 호환성을 위한 기존 방식 (deprecated)
+    @available(*, deprecated, message: "Use glassCard(level:context:) instead")
     func glassCard(style: GlassCardStyle = .default) -> some View {
-        GlassCard(style: style) {
+        LegacyGlassCard(style: style) {
+            self
+        }
+    }
+    
+    /// 컨텍스트 기반 기본 Glass Card
+    func glassCard(context: GlassTokens.Context = .card) -> some View {
+        GlassCard(context: context) {
             self
         }
     }
@@ -244,7 +331,7 @@ public struct BalanceCard: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(DesignTokens.Spacing.lg)
-        .glassCard(style: .wallet)
+        .glassCard(level: .prominent, context: .card)
     }
 }
 
@@ -329,7 +416,7 @@ public struct TransactionCard: View {
             }
         }
         .padding(DesignTokens.Spacing.lg)
-        .glassCard(style: .transaction)
+        .glassCard(level: .subtle, context: .card)
     }
 }
 
@@ -382,7 +469,7 @@ public struct ActionCard: View {
             }
         }
         .padding(DesignTokens.Spacing.lg)
-        .glassCard(style: .default)
+        .glassCard(level: .standard, context: .card)
     }
 }
 
@@ -443,7 +530,7 @@ public struct InfoCard: View {
                 .foregroundColor(.primary)
         }
         .padding(DesignTokens.Spacing.lg)
-        .glassCard(style: .subtle)
+        .glassCard(level: .subtle, context: .card)
     }
 }
 
