@@ -70,7 +70,7 @@ Projects/*/Derived/
 # API Keys and Environment Variables
 .env
 *.env
-Config.plist
+Config/*
 Secrets.plist
 InfuraConfig.plist
 

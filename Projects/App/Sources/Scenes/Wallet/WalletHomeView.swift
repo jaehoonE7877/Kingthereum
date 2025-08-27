@@ -23,8 +23,8 @@ struct WalletHomeView: View {
         NavigationStack(path: $navigationPath) {
             ScrollView {
                 VStack(spacing: 20) {
-                    // Metal Liquid Glass 잔액 카드
-                    MetalBalanceCard(
+                    // 초경량 SwiftUI Glass 잔액 카드
+                    UltraLightweightBalanceCard(
                         balance: "2.5",
                         symbol: "ETH",
                         usdValue: "$4,250.00"
@@ -32,9 +32,9 @@ struct WalletHomeView: View {
                     .scaleEffect(isScrollingDown ? 0.95 : 1.0)
                     .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isScrollingDown)
                     
-                    // Metal Liquid Glass 액션 버튼들
+                    // 초경량 SwiftUI Glass 액션 버튼들
                     HStack(spacing: 16) {
-                        MetalLiquidGlassButton(
+                        UltraLightweightSwiftUIButton(
                             icon: "arrow.up.circle.fill",
                             title: "보내기",
                             style: .crypto
@@ -44,7 +44,7 @@ struct WalletHomeView: View {
                         .accessibilityLabel("이더리움 보내기")
                         .accessibilityHint("탭하여 이더리움을 다른 주소로 전송합니다")
                         
-                        MetalLiquidGlassButton(
+                        UltraLightweightSwiftUIButton(
                             icon: "arrow.down.circle.fill",
                             title: "받기",
                             style: .success
@@ -56,15 +56,14 @@ struct WalletHomeView: View {
                     }
                     .padding(.horizontal, 8)
                     
-                    // Metal Liquid Glass 최근 거래
+                    // 초경량 SwiftUI Glass 최근 거래
                     VStack(alignment: .leading, spacing: 16) {
                         HStack {
                             Text("최근 거래")
                                 .kingStyle(.headlinePrimary)
                             Spacer()
-                            MetalLiquidGlassButton(
-                                icon: "arrow.right",
-                                style: .icon
+                            UltraLightweightSwiftUIButton(
+                                icon: "arrow.right"
                             ) {
                                 // 모든 거래 내역으로 이동
                             }
@@ -72,7 +71,7 @@ struct WalletHomeView: View {
                         .padding(.horizontal)
                         
                         ForEach(0..<3, id: \.self) { index in
-                            MetalTransactionCard(
+                            UltraLightweightTransactionCard(
                                 type: index % 2 == 0 ? .receive : .send,
                                 amount: index == 0 ? "0.5" : index == 1 ? "1.2" : "0.8",
                                 symbol: "ETH",
@@ -113,6 +112,7 @@ struct WalletHomeView: View {
             .environment(\.glassTheme, glassTheme)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
+                    // 테마 변경 메뉴
                     Menu {
                         Button("시스템 테마") {
                             withAnimation(.easeInOut(duration: 0.5)) {

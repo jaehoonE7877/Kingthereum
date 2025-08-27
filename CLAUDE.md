@@ -1452,3 +1452,219 @@ extension KingthereumTypography {
 
 이 디자인 시스템을 통해 일관된 사용자 경험과 브랜드 아이덴티티를 유지하며, 유지보수성과 확장성을 보장합니다.
 
+## 9. Git Flow 전략 (2024 iOS 모바일 앱 최적화)
+
+### 9.1 브랜치 구조
+
+```
+main (production)
+├── develop (통합 브랜치)
+├── feature/* (기능 개발)
+├── improvement/* (기존 기능 개선)
+├── fix/* (버그 수정)
+├── release/* (App Store 릴리즈 준비)
+├── hotfix/* (긴급 수정)
+└── test/* (테스트 전용)
+```
+
+#### 브랜치별 역할
+- **main**: 프로덕션 릴리즈 (App Store 배포 버전)
+  - 모든 커밋은 안정적이고 배포 가능한 상태
+  - 버전 태그 필수 (v1.0.0 형식)
+  
+- **develop**: 개발 통합 브랜치
+  - 다음 릴리즈를 위한 기능 통합
+  - feature 브랜치들이 머지되는 곳
+  
+- **feature/**: 새 기능 개발
+  - develop에서 분기, 완료 후 develop으로 머지
+  - 네이밍: `feature/[기능명]` (예: feature/wallet-connect)
+  
+- **improvement/**: 기존 기능 개선 및 리팩토링
+  - develop에서 분기, 완료 후 develop으로 머지
+  - 네이밍: `improvement/[개선사항]` (예: improvement/design-tokens)
+  
+- **fix/**: develop 브랜치의 버그 수정
+  - develop에서 분기, 완료 후 develop으로 머지
+  - 네이밍: `fix/[버그명]` (예: fix/login-crash)
+  
+- **release/**: App Store 릴리즈 준비
+  - develop에서 분기, main과 develop에 머지
+  - 네이밍: `release/[버전]` (예: release/1.2.0)
+  
+- **hotfix/**: 프로덕션 긴급 수정
+  - main에서 분기, main과 develop에 머지
+  - 네이밍: `hotfix/[이슈]` (예: hotfix/critical-crash)
+  
+- **test/**: 테스트 및 실험 전용
+  - 필요시 생성, 테스트 후 삭제
+  - 프로덕션에 머지되지 않음
+
+### 9.2 작업 플로우
+
+#### 신규 기능 개발
+```bash
+# 1. develop에서 feature 브랜치 생성
+git checkout develop
+git pull origin develop
+git checkout -b feature/new-feature
+
+# 2. 기능 개발 및 커밋
+git add .
+git commit -m "Feat: 새로운 기능 구현"
+
+# 3. develop 최신 상태 반영
+git checkout develop
+git pull origin develop
+git checkout feature/new-feature
+git merge develop
+
+# 4. PR 생성 및 리뷰
+gh pr create --base develop --title "Feature: 새 기능" --body "..."
+
+# 5. 머지 후 브랜치 삭제
+git branch -d feature/new-feature
+```
+
+#### 릴리즈 프로세스
+```bash
+# 1. release 브랜치 생성
+git checkout -b release/1.2.0 develop
+
+# 2. 버전 업데이트 및 최종 테스트
+# 버그 수정만 허용
+
+# 3. main으로 머지
+git checkout main
+git merge --no-ff release/1.2.0
+git tag -a v1.2.0 -m "Release version 1.2.0"
+
+# 4. develop으로 백머지
+git checkout develop
+git merge --no-ff release/1.2.0
+```
+
+#### 핫픽스 프로세스
+```bash
+# 1. main에서 hotfix 브랜치 생성
+git checkout -b hotfix/critical-bug main
+
+# 2. 버그 수정
+
+# 3. main과 develop에 머지
+git checkout main
+git merge --no-ff hotfix/critical-bug
+git tag -a v1.2.1 -m "Hotfix version 1.2.1"
+
+git checkout develop
+git merge --no-ff hotfix/critical-bug
+```
+
+### 9.3 브랜치별 규칙
+
+#### 보호 규칙
+- **main**: 
+  - 직접 푸시 금지
+  - PR 필수 (최소 1명 리뷰)
+  - CI/CD 통과 필수
+  - 관리자 승인 필요
+  
+- **develop**: 
+  - 직접 푸시 금지
+  - PR 필수
+  - 테스트 통과 필수
+  
+- **feature/**, **improvement/**, **fix/**:
+  - 자유로운 커밋 가능
+  - 정기적으로 develop 머지 권장
+  - 완료 후 즉시 삭제
+
+#### 머지 전략
+- **feature → develop**: Squash and merge (커밋 정리)
+- **release → main**: Merge commit (히스토리 보존)
+- **hotfix → main**: Merge commit (추적 가능)
+- **develop 동기화**: Merge commit
+
+### 9.4 PR 및 리뷰 프로세스
+
+#### PR 생성 체크리스트
+- [ ] 코드가 컴파일되고 실행됨
+- [ ] 모든 테스트 통과
+- [ ] 코드 스타일 가이드 준수
+- [ ] 문서 업데이트 (필요시)
+- [ ] CHANGELOG 업데이트
+- [ ] 리뷰어 지정
+
+#### 코드 리뷰 기준
+1. **기능성**: 요구사항을 충족하는가?
+2. **성능**: 성능 이슈는 없는가?
+3. **보안**: 보안 취약점은 없는가?
+4. **가독성**: 코드가 이해하기 쉬운가?
+5. **테스트**: 충분한 테스트가 있는가?
+6. **아키텍처**: VIP 패턴을 준수하는가?
+
+#### 자동화 도구
+- **CI/CD**: GitHub Actions
+- **테스트**: Swift Testing Framework
+- **코드 품질**: SwiftLint, SwiftFormat
+- **보안 스캔**: 자동 의존성 검사
+
+### 9.5 버전 관리
+
+#### Semantic Versioning (SemVer)
+`MAJOR.MINOR.PATCH` 형식 사용
+- **MAJOR**: 호환되지 않는 API 변경
+- **MINOR**: 하위 호환 기능 추가
+- **PATCH**: 하위 호환 버그 수정
+
+#### 태그 규칙
+```bash
+# 정식 릴리즈
+git tag -a v1.2.0 -m "Release: 새 기능 추가"
+
+# 베타 릴리즈
+git tag -a v1.2.0-beta.1 -m "Beta: 테스트 버전"
+
+# RC (Release Candidate)
+git tag -a v1.2.0-rc.1 -m "RC: 릴리즈 후보"
+```
+
+### 9.6 응급 상황 대응
+
+#### 프로덕션 장애 발생 시
+1. hotfix 브랜치 즉시 생성
+2. 최소한의 수정으로 문제 해결
+3. 긴급 테스트 수행
+4. main 배포 및 develop 동기화
+5. 사후 분석 및 문서화
+
+#### 롤백 프로세스
+```bash
+# 이전 버전으로 롤백
+git checkout main
+git reset --hard v1.1.0
+git push --force-with-lease origin main
+
+# 또는 revert 사용 (권장)
+git revert <commit-hash>
+git push origin main
+```
+
+### 9.7 Best Practices
+
+#### Do's ✅
+- 작은 단위로 자주 커밋
+- 명확한 커밋 메시지 작성
+- 정기적으로 develop 브랜치 동기화
+- PR 생성 전 로컬 테스트 실행
+- 리뷰 피드백 적극 반영
+
+#### Don'ts ❌
+- main 브랜치에 직접 푸시
+- 테스트 없이 머지
+- 큰 PR 생성 (500줄 이상)
+- 리뷰 없이 머지
+- 오래된 브랜치 방치
+
+이 Git Flow 전략을 통해 안정적이고 예측 가능한 개발 프로세스를 유지하며, App Store 배포에 최적화된 워크플로우를 구축합니다.
+

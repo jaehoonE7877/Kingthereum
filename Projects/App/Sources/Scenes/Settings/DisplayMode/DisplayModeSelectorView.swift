@@ -5,13 +5,9 @@ import Entity
 import Factory
 
 struct DisplayModeSelectorView: View {
-    @MainActor @Injected(\.displayModeService) private var displayModeService
+    @EnvironmentObject private var displayModeService: DisplayModeService
     @State private var selectedMode: DisplayMode = .system
     @Environment(\.dismiss) private var dismiss
-    
-    init() {
-        // Factory를 통한 자동 주입
-    }
     
     var body: some View {
         NavigationView {
@@ -39,7 +35,10 @@ struct DisplayModeSelectorView: View {
                 
                 Button {
                     displayModeService.setDisplayMode(selectedMode)
-                    dismiss()
+                    // UI 업데이트를 강제로 트리거
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        dismiss()
+                    }
                 } label: {
                     Text("적용")
                         .kingStyle(.buttonPrimary)
