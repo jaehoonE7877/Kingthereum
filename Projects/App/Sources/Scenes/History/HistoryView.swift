@@ -3,6 +3,10 @@ import Core
 import DesignSystem
 import Entity
 
+/// Phase 2.4-2: HistoryView King 디자인 시스템 완전 적용
+/// VIP Architecture + King Design System (Colors, Typography, Gradients)
+/// Modern Minimalism + Premium Fintech + Glassmorphism 완전 통합
+
 /// 거래 내역 화면의 디스플레이 로직을 정의하는 프로토콜
 /// VIP 아키텍처에서 Presenter가 View에게 데이터를 전달하기 위한 인터페이스
 @MainActor
@@ -78,14 +82,16 @@ final class HistoryViewStore: HistoryDisplayLogic {
 struct HistoryView: View {
     @State private var viewStore = HistoryViewStore()
     @Binding var showTabBar: Bool
+    @Binding var selectedTab: AppTab
     
     // MARK: - VIP Architecture Components
     private let interactor: HistoryBusinessLogic
     private let presenter: HistoryPresenter
     private let router: HistoryRouter
     
-    init(showTabBar: Binding<Bool>) {
+    init(showTabBar: Binding<Bool>, selectedTab: Binding<AppTab>) {
         self._showTabBar = showTabBar
+        self._selectedTab = selectedTab
         
         let interactor = HistoryInteractor()
         let presenter = HistoryPresenter()
@@ -101,16 +107,24 @@ struct HistoryView: View {
     var body: some View {
         NavigationView {
             ZStack {
+                // King 디자인 시스템 배경 적용
+                KingGradients.minimalistBackground
+                    .ignoresSafeArea()
+                
                 if viewStore.isLoading && viewStore.transactionViewModels.isEmpty {
-                    // 초기 로딩
+                    // 초기 로딩 - King 스타일
                     LoadingView(style: .spinner, size: .medium)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if viewStore.transactionViewModels.isEmpty && !viewStore.isLoading {
-                    // 빈 상태
-                    EmptyHistoryView()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    // 빈 상태 - King 스타일
+                    EmptyHistoryView(onNavigateToHome: {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            selectedTab = .home
+                        }
+                    })
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
-                    // 거래 목록
+                    // 거래 목록 - King 스타일
                     transactionListView
                 }
             }
@@ -119,6 +133,8 @@ struct HistoryView: View {
             }
             .navigationTitle("거래 내역")
             .navigationBarTitleDisplayMode(.large)
+            .toolbarBackground(KingGradients.minimalistBackground, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
                     filterButton
@@ -151,6 +167,7 @@ struct HistoryView: View {
             } message: {
                 if let message = viewStore.alertMessage {
                     Text(message)
+                        .kingStyle(.bodySecondary)
                 }
             }
         }
@@ -166,12 +183,12 @@ struct HistoryView: View {
     private var transactionListView: some View {
         ScrollView {
             LazyVStack(spacing: DesignTokens.Spacing.md) {
-                // 필터 요약 (활성 필터가 있을 때만 표시)
+                // 필터 요약 (활성 필터가 있을 때만 표시) - King 스타일
                 if viewStore.selectedFilter != .all {
                     filterSummaryView
                 }
                 
-                // 거래 목록
+                // 거래 목록 - King 스타일 적용
                 ForEach(viewStore.transactionViewModels, id: \.id) { transactionVM in
                     TransactionRowView(viewModel: transactionVM)
                         .padding(.horizontal, DesignTokens.Spacing.lg)
@@ -185,10 +202,16 @@ struct HistoryView: View {
                         }
                 }
                 
-                // 더 많은 거래 로딩 인디케이터
+                // 더 많은 거래 로딩 인디케이터 - King 스타일
                 if viewStore.hasMoreTransactions && viewStore.isLoadingMore {
-                    LoadingView(style: .spinner, size: .small)
-                        .padding()
+                    VStack(spacing: 12) {
+                        LoadingView(style: .spinner, size: .small)
+                        Text("더 많은 거래를 불러오는 중...")
+                            .kingStyle(.captionPrimary)
+                    }
+                    .padding()
+                    .premiumFinTechGlass(level: .subtle)
+                    .padding(.horizontal, DesignTokens.Spacing.lg)
                 }
                 
                 // 추가 스크롤 여백
@@ -210,28 +233,39 @@ struct HistoryView: View {
         HStack {
             HStack(spacing: 8) {
                 Image(systemName: viewStore.selectedFilter.systemIcon)
-                    .foregroundColor(.systemBlue)
+                    .font(KingTypography.caption)
+                    .foregroundColor(KingColors.trustPurple)
+                
                 Text(viewStore.selectedFilter.rawValue)
-                    .font(Typography.Body.small)
-                    .fontWeight(.medium)
+                    .kingStyle(.bodyPrimary)
+                
                 if let resultCount = viewStore.filterResultCount {
                     Text("(\(resultCount))")
-                        .font(Typography.Caption.small)
-                        .foregroundColor(.secondary)
+                        .kingStyle(.captionPrimary)
                 }
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(Color.systemBlue.opacity(0.1))
-            .cornerRadius(DesignTokens.CornerRadius.lg)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
+                    .fill(KingColors.trustPurple.opacity(0.08))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
+                            .stroke(KingColors.trustPurple.opacity(0.2), lineWidth: 0.5)
+                    )
+            )
             
             Spacer()
             
             Button("전체") {
                 clearFilter()
             }
-            .font(Typography.Body.small)
-            .foregroundColor(.systemBlue)
+            .font(KingTypography.labelMedium)
+            .foregroundColor(KingColors.trustPurple)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .background(Color.white.opacity(0.1))
+            .cornerRadius(DesignTokens.CornerRadius.md)
         }
         .padding(.horizontal, DesignTokens.Spacing.lg)
     }
@@ -241,8 +275,14 @@ struct HistoryView: View {
             viewStore.showFilterOptions = true
         } label: {
             Image(systemName: "line.horizontal.3.decrease.circle")
-                .foregroundColor(.systemBlue)
+                .font(KingTypography.labelLarge)
+                .foregroundColor(KingColors.exclusiveGold)
+                .padding(8)
+                .background(Color.white.opacity(0.1))
+                .clipShape(Circle())
         }
+        .scaleEffect(viewStore.showFilterOptions ? 0.95 : 1.0)
+        .animation(.easeInOut(duration: 0.15), value: viewStore.showFilterOptions)
     }
     
     private var exportButton: some View {
@@ -250,8 +290,14 @@ struct HistoryView: View {
             viewStore.showExportOptions = true
         } label: {
             Image(systemName: "square.and.arrow.up")
-                .foregroundColor(.systemBlue)
+                .font(KingTypography.labelLarge)
+                .foregroundColor(KingColors.exclusiveGold)
+                .padding(8)
+                .background(Color.white.opacity(0.1))
+                .clipShape(Circle())
         }
+        .scaleEffect(viewStore.showExportOptions ? 0.95 : 1.0)
+        .animation(.easeInOut(duration: 0.15), value: viewStore.showExportOptions)
     }
     
     // MARK: - Business Logic Methods
@@ -325,83 +371,319 @@ struct HistoryView: View {
 
 // MARK: - Supporting Views
 
-/// TransactionViewModel을 기반으로 한 거래 행 뷰
+/// TransactionViewModel을 기반으로 한 거래 행 뷰 - King 디자인 완전 적용
 struct TransactionRowView: View {
     let viewModel: TransactionViewModel
     
     private var statusColor: Color {
         switch viewModel.statusColor {
-        case "systemGreen": return .systemGreen
-        case "systemRed": return .systemRed
-        case "systemOrange": return .systemOrange
-        default: return .systemBlue
+        case "systemGreen": return KingColors.success
+        case "systemRed": return KingColors.error
+        case "systemOrange": return KingColors.warning
+        default: return KingColors.trustPurple
+        }
+    }
+    
+    private var statusGradient: LinearGradient {
+        switch viewModel.statusColor {
+        case "systemGreen": return KingGradients.subtleSuccess
+        case "systemRed": return KingGradients.subtleDanger
+        case "systemOrange": return KingGradients.minimalistSecondary
+        default: return KingGradients.trustGradient
         }
     }
     
     var body: some View {
         HStack(spacing: DesignTokens.Spacing.md) {
-            // 상태 아이콘
-            Image(systemName: viewModel.statusIcon)
-                .font(.title2)
-                .foregroundColor(statusColor)
-                .frame(width: 40, height: 40)
+            // 프리미엄 상태 아이콘
+            ZStack {
+                Circle()
+                    .fill(statusGradient)
+                    .frame(width: 44, height: 44)
+                
+                Image(systemName: viewModel.statusIcon)
+                    .font(KingTypography.labelLarge)
+                    .foregroundColor(statusColor)
+                    .fontWeight(.medium)
+            }
             
-            // 거래 정보
+            // 거래 정보 - King Typography 적용
             VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
                 Text(viewModel.title)
-                    .font(Typography.Body.medium)
-                    .fontWeight(.medium)
+                    .kingStyle(.bodyPrimary)
                 
                 Text(viewModel.subtitle)
-                    .font(Typography.Caption.medium)
-                    .foregroundColor(.secondary)
+                    .kingStyle(.bodySecondary)
                     .lineLimit(1)
             }
             
             Spacer()
             
-            // 금액 및 날짜
+            // 금액 및 날짜 - King Typography 적용
             VStack(alignment: .trailing, spacing: DesignTokens.Spacing.xs) {
                 Text(viewModel.amount)
-                    .font(Typography.Body.medium)
+                    .kingStyle(KingTextStyle(
+                        font: KingTypography.bodyMedium,
+                        color: statusColor
+                    ))
                     .fontWeight(.semibold)
-                    .foregroundColor(statusColor)
                 
                 Text(viewModel.formattedDate)
-                    .font(Typography.Caption.medium)
-                    .foregroundColor(.secondary)
+                    .kingStyle(.captionPrimary)
             }
         }
         .padding(DesignTokens.Spacing.lg)
-        .glassCard(level: .standard, context: .card)
+        .premiumFinTechGlass(level: .standard)
+        .overlay(
+            RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            statusColor.opacity(0.3),
+                            statusColor.opacity(0.1),
+                            Color.clear
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 0.5
+                )
+        )
+        .shadow(
+            color: statusColor.opacity(0.1),
+            radius: 4,
+            x: 0,
+            y: 2
+        )
     }
 }
 
-/// 거래 내역이 없을 때 표시되는 빈 상태 뷰
+/// 빈 상태 뷰 - King 디자인 시스템 완전 적용
 struct EmptyHistoryView: View {
+    @State private var isAnimating = false
+    @State private var pulseAnimation = false
+    @State private var floatingOffset: CGFloat = 0
+    
+    // HomeTab으로 이동하기 위한 클로저
+    let onNavigateToHome: (() -> Void)?
+    
+    init(onNavigateToHome: (() -> Void)? = nil) {
+        self.onNavigateToHome = onNavigateToHome
+    }
+    
     var body: some View {
-        VStack(spacing: DesignTokens.Spacing.xl) {
-            Image(systemName: "clock.arrow.circlepath")
-                .font(.system(size: 64))
-                .foregroundColor(.systemGray3)
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(spacing: 0) {
+                    Spacer(minLength: 60)
+                    
+                    // 메인 콘텐츠 카드
+                    VStack(spacing: 32) {
+                        // 프리미엄 헤더 아이콘 섹션
+                        headerIconSection
+                        
+                        // 메인 메시지 섹션
+                        mainMessageSection
+                        
+                        // CTA 버튼 섹션
+                        ctaButtonSection
+                    }
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 40)
+                    .background(
+                        RoundedRectangle(cornerRadius: 28)
+                            .fill(.ultraThinMaterial)
+                            .background(
+                                RoundedRectangle(cornerRadius: 28)
+                                    .fill(KingGradients.surface.opacity(0.1))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 28)
+                                    .stroke(KingGradients.trustGradient.opacity(0.3), lineWidth: 1)
+                            )
+                    )
+                    .shadow(
+                        color: KingColors.backgroundSecondary.opacity(0.1),
+                        radius: 20,
+                        x: 0,
+                        y: 8
+                    )
+                    .padding(.horizontal, 20)
+                    
+                    Spacer(minLength: 60)
+                }
+            }
+        }
+        .onAppear {
+            withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) {
+                isAnimating = true
+                pulseAnimation = true
+            }
             
-            VStack(spacing: DesignTokens.Spacing.sm) {
-                Text("거래 내역이 없습니다")
-                    .font(Typography.Heading.h4)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.primary)
-                
+            withAnimation(.easeInOut(duration: 2.5).repeatForever(autoreverses: true)) {
+                floatingOffset = -10
+            }
+        }
+    }
+    
+    // MARK: - Header Icon Section
+    private var headerIconSection: some View {
+        ZStack {
+            // 배경 글로우 이펙트
+            Circle()
+                .fill(KingGradients.trustGradient.opacity(0.2))
+                .frame(width: 140, height: 140)
+                .blur(radius: 20)
+                .scaleEffect(pulseAnimation ? 1.1 : 0.9)
+                .animation(
+                    .easeInOut(duration: 2.0).repeatForever(autoreverses: true),
+                    value: pulseAnimation
+                )
+            
+            // 메인 아이콘 배경
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            KingColors.trustPurple.opacity(0.1),
+                            KingColors.exclusiveGold.opacity(0.05)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(width: 100, height: 100)
+                .overlay(
+                    Circle()
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    KingColors.trustPurple.opacity(0.3),
+                                    KingColors.exclusiveGold.opacity(0.2)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 2
+                        )
+                )
+            
+            // 메인 아이콘
+            Image(systemName: "chart.line.uptrend.xyaxis")
+                .font(.system(size: 36, weight: .medium))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [
+                            KingColors.trustPurple,
+                            KingColors.exclusiveGold
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .offset(y: floatingOffset)
+                .animation(
+                    .easeInOut(duration: 2.5).repeatForever(autoreverses: true),
+                    value: floatingOffset
+                )
+        }
+    }
+    
+    // MARK: - Main Message Section
+    private var mainMessageSection: some View {
+        VStack(spacing: 16) {
+            Text("거래 내역이 없습니다")
+                .font(KingTypography.displaySmall)
+                .foregroundColor(KingColors.textPrimary)
+                .multilineTextAlignment(.center)
+            
+            VStack(spacing: 8) {
                 Text("첫 번째 거래를 시작해보세요")
-                    .font(Typography.Body.medium)
-                    .foregroundColor(.secondary)
+                    .font(KingTypography.bodyLarge)
+                    .foregroundColor(KingColors.textSecondary)
+                    .multilineTextAlignment(.center)
+                
+                Text("이더리움을 안전하게 전송하고 받을 수 있습니다")
+                    .font(KingTypography.bodyMedium)
+                    .foregroundColor(KingColors.textTertiary)
                     .multilineTextAlignment(.center)
             }
         }
-        .padding(DesignTokens.Spacing.xxl)
+    }
+    
+    // MARK: - CTA Button Section
+    private var ctaButtonSection: some View {
+        Button(action: {
+            onNavigateToHome?()
+        }) {
+            HStack(spacing: 12) {
+                Image(systemName: "plus.circle.fill")
+                    .font(.system(size: 20, weight: .medium))
+                
+                Text("거래 시작하기")
+                    .font(KingTypography.buttonPrimary)
+                    .fontWeight(.semibold)
+            }
+            .foregroundColor(KingColors.textInverse)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(
+                ZStack {
+                    // 배경 그라데이션 레이어
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(KingGradients.premiumGoldButton)
+                    
+                    // 오버레이 그라데이션
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    KingColors.trustPurple.opacity(0.8),
+                                    KingColors.exclusiveGold.opacity(0.6)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .blendMode(.overlay)
+                }
+                .shadow(
+                    color: KingColors.trustPurple.opacity(0.4),
+                    radius: 16,
+                    x: 0,
+                    y: 8
+                )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                KingColors.trustPurple.opacity(0.5),
+                                KingColors.exclusiveGold.opacity(0.3)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            )
+        }
+        .buttonStyle(PressedButtonStyle())
     }
 }
 
-/// 필터 옵션을 선택하는 모달 뷰
+// MARK: - Custom Button Style
+struct PressedButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
+            .opacity(configuration.isPressed ? 0.9 : 1.0)
+            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
+    }
+}
+
+/// 필터 옵션 모달 뷰 - King 디자인 완전 적용
 struct FilterOptionsView: View {
     @Binding var selectedFilter: TransactionFilterType
     let onFilterApplied: (TransactionFilterType) -> Void
@@ -409,45 +691,99 @@ struct FilterOptionsView: View {
     
     var body: some View {
         NavigationView {
-            List {
-                ForEach(TransactionFilterType.allCases, id: \.self) { filterType in
-                    HStack {
-                        Image(systemName: filterType.systemIcon)
-                            .foregroundColor(.systemBlue)
-                            .frame(width: 24)
-                        
-                        Text(filterType.rawValue)
-                            .font(Typography.Body.medium)
-                        
-                        Spacer()
-                        
-                        if selectedFilter == filterType {
-                            Image(systemName: "checkmark")
-                                .foregroundColor(.systemBlue)
+            ZStack {
+                KingGradients.minimalistBackground
+                    .ignoresSafeArea()
+                
+                ScrollView {
+                    LazyVStack(spacing: DesignTokens.Spacing.sm) {
+                        ForEach(TransactionFilterType.allCases, id: \.self) { filterType in
+                            FilterOptionRow(
+                                filterType: filterType,
+                                isSelected: selectedFilter == filterType
+                            ) {
+                                selectedFilter = filterType
+                                onFilterApplied(filterType)
+                                dismiss()
+                            }
                         }
                     }
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        selectedFilter = filterType
-                        onFilterApplied(filterType)
-                        dismiss()
-                    }
+                    .padding()
                 }
             }
             .navigationTitle("필터")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(KingGradients.minimalistBackground, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("완료") {
                         dismiss()
                     }
+                    .font(KingTypography.buttonPrimary)
+                    .foregroundColor(KingColors.trustPurple)
                 }
             }
         }
+        .presentationDetents([.medium])
+        .presentationDragIndicator(.visible)
     }
 }
 
-/// 내보내기 옵션을 선택하는 모달 뷰
+struct FilterOptionRow: View {
+    let filterType: TransactionFilterType
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: DesignTokens.Spacing.md) {
+                // 아이콘
+                ZStack {
+                    Circle()
+                        .fill(isSelected ? KingColors.trustPurple.opacity(0.15) : Color.clear)
+                        .frame(width: 36, height: 36)
+                    
+                    Image(systemName: filterType.systemIcon)
+                        .font(KingTypography.labelLarge)
+                        .foregroundColor(isSelected ? KingColors.trustPurple : KingColors.textSecondary)
+                }
+                
+                // 텍스트
+                Text(filterType.rawValue)
+                    .font(KingTypography.bodyMedium)
+                    .foregroundColor(isSelected ? KingColors.textPrimary : KingColors.textSecondary)
+                
+                Spacer()
+                
+                // 선택 표시
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(KingTypography.labelLarge)
+                        .foregroundColor(KingColors.trustPurple)
+                        .transition(.scale.combined(with: .opacity))
+                }
+            }
+            .padding(DesignTokens.Spacing.lg)
+            .background(
+                RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
+                    .fill(isSelected ? KingColors.trustPurple.opacity(0.08) : Color.white.opacity(0.1))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
+                            .stroke(
+                                isSelected ? KingColors.trustPurple.opacity(0.3) : Color.clear,
+                                lineWidth: 1
+                            )
+                    )
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+        .scaleEffect(isSelected ? 1.02 : 1.0)
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isSelected)
+    }
+}
+
+/// 내보내기 옵션 모달 뷰 - King 디자인 완전 적용
 struct ExportOptionsView: View {
     let transactions: [Entity.Transaction]
     let onExport: (ExportFormat) -> Void
@@ -455,55 +791,76 @@ struct ExportOptionsView: View {
     
     var body: some View {
         NavigationView {
-            List {
-                Section("내보내기 형식") {
-                    ForEach(ExportFormat.allCases, id: \.self) { format in
-                        HStack {
-                            Image(systemName: iconForFormat(format))
-                                .foregroundColor(.systemBlue)
-                                .frame(width: 24)
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(format.rawValue)
-                                    .font(Typography.Body.medium)
+            ZStack {
+                KingGradients.minimalistBackground
+                    .ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(spacing: DesignTokens.Spacing.lg) {
+                        // 헤더 섹션
+                        VStack(spacing: DesignTokens.Spacing.md) {
+                            ZStack {
+                                Circle()
+                                    .fill(KingGradients.premiumGold)
+                                    .frame(width: 64, height: 64)
                                 
-                                Text(descriptionForFormat(format))
-                                    .font(Typography.Caption.medium)
-                                    .foregroundColor(.secondary)
+                                Image(systemName: "square.and.arrow.up")
+                                    .font(KingTypography.headlineMedium)
+                                    .foregroundColor(KingColors.exclusiveGold)
                             }
                             
-                            Spacer()
-                            
-                            Image(systemName: "chevron.right")
-                                .foregroundColor(.systemGray3)
+                            VStack(spacing: DesignTokens.Spacing.xs) {
+                                Text("거래 내역 내보내기")
+                                    .font(KingTypography.headlineLarge)
+                                    .foregroundColor(KingColors.textPrimary)
+                                
+                                Text("\(transactions.count)개의 거래를 선택한 형식으로 내보냅니다")
+                                    .font(KingTypography.bodyMedium)
+                                    .foregroundColor(KingColors.textSecondary)
+                                    .multilineTextAlignment(.center)
+                            }
                         }
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            onExport(format)
-                            dismiss()
+                        .padding(.top)
+                        
+                        // 내보내기 형식 옵션들
+                        LazyVStack(spacing: DesignTokens.Spacing.sm) {
+                            ForEach(ExportFormat.allCases, id: \.self) { format in
+                                ExportOptionRow(format: format) {
+                                    onExport(format)
+                                    dismiss()
+                                }
+                            }
                         }
+                        
+                        Spacer(minLength: 50)
                     }
-                }
-                
-                Section {
-                    Text("\(transactions.count)개의 거래를 내보냅니다")
-                        .font(Typography.Caption.medium)
-                        .foregroundColor(.secondary)
+                    .padding()
                 }
             }
             .navigationTitle("내보내기")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(KingGradients.minimalistBackground, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("취소") {
                         dismiss()
                     }
+                    .font(KingTypography.buttonPrimary)
+                    .foregroundColor(KingColors.textSecondary)
                 }
             }
         }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
     }
+}
+
+struct ExportOptionRow: View {
+    let format: ExportFormat
+    let action: () -> Void
     
-    private func iconForFormat(_ format: ExportFormat) -> String {
+    private var formatIcon: String {
         switch format {
         case .csv: return "doc.text"
         case .json: return "doc.badge.gearshape"
@@ -512,12 +869,65 @@ struct ExportOptionsView: View {
         }
     }
     
-    private func descriptionForFormat(_ format: ExportFormat) -> String {
+    private var formatDescription: String {
         switch format {
         case .csv: return "스프레드시트에서 열기"
         case .json: return "개발자용 데이터 형식"
         case .pdf: return "문서 형태로 저장"
         case .xlsx: return "엑셀 파일로 저장"
         }
+    }
+    
+    private var formatColor: Color {
+        switch format {
+        case .csv: return KingColors.success
+        case .json: return KingColors.trustPurple
+        case .pdf: return KingColors.error
+        case .xlsx: return KingColors.exclusiveGold
+        }
+    }
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: DesignTokens.Spacing.md) {
+                // 아이콘
+                ZStack {
+                    RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.md)
+                        .fill(formatColor.opacity(0.15))
+                        .frame(width: 44, height: 44)
+                    
+                    Image(systemName: formatIcon)
+                        .font(KingTypography.labelLarge)
+                        .foregroundColor(formatColor)
+                }
+                
+                // 텍스트 정보
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(format.rawValue.uppercased())
+                        .kingStyle(.bodyPrimary)
+                        .fontWeight(.semibold)
+                    
+                    Text(formatDescription)
+                        .kingStyle(.bodySecondary)
+                }
+                
+                Spacer()
+                
+                // 화살표
+                Image(systemName: "chevron.right")
+                    .font(KingTypography.caption)
+                    .foregroundColor(KingColors.textTertiary)
+            }
+            .padding(DesignTokens.Spacing.lg)
+            .background(.ultraThinMaterial)
+            .cornerRadius(DesignTokens.CornerRadius.lg)
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
+                    .stroke(formatColor.opacity(0.2), lineWidth: 0.5)
+            )
+        }
+        .buttonStyle(PlainButtonStyle())
+        .scaleEffect(0.98)
+        .animation(.easeInOut(duration: 0.1), value: false)
     }
 }
