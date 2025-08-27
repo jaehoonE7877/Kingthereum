@@ -14,7 +14,7 @@ public extension EnvironmentValues {
 }
 
 /// Glass 컴포넌트의 테마
-public enum GlassTheme: String, CaseIterable {
+public enum GlassTheme: String, CaseIterable, Sendable {
     case system = "system"
     case light = "light" 
     case dark = "dark"
@@ -83,7 +83,7 @@ public struct GlassCard<Content: View>: View {
         case .dark:
             return style.borderColor.opacity(0.8)
         case .vibrant:
-            return LinearGradient.primaryGradient.opacity(0.7)
+            return style.borderColor.opacity(0.7)
         }
     }
     
@@ -114,8 +114,7 @@ public struct GlassCard<Content: View>: View {
     }
 }
 
-@MainActor
-public struct GlassCardStyle {
+public struct GlassCardStyle: Sendable {
     public static let `default` = GlassCardStyle(
         material: .ultraThinMaterial,
         cornerRadius: Constants.UI.cornerRadius,
@@ -148,7 +147,7 @@ public struct GlassCardStyle {
     
     public static let wallet = GlassCardStyle(
         material: .regularMaterial,
-        cornerRadius: Constants.UI.cornerRadius + 4,
+        cornerRadius: DesignTokens.MetalGlass.Card.prominentCornerRadius,
         borderColor: .glassBorderAccent,
         borderWidth: 1.1,
         shadowColor: .glassShadowMedium,
@@ -158,7 +157,7 @@ public struct GlassCardStyle {
     
     public static let transaction = GlassCardStyle(
         material: .thinMaterial,
-        cornerRadius: Constants.UI.cornerRadius - 2,
+        cornerRadius: DesignTokens.MetalGlass.Card.subtleCornerRadius,
         borderColor: .glassBorderSecondary,
         borderWidth: 0.6,
         shadowColor: .glassShadowLight,
@@ -244,7 +243,7 @@ public struct BalanceCard: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(20)
+        .padding(DesignTokens.Spacing.lg)
         .glassCard(style: .wallet)
     }
 }
@@ -308,7 +307,7 @@ public struct TransactionCard: View {
             Image(systemName: type.icon)
                 .font(.title2)
                 .foregroundColor(type.color)
-                .frame(width: 32, height: 32)
+                .frame(width: DesignTokens.Size.Icon.lg, height: DesignTokens.Size.Icon.lg)
             
             VStack(alignment: .leading, spacing: 2) {
                 HStack {
@@ -329,7 +328,7 @@ public struct TransactionCard: View {
                     .foregroundColor(.secondary)
             }
         }
-        .padding(16)
+        .padding(DesignTokens.Spacing.lg)
         .glassCard(style: .transaction)
     }
 }
@@ -375,14 +374,14 @@ public struct ActionCard: View {
                                 .foregroundColor(.primary)
                         }
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8))
+                        .padding(.vertical, DesignTokens.Spacing.md)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.md))
                     }
                     .buttonStyle(PlainButtonStyle())
                 }
             }
         }
-        .padding(20)
+        .padding(DesignTokens.Spacing.lg)
         .glassCard(style: .default)
     }
 }
@@ -421,7 +420,7 @@ public struct InfoCard: View {
             Image(systemName: icon)
                 .font(.title2)
                 .foregroundColor(style.iconColor)
-                .frame(width: 32, height: 32)
+                .frame(width: DesignTokens.Size.Icon.lg, height: DesignTokens.Size.Icon.lg)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
@@ -443,7 +442,7 @@ public struct InfoCard: View {
                 .fontWeight(.semibold)
                 .foregroundColor(.primary)
         }
-        .padding(16)
+        .padding(DesignTokens.Spacing.lg)
         .glassCard(style: .subtle)
     }
 }

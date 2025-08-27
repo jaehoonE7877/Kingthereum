@@ -21,6 +21,8 @@ public enum DesignTokens {
         public static let xxl: CGFloat = 32
         /// 점보 간격 (48pt)
         public static let jumbo: CGFloat = 48
+        /// 스크롤 하단 여백 (100pt)
+        public static let scrollBottomPadding: CGFloat = 100
         
         /// 패딩 프리셋
         public enum Padding {
@@ -71,6 +73,7 @@ public enum DesignTokens {
         public enum Card {
             public static let minHeight: CGFloat = 120
             public static let maxWidth: CGFloat = 400
+            public static let prominentHeight: CGFloat = 200
         }
         
         /// 입력 필드 높이
@@ -78,6 +81,21 @@ public enum DesignTokens {
             public static let sm: CGFloat = 36
             public static let md: CGFloat = 44
             public static let lg: CGFloat = 52
+        }
+        
+        /// 구분선 높이
+        public enum Divider {
+            public static let thin: CGFloat = 1
+            public static let normal: CGFloat = 2
+            public static let thick: CGFloat = 4
+            public static let heavy: CGFloat = 8
+        }
+        
+        /// 탭바 크기
+        public enum TabBar {
+            public static let height: CGFloat = 83
+            public static let iconSize: CGFloat = 24
+            public static let selectedIconSize: CGFloat = 26
         }
     }
     
@@ -102,11 +120,11 @@ public enum DesignTokens {
         }
         
         public static let none = ShadowStyle(color: .clear, radius: 0, x: 0, y: 0)
-        public static let subtle = ShadowStyle(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
-        public static let light = ShadowStyle(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-        public static let medium = ShadowStyle(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
-        public static let heavy = ShadowStyle(color: .black.opacity(0.2), radius: 16, x: 0, y: 8)
-        public static let card = ShadowStyle(color: .black.opacity(0.08), radius: 6, x: 0, y: 3)
+        public static let subtle = ShadowStyle(color: KingthereumColors.cardShadow.opacity(0.5), radius: 2, x: 0, y: 1)
+        public static let light = ShadowStyle(color: KingthereumColors.cardShadow.opacity(0.8), radius: 4, x: 0, y: 2)
+        public static let medium = ShadowStyle(color: KingthereumColors.cardShadow, radius: 8, x: 0, y: 4)
+        public static let heavy = ShadowStyle(color: KingthereumColors.cardShadow.opacity(1.5), radius: 16, x: 0, y: 8)
+        public static let card = ShadowStyle(color: KingthereumColors.cardShadow, radius: 6, x: 0, y: 3)
     }
     
     // MARK: - Opacity
@@ -139,6 +157,87 @@ public enum DesignTokens {
         public static let verySlow: Double = 0.8
     }
     
+    // MARK: - Metal Glass Effects
+    
+    public enum MetalGlass {
+        /// Metal 효과를 위한 설정값들
+        public enum Config {
+            public static let blurRadius: CGFloat = 20
+            public static let saturation: Double = 1.8
+            public static let brightness: Double = 1.1
+            public static let minOpacity: Double = 0.3
+            public static let maxOpacity: Double = 0.9
+        }
+        
+        /// Glass 카드 설정
+        public enum Card {
+            public static let defaultCornerRadius: CGFloat = 16
+            public static let prominentCornerRadius: CGFloat = 20
+            public static let subtleCornerRadius: CGFloat = 12
+            public static let borderWidth: CGFloat = 1
+            public static let shadowRadius: CGFloat = 10
+            public static let shadowOffset: CGPoint = CGPoint(x: 0, y: 4)
+        }
+        
+        /// Glass 버튼 설정  
+        public enum Button {
+            public static let cornerRadius: CGFloat = 12
+            public static let height: CGFloat = 48
+            public static let iconSize: CGFloat = 20
+            public static let pressedScale: CGFloat = 0.95
+            public static let animationDuration: Double = 0.2
+        }
+    }
+    
+    // MARK: - Crypto Specific Tokens
+    
+    public enum Crypto {
+        /// 암호화폐 주소 관련
+        public enum Address {
+            public static let fontSize: CGFloat = 14
+            public static let fontFamily: String = "SFMono-Regular"
+            public static let letterSpacing: CGFloat = 0.5
+            public static let cornerRadius: CGFloat = 8
+            public static let padding: EdgeInsets = EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12)
+        }
+        
+        /// 암호화폐 잔액 표시
+        public enum Balance {
+            public static let primaryFontSize: CGFloat = 32
+            public static let secondaryFontSize: CGFloat = 18
+            public static let symbolFontSize: CGFloat = 14
+            public static let decimals: Int = 6
+        }
+        
+        /// 거래 카드
+        public enum Transaction {
+            public static let cardHeight: CGFloat = 72
+            public static let iconSize: CGFloat = 24
+            public static let cornerRadius: CGFloat = 12
+            public static let spacing: CGFloat = 12
+        }
+    }
+    
+    // MARK: - Accessibility
+    
+    public enum Accessibility {
+        /// 터치 대상 최소 크기 (Apple HIG 기준)
+        public static let minTouchTarget: CGFloat = 44
+        
+        /// 색상 대비율 (WCAG 기준)
+        public enum ContrastRatio {
+            public static let aa: Double = 4.5
+            public static let aaa: Double = 7.0
+            public static let largeText: Double = 3.0
+        }
+        
+        /// 동적 타입 지원 배율
+        public enum DynamicType {
+            public static let minScale: CGFloat = 0.8
+            public static let maxScale: CGFloat = 1.4
+        }
+    }
+    
     // MARK: - Breakpoints (for responsive design)
     
     public enum Breakpoint {
@@ -150,45 +249,104 @@ public enum DesignTokens {
     }
 }
 
-// MARK: - Semantic Color Tokens
+// MARK: - Semantic Color Tokens (Kingthereum Integration)
 
 public extension Color {
     
     // MARK: - Status Colors
     
-    static let success = Color.green
-    static let warning = Color.orange
-    static let error = Color.red
-    static let info = Color.blue
+    static let success = KingthereumColors.success
+    static let warning = KingthereumColors.warning
+    static let error = KingthereumColors.error
+    static let info = KingthereumColors.info
     
     // MARK: - Surface Colors
     
-    static let surfacePrimary = Color(UIColor.systemBackground)
-    static let surfaceSecondary = Color(UIColor.secondarySystemBackground)
-    static let surfaceTertiary = Color(UIColor.tertiarySystemBackground)
+    static let surfacePrimary = KingthereumColors.backgroundPrimary
+    static let surfaceSecondary = KingthereumColors.backgroundSecondary
+    static let surfaceTertiary = KingthereumColors.backgroundTertiary
     
     // MARK: - Border Colors
     
-    static let borderPrimary = Color(UIColor.separator)
-    static let borderSecondary = Color(UIColor.separator).opacity(0.5)
-    static let borderFocus = Color.blue
+    static let borderPrimary = KingthereumColors.border
+    static let borderSecondary = KingthereumColors.borderSubtle
+    static let borderFocus = KingthereumColors.focus
     
     // MARK: - Text Colors
     
-    static let textPrimary = Color(UIColor.label)
-    static let textSecondary = Color(UIColor.secondaryLabel)
-    static let textTertiary = Color(UIColor.tertiaryLabel)
-    static let textDisabled = Color(UIColor.quaternaryLabel)
+    static let textPrimary = KingthereumColors.textPrimary
+    static let textSecondary = KingthereumColors.textSecondary
+    static let textTertiary = KingthereumColors.textTertiary
+    static let textDisabled = KingthereumColors.textPlaceholder
     
     // MARK: - Interactive Colors
     
-    static let interactive = Color.blue
-    static let interactiveHover = Color.blue.opacity(0.8)
-    static let interactivePressed = Color.blue.opacity(0.6)
-    static let interactiveDisabled = Color.gray
+    static let interactive = KingthereumColors.accent
+    static let interactiveHover = KingthereumColors.accent.opacity(0.8)
+    static let interactivePressed = KingthereumColors.accent.opacity(0.6)
+    static let interactiveDisabled = KingthereumColors.buttonDisabled
 }
 
-// MARK: - Typography Scale
+// MARK: - Advanced Design Tokens
+
+public enum DesignSystem {
+    
+    // MARK: - Content Density
+    
+    public enum Density {
+        public enum Comfortable {
+            public static let spacing: CGFloat = DesignTokens.Spacing.lg
+            public static let buttonHeight: CGFloat = 48
+            public static let inputHeight: CGFloat = 48
+        }
+        
+        public enum Compact {
+            public static let spacing: CGFloat = DesignTokens.Spacing.md
+            public static let buttonHeight: CGFloat = 36
+            public static let inputHeight: CGFloat = 36
+        }
+    }
+    
+    // MARK: - Layout Grid
+    
+    public enum Grid {
+        public static let columns: Int = 12
+        public static let gutter: CGFloat = 16
+        public static let margin: CGFloat = 24
+        public static let maxWidth: CGFloat = 1200
+    }
+    
+    // MARK: - Elevation System
+    
+    public enum Elevation {
+        public static let level1: CGFloat = 2  // Cards
+        public static let level2: CGFloat = 4  // Buttons
+        public static let level3: CGFloat = 8  // App Bar
+        public static let level4: CGFloat = 12 // FAB
+        public static let level5: CGFloat = 16 // Drawer
+        public static let level6: CGFloat = 24 // Modal
+    }
+    
+    // MARK: - State Tokens
+    
+    public enum State {
+        public enum Button {
+            public static let normalOpacity: Double = 1.0
+            public static let hoverOpacity: Double = 0.9
+            public static let pressedOpacity: Double = 0.8
+            public static let disabledOpacity: Double = 0.4
+            public static let focusScale: CGFloat = 1.02
+        }
+        
+        public enum Card {
+            public static let normalScale: CGFloat = 1.0
+            public static let hoverScale: CGFloat = 1.02
+            public static let pressedScale: CGFloat = 0.98
+        }
+    }
+}
+
+// MARK: - Typography Scale (Preserved for backward compatibility)
 
 public enum Typography {
     
@@ -310,6 +468,86 @@ public extension View {
     ) -> some View {
         GeometryReader { geometry in
             content(geometry.size.width)
+        }
+    }
+    
+    // MARK: - Metal Glass Effects
+    
+    func metalGlassEffect(
+        style: MetalGlassStyle = .default,
+        cornerRadius: CGFloat = DesignTokens.MetalGlass.Card.defaultCornerRadius
+    ) -> some View {
+        self
+            .background(.ultraThinMaterial)
+            .cornerRadius(cornerRadius)
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.3),
+                                Color.clear,
+                                Color.white.opacity(0.1)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: DesignTokens.MetalGlass.Card.borderWidth
+                    )
+            )
+            .shadow(
+                color: KingthereumColors.cardShadow.opacity(0.3),
+                radius: DesignTokens.MetalGlass.Card.shadowRadius,
+                x: DesignTokens.MetalGlass.Card.shadowOffset.x,
+                y: DesignTokens.MetalGlass.Card.shadowOffset.y
+            )
+    }
+    
+    // MARK: - Crypto Specific Styling
+    
+    func cryptoAddressStyle() -> some View {
+        self
+            .font(.system(size: DesignTokens.Crypto.Address.fontSize, weight: .regular, design: .monospaced))
+            .kerning(DesignTokens.Crypto.Address.letterSpacing)
+            .padding(DesignTokens.Crypto.Address.padding)
+            .background(.ultraThinMaterial)
+            .cornerRadius(DesignTokens.Crypto.Address.cornerRadius)
+    }
+    
+    func cryptoBalanceStyle(isPrimary: Bool = true) -> some View {
+        let fontSize = isPrimary ? 
+            DesignTokens.Crypto.Balance.primaryFontSize : 
+            DesignTokens.Crypto.Balance.secondaryFontSize
+        
+        return self
+            .font(.system(size: fontSize, weight: .semibold, design: .rounded))
+            .foregroundStyle(isPrimary ? KingthereumColors.textPrimary : KingthereumColors.textSecondary)
+    }
+    
+    // MARK: - Accessibility Helpers
+    
+    func accessibleTouchTarget() -> some View {
+        self
+            .frame(minWidth: DesignTokens.Accessibility.minTouchTarget,
+                   minHeight: DesignTokens.Accessibility.minTouchTarget)
+    }
+}
+
+// MARK: - Helper Enums
+
+public enum MetalGlassStyle {
+    case `default`
+    case prominent
+    case subtle
+    
+    var cornerRadius: CGFloat {
+        switch self {
+        case .default:
+            return DesignTokens.MetalGlass.Card.defaultCornerRadius
+        case .prominent:
+            return DesignTokens.MetalGlass.Card.prominentCornerRadius
+        case .subtle:
+            return DesignTokens.MetalGlass.Card.subtleCornerRadius
         }
     }
 }

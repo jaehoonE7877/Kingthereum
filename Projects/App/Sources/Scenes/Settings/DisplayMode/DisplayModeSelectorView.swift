@@ -5,13 +5,9 @@ import Entity
 import Factory
 
 struct DisplayModeSelectorView: View {
-    @MainActor @Injected(\.displayModeService) private var displayModeService
+    @EnvironmentObject private var displayModeService: DisplayModeService
     @State private var selectedMode: DisplayMode = .system
     @Environment(\.dismiss) private var dismiss
-    
-    init() {
-        // Factory를 통한 자동 주입
-    }
     
     var body: some View {
         NavigationView {
@@ -39,21 +35,17 @@ struct DisplayModeSelectorView: View {
                 
                 Button {
                     displayModeService.setDisplayMode(selectedMode)
-                    dismiss()
+                    // UI 업데이트를 강제로 트리거
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        dismiss()
+                    }
                 } label: {
                     Text("적용")
-                        .font(.headline)
-                        .foregroundColor(.white)
+                        .kingStyle(.buttonPrimary)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 56)
-                        .background(
-                            .linearGradient(
-                                colors: [.blue, .purple],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .cornerRadius(16)
+                        .frame(height: DesignTokens.Size.Button.md)
+                        .background(KingthereumGradients.buttonPrimary)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 20)
@@ -125,22 +117,14 @@ struct DisplayModeOptionCard: View {
             }
             .padding()
             .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.secondary.opacity(0.05))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .strokeBorder(
-                                isSelected
-                                ? AnyShapeStyle(.linearGradient(
-                                    colors: [.blue.opacity(0.5), .purple.opacity(0.5)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ))
-                                : AnyShapeStyle(.clear),
-                                lineWidth: 2
-                            )
-                    )
+                RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
+                    .fill(isSelected ? KingthereumGradients.cardElevated : KingthereumGradients.card)
             )
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
+                    .stroke(isSelected ? KingthereumColors.accent : KingthereumColors.cardBorder, lineWidth: isSelected ? 2 : 1)
+            )
+            .shadow(color: KingthereumColors.cardShadow, radius: isSelected ? 8 : 4, x: 0, y: isSelected ? 4 : 2)
         }
         .buttonStyle(PlainButtonStyle())
     }
