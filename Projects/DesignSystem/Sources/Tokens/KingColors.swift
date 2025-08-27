@@ -5,193 +5,227 @@ import UIKit
 import AppKit
 #endif
 
-/// King 앱 전용 모던 색상 시스템
-/// 라이트/다크 모드에 자연스럽게 어울리는 일관된 색상 팔레트
+/// Kingthereum 프리미엄 디자인 시스템 2024
+/// 모던 미니멀리즘 + 프리미엄 피나테크 + 글래스모피즘 핵심 키워드 기반
 public struct KingColors {
     
-    // MARK: - Primary Brand Colors
+    // MARK: - 모던 미니멀리즘 Core Colors
     
-    /// 메인 브랜드 색상 - 딥 네이비
-    public static let primaryDark = Color.kingAdaptive(
-        light: Color(hex: "#1A1B23"),
+    /// 극도로 깊은 네이비 - 모던 미니멀리즘의 핵심
+    public static let minimalistNavy = Color.kingAdaptive(
+        light: Color(hex: "#0A0F1C"),  // 더욱 깊고 절제된 네이비
+        dark: Color(hex: "#000000")    // 순수 블랙
+    )
+    
+    /// 프리미엄 피나테크 신뢰 퍼플
+    public static let trustPurple = Color.kingAdaptive(
+        light: Color(hex: "#5B21B6"),  // 신뢰감 있는 딥 퍼플
+        dark: Color(hex: "#7C3AED")
+    )
+    
+    /// 골드 액센트 - 오직 중요한 요소에만 사용
+    public static let exclusiveGold = Color.kingAdaptive(
+        light: Color(hex: "#B7791F"),  // 차분하고 고급스러운 골드
+        dark: Color(hex: "#D97706")    // 약간 더 밝은 골드
+    )
+    
+    /// 순수 화이트 - 미니멀리즘의 기본
+    public static let pureWhite = Color.kingAdaptive(
+        light: Color(hex: "#FFFFFF"),
         dark: Color(hex: "#0F0F0F")
     )
     
-    /// 라이트 브랜드 색상
-    public static let primaryLight = Color.kingAdaptive(
-        light: Color(hex: "#2A2D39"),
+    /// 서브틀 그레이 - 뉴트럴 톤
+    public static let subtleGray = Color.kingAdaptive(
+        light: Color(hex: "#F8FAFC"),
         dark: Color(hex: "#1A1A1A")
     )
     
-    /// 메인 액센트 색상 - 세련된 블루
-    public static let accent = Color.kingAdaptive(
-        light: Color(hex: "#4C6EF5"),
-        dark: Color(hex: "#5C7CFA")
-    )
+    // MARK: - Legacy Colors (호환성을 위해 유지하되 새로운 색상으로 매핑)
     
-    /// 세컨더리 액센트 - 퍼플
-    public static let accentSecondary = Color.kingAdaptive(
-        light: Color(hex: "#7C3AED"),
-        dark: Color(hex: "#8B5CF6")
-    )
+    /// 메인 브랜드 색상 → minimalistNavy로 매핑
+    public static let primaryDark = minimalistNavy
     
-    // MARK: - Background Hierarchy
+    /// 라이트 브랜드 색상 → subtleGray로 매핑
+    public static let primaryLight = subtleGray
     
-    /// 메인 배경색
-    public static let backgroundPrimary = Color.kingAdaptive(
-        light: Color(hex: "#FFFFFF"),
-        dark: Color(hex: "#000000")
-    )
+    /// 메인 액센트 색상 → trustPurple로 매핑
+    public static let accent = trustPurple
     
-    /// 세컨더리 배경색 - 카드 등
+    /// 세컨더리 액센트 → exclusiveGold로 매핑
+    public static let accentSecondary = exclusiveGold
+    
+    // MARK: - 미니멀리즘 Background Hierarchy
+    
+    /// 메인 배경색 - 순수하고 깔끔한 베이스
+    public static let backgroundPrimary = pureWhite
+    
+    /// 세컨더리 배경색 - 극도로 서브틀한 그레이
     public static let backgroundSecondary = Color.kingAdaptive(
-        light: Color(hex: "#F8F9FA"),
-        dark: Color(hex: "#111111")
+        light: Color(hex: "#FAFBFC"),  // 거의 화이트에 가까운 서브틀함
+        dark: Color(hex: "#0A0A0A")
     )
     
-    /// 터셔리 배경색 - 그룹된 컨텐츠
+    /// 터셔리 배경색 - 미니멀 그룹 배경
     public static let backgroundTertiary = Color.kingAdaptive(
-        light: Color(hex: "#E9ECEF"),
-        dark: Color(hex: "#1F1F1F")
+        light: Color(hex: "#F5F6F8"),  // 아주 연한 그레이
+        dark: Color(hex: "#151515")
     )
     
-    /// 서피스 배경색 - 엘리베이티드 컨텐츠
+    /// 서피스 배경색 - 글래스모피즘 베이스
     public static let surface = Color.kingAdaptive(
-        light: Color(hex: "#FFFFFF"),
-        dark: Color(hex: "#161616")
+        light: Color(hex: "#FFFFFF").opacity(0.9),  // 반투명 화이트
+        dark: Color(hex: "#1A1A1A").opacity(0.9)    // 반투명 다크
     )
     
-    // MARK: - Card & Surface Colors
+    // MARK: - 글래스모피즘 Card & Surface Colors
     
-    /// 카드 배경색
-    public static let cardBackground = Color.kingAdaptive(
-        light: Color(hex: "#FFFFFF"),
-        dark: Color(hex: "#1A1A1A")
+    /// 미니멀 글래스 카드 배경 - 극도로 서브틀한 반투명
+    public static let glassCardBackground = Color.kingAdaptive(
+        light: Color.white.opacity(0.65),  // 더 서브틀하게
+        dark: Color(hex: "#1A1A1A").opacity(0.75)
     )
     
-    /// 카드 보더색
-    public static let cardBorder = Color.kingAdaptive(
-        light: Color(hex: "#E5E7EB"),
-        dark: Color(hex: "#374151")
+    /// 글래스 보더 - 극도로 연한 톤 (미니멀리즘)
+    public static let glassBorder = Color.kingAdaptive(
+        light: Color.white.opacity(0.2),  // 더 연하게
+        dark: Color.white.opacity(0.1)
     )
     
-    /// 카드 섀도우색
-    public static let cardShadow = Color.kingAdaptive(
-        light: Color(hex: "#000000").opacity(0.04),
-        dark: Color(hex: "#000000").opacity(0.2)
+    /// 글래스 섀도우 - 미니멀한 깊이감
+    public static let glassShadow = Color.kingAdaptive(
+        light: Color.black.opacity(0.05),  // 극도로 연하게
+        dark: Color.black.opacity(0.2)
     )
     
-    /// 엘리베이티드 카드 배경
-    public static let cardElevated = Color.kingAdaptive(
-        light: Color(hex: "#FFFFFF"),
-        dark: Color(hex: "#262626")
+    /// 프리미엄 엘리베이티드 카드 - 중요한 요소용
+    public static let premiumElevated = Color.kingAdaptive(
+        light: Color.white.opacity(0.9),
+        dark: Color(hex: "#1F1F1F").opacity(0.9)
     )
     
-    // MARK: - Text Hierarchy
+    // MARK: - Legacy Card Colors (호환성을 위해 유지)
     
-    /// 메인 텍스트 색상
+    /// 카드 배경색 → glassCardBackground로 매핑
+    public static let cardBackground = glassCardBackground
+    
+    /// 카드 보더색 → glassBorder로 매핑
+    public static let cardBorder = glassBorder
+    
+    /// 카드 섀도우색 → glassShadow로 매핑
+    public static let cardShadow = glassShadow
+    
+    /// 엘리베이티드 카드 배경 → premiumElevated로 매핑
+    public static let cardElevated = premiumElevated
+    
+    // MARK: - 미니멀리즘 Text Hierarchy
+    
+    /// 메인 텍스트 색상 - 강렬한 대비
     public static let textPrimary = Color.kingAdaptive(
-        light: Color(hex: "#111827"),
-        dark: Color(hex: "#F9FAFB")
+        light: minimalistNavy,
+        dark: pureWhite
     )
     
-    /// 세컨더리 텍스트 색상
+    /// 세컨더리 텍스트 색상 - 서브틀한 정보
     public static let textSecondary = Color.kingAdaptive(
-        light: Color(hex: "#6B7280"),
-        dark: Color(hex: "#D1D5DB")
+        light: Color(hex: "#64748B"),  // 미디엄 그레이
+        dark: Color(hex: "#CBD5E1")   // 연한 그레이
     )
     
-    /// 터셔리 텍스트 색상 - 서브틀한 내용
+    /// 터셔리 텍스트 색상 - 극도로 서브틀
     public static let textTertiary = Color.kingAdaptive(
-        light: Color(hex: "#9CA3AF"),
-        dark: Color(hex: "#9CA3AF")
+        light: Color(hex: "#94A3B8"),  // 라이트 그레이
+        dark: Color(hex: "#64748B")   // 미디엄 그레이
     )
     
-    /// 플레이스홀더 텍스트 색상
+    /// 플레이스홀더 텍스트 색상 - 거의 보이지 않을 정도로 서브틀
     public static let textPlaceholder = Color.kingAdaptive(
-        light: Color(hex: "#D1D5DB"),
-        dark: Color(hex: "#6B7280")
+        light: Color(hex: "#CBD5E1"),
+        dark: Color(hex: "#475569")
     )
     
-    /// 인버스 텍스트 색상 (어두운 배경 위)
+    /// 골드 텍스트 - 오직 중요한 수치/액션에만
+    public static let textGold = exclusiveGold
+    
+    /// 퍼플 텍스트 - 신뢰성 요소
+    public static let textTrust = trustPurple
+    
+    /// 인버스 텍스트 색상
     public static let textInverse = Color.kingAdaptive(
-        light: Color(hex: "#FFFFFF"),
-        dark: Color(hex: "#111827")
+        light: pureWhite,
+        dark: minimalistNavy
     )
     
-    // MARK: - Interactive Element Colors
+    // MARK: - 미니멀리즘 Interactive Element Colors
     
-    /// 버튼 배경색
-    public static let buttonPrimary = accent
+    /// 프리미엄 버튼 - 골드 액센트 (중요한 액션에만)
+    public static let buttonPrimary = exclusiveGold
     
-    /// 세컨더리 버튼 색상
+    /// 신뢰 버튼 - 퍼플 (보안 및 중요 기능)
+    public static let buttonTrust = trustPurple
+    
+    /// 세컨더리 버튼 - 극도로 서브틀
     public static let buttonSecondary = Color.kingAdaptive(
-        light: Color(hex: "#F3F4F6"),
-        dark: Color(hex: "#374151")
-    )
-    
-    /// 비활성화된 버튼 색상
-    public static let buttonDisabled = Color.kingAdaptive(
-        light: Color(hex: "#E5E7EB"),
-        dark: Color(hex: "#4B5563")
-    )
-    
-    /// 링크 색상
-    public static let link = accent
-    
-    /// 포커스 색상
-    public static let focus = Color.kingAdaptive(
-        light: Color(hex: "#3B82F6"),
-        dark: Color(hex: "#60A5FA")
-    )
-    
-    // MARK: - Semantic Colors
-    
-    /// 성공 색상
-    public static let success = Color.kingAdaptive(
-        light: Color(hex: "#10B981"),
-        dark: Color(hex: "#34D399")
-    )
-    
-    /// 경고 색상
-    public static let warning = Color.kingAdaptive(
-        light: Color(hex: "#F59E0B"),
-        dark: Color(hex: "#FBBF24")
-    )
-    
-    /// 에러 색상
-    public static let error = Color.kingAdaptive(
-        light: Color(hex: "#EF4444"),
-        dark: Color(hex: "#F87171")
-    )
-    
-    /// 정보 색상
-    public static let info = Color.kingAdaptive(
-        light: Color(hex: "#3B82F6"),
-        dark: Color(hex: "#60A5FA")
-    )
-    
-    // MARK: - Border & Separator Colors
-    
-    /// 메인 보더 색상
-    public static let border = Color.kingAdaptive(
-        light: Color(hex: "#E5E7EB"),
-        dark: Color(hex: "#374151")
-    )
-    
-    /// 서브틀 보더 색상
-    public static let borderSubtle = Color.kingAdaptive(
-        light: Color(hex: "#F3F4F6"),
+        light: Color(hex: "#F8FAFC"),  // 거의 투명한 그레이
         dark: Color(hex: "#1F2937")
     )
     
-    /// 강조 보더 색상
-    public static let borderAccent = accent.opacity(0.3)
+    /// 비활성화된 버튼 - 아주 연한 그레이
+    public static let buttonDisabled = Color.kingAdaptive(
+        light: Color(hex: "#F1F5F9"),
+        dark: Color(hex: "#334155")
+    )
     
-    /// 구분선 색상
+    /// 미니멀 링크 - 골드로 전환
+    public static let link = exclusiveGold
+    
+    /// 포커스 색상 - 골드로 통일
+    public static let focus = exclusiveGold
+    
+    // MARK: - 미니멀리즘 Semantic Colors
+    
+    /// 성공 색상 - 서브틀한 그린
+    public static let success = Color.kingAdaptive(
+        light: Color(hex: "#059669"),  // 더 진한 그린
+        dark: Color(hex: "#10B981")
+    )
+    
+    /// 경고 색상 - 서브틀한 오렌지
+    public static let warning = Color.kingAdaptive(
+        light: Color(hex: "#D97706"),  // 진한 오렌지
+        dark: Color(hex: "#F59E0B")
+    )
+    
+    /// 에러 색상 - 서브틀한 레드
+    public static let error = Color.kingAdaptive(
+        light: Color(hex: "#DC2626"),  // 더 진한 레드
+        dark: Color(hex: "#EF4444")
+    )
+    
+    /// 정보 색상 - 퍼플로 통일
+    public static let info = trustPurple
+    
+    // MARK: - 미니멀리즘 Border & Separator Colors
+    
+    /// 극도로 서브틀한 보더 색상
+    public static let border = Color.kingAdaptive(
+        light: Color(hex: "#F1F5F9"),  // 거의 보이지 않는 연한 그레이
+        dark: Color(hex: "#1E293B")
+    )
+    
+    /// 극히 서브틀한 보더 색상
+    public static let borderSubtle = Color.kingAdaptive(
+        light: Color(hex: "#F8FAFC"),  // 거의 투명
+        dark: Color(hex: "#0F172A")
+    )
+    
+    /// 골드 강조 보더 색상 - 중요한 요소에만
+    public static let borderAccent = exclusiveGold.opacity(0.4)
+    
+    /// 미니멀 구분선 색상
     public static let separator = Color.kingAdaptive(
-        light: Color(hex: "#E5E7EB"),
-        dark: Color(hex: "#374151")
+        light: Color(hex: "#F1F5F9"),
+        dark: Color(hex: "#1E293B")
     )
     
     // MARK: - Status & Transaction Colors
@@ -211,59 +245,48 @@ public struct KingColors {
     /// 실패한 트랜잭션 색상
     public static let transactionFailed = error
     
-    // MARK: - Ethereum & Crypto Specific Colors
+    // MARK: - 프리미엄 피나테크 Crypto Colors
     
-    /// 이더리움 브랜드 색상
-    public static let ethereum = Color.kingAdaptive(
-        light: Color(hex: "#627EEA"),
-        dark: Color(hex: "#7B93F4")
+    /// 이더리움 색상 - trustPurple로 통일
+    public static let ethereum = trustPurple
+    
+    /// Bitcoin 색상 - 골드로 통일
+    public static let bitcoin = exclusiveGold
+    
+    /// 암호화폐 성공 색상
+    public static let cryptoPositive = success
+    
+    /// 암호화폐 손실 색상
+    public static let cryptoNegative = error
+    
+    // MARK: - 프리미엄 글래스모피즘 2024 (중복 제거 및 통합)
+    
+    /// 프리미엄 글래스 하이라이트 - 골드 액센트
+    public static let glassGoldHighlight = Color.kingAdaptive(
+        light: exclusiveGold.opacity(0.2),
+        dark: exclusiveGold.opacity(0.3)
     )
     
-    /// Bitcoin 색상
-    public static let bitcoin = Color.kingAdaptive(
-        light: Color(hex: "#F7931A"),
-        dark: Color(hex: "#FFB74D")
+    /// 프리미엄 글래스 퍼플 하이라이트 - 신뢰성 액센트
+    public static let glassTrustHighlight = Color.kingAdaptive(
+        light: trustPurple.opacity(0.15),
+        dark: trustPurple.opacity(0.25)
     )
     
-    // MARK: - Glass Morphism Colors
-    
-    /// Glass 테두리 색상
-    public static let glassBorder = Color.kingAdaptive(
-        light: Color.white.opacity(0.3),
-        dark: Color.white.opacity(0.2)
+    /// 미니멀 글래스 베이스 - 완전 투명에 가까운
+    public static let glassMinimalBase = Color.kingAdaptive(
+        light: Color.white.opacity(0.1),
+        dark: Color.black.opacity(0.1)
     )
     
-    /// Glass 그림자 색상
-    public static let glassShadow = Color.kingAdaptive(
-        light: Color.black.opacity(0.1),
-        dark: Color.black.opacity(0.3)
-    )
-    
-    // MARK: - Enhanced Glass Morphism Colors (2024 최적화)
-    
-    /// 접근성을 고려한 Glass 테두리 색상 (WCAG AAA 기준)
-    public static let glassAccessibleBorder = Color.kingAdaptive(
-        light: Color.white.opacity(0.6),
-        dark: Color.white.opacity(0.45)
-    )
-    
-    /// 고대비 Glass 그림자 색상
-    public static let glassAccessibleShadow = Color.kingAdaptive(
-        light: Color.black.opacity(0.25),
-        dark: Color.black.opacity(0.5)
-    )
-    
-    /// Vibrancy 효과용 Glass 하이라이트 색상
+    /// 글래스 바이브런시 효과 - 미니멀한 하이라이트용
     public static let glassVibrancy = Color.kingAdaptive(
-        light: Color.white.opacity(0.25),
-        dark: Color.white.opacity(0.15)
+        light: Color.white.opacity(0.15),
+        dark: Color.white.opacity(0.08)
     )
     
-    /// Apple Vision Pro 스타일 Glass 테두리
-    public static let glassVisionProBorder = Color.kingAdaptive(
-        light: Color.white.opacity(0.8),
-        dark: Color.white.opacity(0.6)
-    )
+    // MARK: - Legacy Glass Colors (호환성을 위해 유지)
+    /// 기존 glassBorder들은 이미 위에서 새로 정의됨
 }
 
 // MARK: - Color Extensions for Hex Support
