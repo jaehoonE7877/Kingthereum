@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// 4단계 GlassMorphism 효과 시스템의 디자인 토큰
-/// 각 레벨은 시각적 깊이와 강조 수준에 따라 구분됨
+/// Kingthereum 프리미엄 글래스모피즘 시스템 2024
+/// 모던 미니멀리즘 + 프리미엄 피나테크 + 극도로 서브틀한 글래스 효과
 public struct GlassTokens {
     
     // MARK: - Glass Effect Levels
@@ -71,55 +71,72 @@ public struct GlassTokens {
             }
         }
         
-        /// 각 레벨별 블러 반경
-        public var blurRadius: CGFloat {
+        /// 미니멀리즘 블러 반경 - 극도로 서브틀한 효과
+        public var minimalistBlurRadius: CGFloat {
             switch self {
-            case .subtle: return 8
-            case .standard: return 12
-            case .prominent: return 16
-            case .intense: return 24
+            case .subtle: return 4    // 더 연하게
+            case .standard: return 6  // 더 연하게
+            case .prominent: return 8 // 더 연하게
+            case .intense: return 12  // 더 연하게
             }
         }
         
-        /// 각 레벨별 투명도
-        public var opacity: Double {
+        /// 미니멀리즘 투명도 - 거의 보이지 않을 정도로 서브틀
+        public var minimalistOpacity: Double {
             switch self {
-            case .subtle: return 0.4
-            case .standard: return 0.6
-            case .prominent: return 0.8
-            case .intense: return 0.95
+            case .subtle: return 0.15    // 극도로 연하게
+            case .standard: return 0.25  // 연하게
+            case .prominent: return 0.4  // 중간
+            case .intense: return 0.6    // 최대 60%만
             }
         }
         
-        /// 각 레벨별 테두리 두께
-        public var borderWidth: CGFloat {
+        /// 미니멀리즘 테두리 두께 - 거의 보이지 않는 수준
+        public var minimalistBorderWidth: CGFloat {
             switch self {
-            case .subtle: return 0.5
-            case .standard: return 1.0
-            case .prominent: return 1.5
-            case .intense: return 2.0
+            case .subtle: return 0.25   // 극도로 얇게
+            case .standard: return 0.5  // 얇게
+            case .prominent: return 0.75 // 중간
+            case .intense: return 1.0   // 최대 1pt
             }
         }
         
-        /// 각 레벨별 그림자 반경
-        public var shadowRadius: CGFloat {
+        /// 미니멀리즘 그림자 반경 - 극도로 서브틀한 깊이감
+        public var minimalistShadowRadius: CGFloat {
             switch self {
-            case .subtle: return 4
-            case .standard: return 8
-            case .prominent: return 12
-            case .intense: return 20
+            case .subtle: return 2    // 매우 연하게
+            case .standard: return 4  // 연하게
+            case .prominent: return 6 // 중간
+            case .intense: return 8   // 최대 8pt
             }
         }
         
-        /// 각 레벨별 그림자 Y 오프셋
-        public var shadowOffset: CGFloat {
+        /// 미니멀리즘 그림자 오프셋 - 서브틀한 깊이
+        public var minimalistShadowOffset: CGFloat {
             switch self {
-            case .subtle: return 2
-            case .standard: return 4
-            case .prominent: return 6
-            case .intense: return 10
+            case .subtle: return 1    // 매우 연하게
+            case .standard: return 2  // 연하게  
+            case .prominent: return 3 // 중간
+            case .intense: return 4   // 최대 4pt
             }
         }
+        
+        // MARK: - Legacy Properties (호환성 유지)
+        
+        /// 기존 blurRadius → minimalistBlurRadius로 매핑
+        public var blurRadius: CGFloat { minimalistBlurRadius }
+        
+        /// 기존 opacity → minimalistOpacity로 매핑
+        public var opacity: Double { minimalistOpacity }
+        
+        /// 기존 borderWidth → minimalistBorderWidth로 매핑
+        public var borderWidth: CGFloat { minimalistBorderWidth }
+        
+        /// 기존 shadowRadius → minimalistShadowRadius로 매핑
+        public var shadowRadius: CGFloat { minimalistShadowRadius }
+        
+        /// 기존 shadowOffset → minimalistShadowOffset으로 매핑
+        public var shadowOffset: CGFloat { minimalistShadowOffset }
     }
     
     // MARK: - Glass Context
@@ -169,14 +186,25 @@ public struct GlassTokens {
             self.vibrant = vibrant
         }
         
-        /// 기본 색상 적응 설정
-        public static let `default` = ColorAdaptation(light: 0.6, dark: 0.8, vibrant: 0.7)
+        /// 미니멀리즘 기본 색상 적응 - 극도로 서브틀
+        public static let minimalist = ColorAdaptation(light: 0.15, dark: 0.25, vibrant: 0.2)
         
-        /// 테두리용 색상 적응 설정
-        public static let border = ColorAdaptation(light: 0.3, dark: 0.5, vibrant: 0.4)
+        /// 미니멀리즘 테두리 색상 적응 - 거의 보이지 않는 수준
+        public static let minimalistBorder = ColorAdaptation(light: 0.08, dark: 0.15, vibrant: 0.12)
         
-        /// 그림자용 색상 적응 설정
-        public static let shadow = ColorAdaptation(light: 0.2, dark: 0.6, vibrant: 0.5)
+        /// 미니멀리즘 그림자 색상 적응 - 극도로 연한 깊이감
+        public static let minimalistShadow = ColorAdaptation(light: 0.05, dark: 0.2, vibrant: 0.15)
+        
+        // MARK: - Legacy Adaptations (호환성 유지)
+        
+        /// 기존 default → minimalist로 매핑
+        public static let `default` = minimalist
+        
+        /// 기존 border → minimalistBorder로 매핑
+        public static let border = minimalistBorder
+        
+        /// 기존 shadow → minimalistShadow로 매핑  
+        public static let shadow = minimalistShadow
     }
     
     // MARK: - Animation Settings
