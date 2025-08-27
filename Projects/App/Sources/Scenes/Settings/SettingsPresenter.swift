@@ -221,19 +221,8 @@ final class SettingsPresenter: SettingsPresentationLogic {
     }
     
     private func formatErrorMessage(_ error: Error) -> String {
-        if let networkError = error as? Core.NetworkError {
-            switch networkError {
-            case .invalidResponse:
-                return "유효하지 않은 응답입니다"
-            case .clientError(let code):
-                return "클라이언트 오류 (HTTP \(code))"
-            case .serverError(let code):
-                return "서버 오류 (HTTP \(code))"
-            case .unexpectedStatusCode(let code):
-                return "예상하지 못한 상태 코드 (HTTP \(code))"
-            case .unsupportedHTTPMethod(let method):
-                return "지원하지 않는 HTTP 메서드: \(method)"
-            }
+        if let networkError = error as? NetworkError {
+            return networkError.errorDescription ?? error.localizedDescription
         }
         
         return error.localizedDescription
