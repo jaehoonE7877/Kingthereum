@@ -8,7 +8,99 @@ import SecurityKit
 /// 극한 미니멀리즘 AuthenticationView 2024
 /// 670줄 → 200줄 이내로 압축, 핵심 기능만 유지
 
-// MARK: - ViewStore는 기존 것 그대로 사용 (비즈니스 로직 유지)
+// MARK: - VIP Architecture Support (필수 비즈니스 로직)
+
+/// 인증 화면의 디스플레이 로직을 정의하는 프로토콜
+/// VIP 아키텍처에서 Presenter가 View에게 데이터를 전달하기 위한 인터페이스
+@MainActor
+protocol AuthenticationDisplayLogic: AnyObject {
+    /// PIN 설정 결과를 화면에 표시
+    func displayPINSetupResult(viewModel: AuthenticationScene.SetupPIN.ViewModel)
+    /// 생체인증 결과를 화면에 표시
+    func displayBiometricAuthenticationResult(viewModel: AuthenticationScene.AuthenticateWithBiometrics.ViewModel)
+    /// PIN 인증 결과를 화면에 표시
+    func displayPINAuthenticationResult(viewModel: AuthenticationScene.AuthenticateWithPIN.ViewModel)
+    /// 생체인증 가능 여부를 화면에 표시
+    func displayBiometricAvailability(viewModel: AuthenticationScene.CheckBiometricAvailability.ViewModel)
+    /// 지갑 생성 결과를 화면에 표시
+    func displayWalletCreationResult(viewModel: AuthenticationScene.CreateWallet.ViewModel)
+    /// 지갑 복원 결과를 화면에 표시
+    func displayWalletImportResult(viewModel: AuthenticationScene.ImportWallet.ViewModel)
+}
+
+/// 인증 화면의 진행 단계
+enum AuthenticationStep: String, CaseIterable {
+    case welcome = "welcome"
+    case pinSetup = "pin_setup"
+    case biometricSetup = "biometric_setup"
+    case walletCreation = "wallet_creation"
+    case walletImport = "wallet_import"
+    case backup = "backup"
+}
+
+/// SwiftUI용 Authentication ViewStore (DisplayLogic 구현)
+@MainActor
+@Observable
+final class AuthenticationViewStore: AuthenticationDisplayLogic {
+    weak var appCoordinator: AppCoordinator?
+    var currentStep: AuthenticationStep = .welcome
+    var errorMessage: String?
+    var showMnemonicView = false
+    var isLoading = false
+    var biometricAvailable = false
+    
+    func displayPINSetupResult(viewModel: AuthenticationScene.SetupPIN.ViewModel) {
+        if viewModel.success {
+            currentStep = .biometricSetup
+        } else {
+            errorMessage = viewModel.errorMessage
+        }
+    }
+    
+    func displayBiometricAuthenticationResult(viewModel: AuthenticationScene.AuthenticateWithBiometrics.ViewModel) {
+        isLoading = false
+        if viewModel.success {
+            // 인증 성공 시 메인 앱으로 이동
+            appCoordinator?.completeAuthentication()
+        } else {
+            errorMessage = viewModel.errorMessage
+        }
+    }
+    
+    func displayPINAuthenticationResult(viewModel: AuthenticationScene.AuthenticateWithPIN.ViewModel) {
+        isLoading = false
+        if viewModel.success {
+            // 인증 성공 시 메인 앱으로 이동
+            appCoordinator?.completeAuthentication()
+        } else {
+            errorMessage = viewModel.errorMessage
+        }
+    }
+    
+    func displayBiometricAvailability(viewModel: AuthenticationScene.CheckBiometricAvailability.ViewModel) {
+        biometricAvailable = viewModel.isAvailable
+    }
+    
+    func displayWalletCreationResult(viewModel: AuthenticationScene.CreateWallet.ViewModel) {
+        if viewModel.success {
+            showMnemonicView = true
+        } else {
+            errorMessage = viewModel.errorMessage
+        }
+    }
+    
+    func displayWalletImportResult(viewModel: AuthenticationScene.ImportWallet.ViewModel) {
+        if viewModel.success {
+            currentStep = .pinSetup
+        } else {
+            errorMessage = viewModel.errorMessage
+        }
+    }
+    
+    func clearError() {
+        errorMessage = nil
+    }
+}
 
 /// Kingthereum 지갑의 극한 미니멀 인증 화면
 /// Clean Swift VIP 패턴 + 미니멀리즘 + 프리미엄 피나테크 + 글래스모피즘
@@ -167,7 +259,7 @@ struct AuthenticationView: View {
                                 .foregroundColor(KingColors.exclusiveGold)
                             
                             Text("새 지갑")
-                                .font(KingTypography.captionMedium)
+                                .font(KingTypography.caption)
                                 .foregroundColor(KingColors.textSecondary)
                         }
                         .frame(maxWidth: .infinity)
@@ -185,7 +277,7 @@ struct AuthenticationView: View {
                                 .foregroundColor(KingColors.info)
                             
                             Text("복원")
-                                .font(KingTypography.captionMedium)
+                                .font(KingTypography.caption)
                                 .foregroundColor(KingColors.textSecondary)
                         }
                         .frame(maxWidth: .infinity)
