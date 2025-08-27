@@ -246,25 +246,10 @@ struct AuthenticationView: View {
                     )
                     .frame(width: 130, height: 130)
                 
-                // 메인 아이콘 컨테이너
+                // 메인 아이콘 컨테이너 - VibrancyGlass로 업그레이드
                 ZStack {
                     Circle()
-                        .fill(.ultraThickMaterial)
-                        .overlay(
-                            Circle()
-                                .stroke(
-                                    LinearGradient(
-                                        colors: [
-                                            Color.white.opacity(0.6),
-                                            KingColors.accent.opacity(0.3),
-                                            Color.clear
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 2
-                                )
-                        )
+                        .fill(Color.clear)
                         .frame(width: 120, height: 120)
                     
                     // 내부 하이라이트
@@ -282,7 +267,7 @@ struct AuthenticationView: View {
                         )
                         .frame(width: 118, height: 118)
                     
-                    // 크라운 아이콘
+                    // 크라운 아이콘 - 동적 효과 적용
                     Image(systemName: "crown.fill")
                         .font(.system(size: 52, weight: .bold))
                         .foregroundStyle(
@@ -297,7 +282,9 @@ struct AuthenticationView: View {
                             )
                         )
                         .shadow(color: KingColors.warning.opacity(0.5), radius: 8, x: 0, y: 4)
+                        .symbolEffect(.pulse, isActive: true)
                 }
+                .vibrancyGlassCard(level: .intense)
                 .shadow(color: KingColors.cardShadow.opacity(0.3), radius: 20, x: 0, y: 10)
                 .shadow(color: KingColors.accent.opacity(0.2), radius: 40, x: 0, y: 20)
             }
@@ -365,14 +352,7 @@ struct AuthenticationView: View {
         }
         .padding(.horizontal, DesignTokens.Spacing.sm)
         .padding(.vertical, DesignTokens.Spacing.xs)
-        .background(
-            Capsule()
-                .fill(KingColors.success.opacity(0.1))
-                .overlay(
-                    Capsule()
-                        .stroke(KingColors.success.opacity(0.3), lineWidth: 0.5)
-                )
-        )
+        .glassCard(level: .subtle, context: .button)
     }
     
     @ViewBuilder
@@ -430,7 +410,7 @@ struct AuthenticationView: View {
                         )
                         .frame(width: 100, height: 80)
                     
-                    // 메인 아이콘
+                    // 메인 아이콘 - 향상된 동적 효과
                     Image(systemName: viewStore.isLoading ? "hourglass" : "faceid")
                         .font(.system(size: 32, weight: .medium))
                         .foregroundStyle(
@@ -481,45 +461,7 @@ struct AuthenticationView: View {
         }
         .buttonStyle(PlainButtonStyle())
         .disabled(viewStore.isLoading)
-        .background(
-            ZStack {
-                // 메인 배경
-                RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xl)
-                    .fill(.ultraThinMaterial)
-                    .background(
-                        RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xl)
-                            .fill(KingGradients.success.opacity(0.05))
-                    )
-                
-                // 상단 하이라이트
-                RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xl)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.2),
-                                Color.clear
-                            ],
-                            startPoint: .top,
-                            endPoint: .center
-                        )
-                    )
-                
-                // 프리미엄 테두리
-                RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xl)
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                KingColors.success.opacity(0.4),
-                                Color.clear,
-                                KingColors.success.opacity(0.2)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 2
-                    )
-            }
-        )
+        .glassCard(level: .prominent, context: .card, cornerRadius: DesignTokens.CornerRadius.xl)
         .shadow(color: KingColors.success.opacity(0.2), radius: 15, x: 0, y: 8)
         .shadow(color: KingColors.cardShadow.opacity(0.1), radius: 30, x: 0, y: 15)
         .scaleEffect(viewStore.isLoading ? 0.98 : 1.0)
@@ -574,14 +516,7 @@ struct AuthenticationView: View {
                 }
             }
             .padding(DesignTokens.Spacing.lg)
-            .background(
-                RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
-                    .fill(.ultraThinMaterial)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
-                            .stroke(KingColors.accent.opacity(0.2), lineWidth: 1)
-                    )
-            )
+            .glassCard(level: .standard, context: .card, cornerRadius: DesignTokens.CornerRadius.lg)
             
             // PIN 인증 버튼
             Button {
@@ -693,14 +628,7 @@ struct AuthenticationView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, DesignTokens.Spacing.lg)
-            .background(
-                RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.md)
-                    .fill(.ultraThinMaterial)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.md)
-                            .stroke(color.opacity(0.3), lineWidth: 1)
-                    )
-            )
+            .glassCard(level: .subtle, context: .button, cornerRadius: DesignTokens.CornerRadius.md)
         }
         .buttonStyle(PlainButtonStyle())
     }

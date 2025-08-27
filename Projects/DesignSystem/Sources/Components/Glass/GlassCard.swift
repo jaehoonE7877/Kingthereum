@@ -59,7 +59,6 @@ public struct GlassCard<Content: View>: View {
                 x: 0,
                 y: effectiveShadowOffset
             )
-            .drawingGroup() // 성능 최적화: 복합 렌더링을 단일 레이어로 합성
     }
     
     // MARK: - Dynamic Properties
@@ -424,42 +423,6 @@ public struct InfoCard: View {
 
 // MARK: - Advanced Glass Components (2024 최적화)
 
-/// 성능 최적화된 Glass 컴포넌트 
-public struct OptimizedGlassCard<Content: View>: View {
-    let content: Content
-    let level: GlassTokens.EffectLevel
-    let context: GlassTokens.Context
-    
-    @State private var isVisible = true
-    @Environment(\.scenePhase) private var scenePhase
-    
-    public init(
-        level: GlassTokens.EffectLevel,
-        context: GlassTokens.Context = .card,
-        @ViewBuilder content: () -> Content
-    ) {
-        self.content = content()
-        self.level = level
-        self.context = context
-    }
-    
-    public var body: some View {
-        content
-            .background {
-                if isVisible {
-                    RoundedRectangle(cornerRadius: context.defaultCornerRadius)
-                        .fill(level.material)
-                }
-            }
-            .drawingGroup() // GPU 가속 렌더링
-            .onChange(of: scenePhase) { _, newPhase in
-                withAnimation(.easeInOut(duration: 0.3)) {
-                    isVisible = newPhase == .active
-                }
-            }
-    }
-}
-
 /// Vibrancy 효과가 있는 동적 Glass 카드
 public struct VibrancyGlassCard<Content: View>: View {
     let content: Content
@@ -505,7 +468,7 @@ public struct VibrancyGlassCard<Content: View>: View {
             .scaleEffect(isPressed ? 0.95 : 1.0)
             .onAppear {
                 if !reduceMotion {
-                    withAnimation(.easeInOut(duration: 3.0).repeatForever(autoreverses: true)) {
+                    withAnimation(.easeInOut(duration: 6.0).repeatForever(autoreverses: true)) {
                         animationPhase = 1.0
                     }
                 }
@@ -522,63 +485,16 @@ public struct VibrancyGlassCard<Content: View>: View {
                     }
                 }
             }
-            .drawingGroup()
     }
 }
 
-/// Apple Vision Pro 최적화 Glass 카드
-@available(iOS 17.0, *)
-public struct VisionProGlassCard<Content: View>: View {
-    let content: Content
-    let level: GlassTokens.EffectLevel
-    
-    public init(
-        level: GlassTokens.EffectLevel,
-        @ViewBuilder content: () -> Content
-    ) {
-        self.content = content()
-        self.level = level
-    }
-    
-    public var body: some View {
-        content
-            .background(level.material, in: .rect(cornerRadius: 16))
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .strokeBorder(KingColors.glassVisionProBorder, lineWidth: level.borderWidth)
-            )
-            .shadow(color: .black.opacity(0.3), radius: level.shadowRadius * 1.5, y: level.shadowOffset * 1.2)
-            .hoverEffect(.lift) // Vision Pro 전용 호버 효과
-            .scaleEffect(1.0)
-            .animation(.interactiveSpring(response: 0.4, dampingFraction: 0.8), value: level)
-            .drawingGroup()
-    }
-}
 
-// MARK: - Convenience Extensions for New Components
+// MARK: - Convenience Extensions for Vibrancy Glass
 
 public extension View {
-    /// 성능 최적화된 Glass Card 적용
-    func optimizedGlassCard(
-        level: GlassTokens.EffectLevel,
-        context: GlassTokens.Context = .card
-    ) -> some View {
-        OptimizedGlassCard(level: level, context: context) {
-            self
-        }
-    }
-    
     /// Vibrancy 효과가 있는 Glass Card 적용
     func vibrancyGlassCard(level: GlassTokens.EffectLevel) -> some View {
         VibrancyGlassCard(level: level) {
-            self
-        }
-    }
-    
-    /// Apple Vision Pro 최적화 Glass Card 적용
-    @available(iOS 17.0, *)
-    func visionProGlassCard(level: GlassTokens.EffectLevel) -> some View {
-        VisionProGlassCard(level: level) {
             self
         }
     }
