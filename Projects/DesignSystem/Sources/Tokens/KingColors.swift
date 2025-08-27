@@ -182,11 +182,6 @@ public struct KingColors {
     /// 포커스 색상 - 골드로 통일
     public static let focus = exclusiveGold
     
-    // MARK: - Legacy Interactive Colors (호환성을 위해 유지)
-    
-    /// 기존 accent → trustPurple로 매핑
-    public static let accent = trustPurple
-    
     // MARK: - 미니멀리즘 Semantic Colors
     
     /// 성공 색상 - 서브틀한 그린
@@ -282,6 +277,12 @@ public struct KingColors {
     public static let glassMinimalBase = Color.kingAdaptive(
         light: Color.white.opacity(0.1),
         dark: Color.black.opacity(0.1)
+    )
+    
+    /// 글래스 바이브런시 효과 - 미니멀한 하이라이트용
+    public static let glassVibrancy = Color.kingAdaptive(
+        light: Color.white.opacity(0.15),
+        dark: Color.white.opacity(0.08)
     )
     
     // MARK: - Legacy Glass Colors (호환성을 위해 유지)
