@@ -157,10 +157,10 @@ public enum DesignTokens {
         public static let verySlow: Double = 0.8
     }
     
-    // MARK: - Metal Glass Effects
+    // MARK: - Glass Effects
     
-    public enum MetalGlass {
-        /// Metal 효과를 위한 설정값들
+    public enum Glass {
+        /// Glass 효과를 위한 설정값들
         public enum Config {
             public static let blurRadius: CGFloat = 20
             public static let saturation: Double = 1.8
@@ -471,11 +471,11 @@ public extension View {
         }
     }
     
-    // MARK: - Metal Glass Effects
+    // MARK: - Glass Effects
     
-    func metalGlassEffect(
-        style: MetalGlassStyle = .default,
-        cornerRadius: CGFloat = DesignTokens.MetalGlass.Card.defaultCornerRadius
+    func glassEffect(
+        style: GlassStyle = .default,
+        cornerRadius: CGFloat = DesignTokens.Glass.Card.defaultCornerRadius
     ) -> some View {
         self
             .background(.ultraThinMaterial)
@@ -492,14 +492,14 @@ public extension View {
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
-                        lineWidth: DesignTokens.MetalGlass.Card.borderWidth
+                        lineWidth: DesignTokens.Glass.Card.borderWidth
                     )
             )
             .shadow(
                 color: KingthereumColors.cardShadow.opacity(0.3),
-                radius: DesignTokens.MetalGlass.Card.shadowRadius,
-                x: DesignTokens.MetalGlass.Card.shadowOffset.x,
-                y: DesignTokens.MetalGlass.Card.shadowOffset.y
+                radius: DesignTokens.Glass.Card.shadowRadius,
+                x: DesignTokens.Glass.Card.shadowOffset.x,
+                y: DesignTokens.Glass.Card.shadowOffset.y
             )
     }
     
@@ -535,7 +535,7 @@ public extension View {
 
 // MARK: - Helper Enums
 
-public enum MetalGlassStyle {
+public enum GlassStyle {
     case `default`
     case prominent
     case subtle
@@ -543,11 +543,11 @@ public enum MetalGlassStyle {
     var cornerRadius: CGFloat {
         switch self {
         case .default:
-            return DesignTokens.MetalGlass.Card.defaultCornerRadius
+            return DesignTokens.Glass.Card.defaultCornerRadius
         case .prominent:
-            return DesignTokens.MetalGlass.Card.prominentCornerRadius
+            return DesignTokens.Glass.Card.prominentCornerRadius
         case .subtle:
-            return DesignTokens.MetalGlass.Card.subtleCornerRadius
+            return DesignTokens.Glass.Card.subtleCornerRadius
         }
     }
 }
