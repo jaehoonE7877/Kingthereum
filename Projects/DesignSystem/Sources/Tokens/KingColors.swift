@@ -224,6 +224,46 @@ public struct KingColors {
         light: Color(hex: "#F7931A"),
         dark: Color(hex: "#FFB74D")
     )
+    
+    // MARK: - Glass Morphism Colors
+    
+    /// Glass 테두리 색상
+    public static let glassBorder = Color.kingAdaptive(
+        light: Color.white.opacity(0.3),
+        dark: Color.white.opacity(0.2)
+    )
+    
+    /// Glass 그림자 색상
+    public static let glassShadow = Color.kingAdaptive(
+        light: Color.black.opacity(0.1),
+        dark: Color.black.opacity(0.3)
+    )
+    
+    // MARK: - Enhanced Glass Morphism Colors (2024 최적화)
+    
+    /// 접근성을 고려한 Glass 테두리 색상 (WCAG AAA 기준)
+    public static let glassAccessibleBorder = Color.kingAdaptive(
+        light: Color.white.opacity(0.6),
+        dark: Color.white.opacity(0.45)
+    )
+    
+    /// 고대비 Glass 그림자 색상
+    public static let glassAccessibleShadow = Color.kingAdaptive(
+        light: Color.black.opacity(0.25),
+        dark: Color.black.opacity(0.5)
+    )
+    
+    /// Vibrancy 효과용 Glass 하이라이트 색상
+    public static let glassVibrancy = Color.kingAdaptive(
+        light: Color.white.opacity(0.25),
+        dark: Color.white.opacity(0.15)
+    )
+    
+    /// Apple Vision Pro 스타일 Glass 테두리
+    public static let glassVisionProBorder = Color.kingAdaptive(
+        light: Color.white.opacity(0.8),
+        dark: Color.white.opacity(0.6)
+    )
 }
 
 // MARK: - Color Extensions for Hex Support

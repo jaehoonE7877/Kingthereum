@@ -235,7 +235,7 @@ struct SendRecipientNavigationView: View {
                     }
                 }
                 .padding()
-                .glassCard()
+                .glassCard(level: .standard, context: .card)
                 
                 Spacer(minLength: 100)
             }
@@ -301,7 +301,7 @@ struct SendAmountNavigationView: View {
                     }
                 }
                 .padding()
-                .glassCard(style: .subtle)
+                .glassCard(level: .subtle, context: .card)
                 
                 // 금액 입력
                 VStack(spacing: 20) {
@@ -337,7 +337,7 @@ struct SendAmountNavigationView: View {
                     }
                 }
                 .padding()
-                .glassCard()
+                .glassCard(level: .standard, context: .card)
                 
                 Spacer(minLength: 100)
             }
@@ -403,7 +403,7 @@ struct SendConfirmNavigationView: View {
                 }
                 .padding()
                 .frame(maxWidth: .infinity)
-                .glassCard(style: .prominent)
+                .glassCard(level: .prominent, context: .card)
                 
                 // 전송 버튼
                 Button {
