@@ -148,12 +148,12 @@ struct SettingsView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // 프리미엄 피나테크 배경 - 깊이감 있는 그라데이션
+                // 프리미엄 피나테크 배경 - 다크모드 가독성 개선 그라데이션
                 LinearGradient(
                     colors: [
-                        KingColors.minimalistNavy,
-                        KingColors.minimalistNavy.opacity(0.8),
-                        KingColors.trustPurple.opacity(0.1)
+                        KingColors.backgroundPrimary,
+                        KingColors.backgroundSecondary,
+                        KingColors.trustPurple.opacity(0.85)
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
@@ -409,14 +409,25 @@ extension SettingsView {
     @ViewBuilder
     private var coreSecuritySection: some View {
         VStack(spacing: 20) {
-            // 섹션 헤더
+            // 섹션 헤더 - 가독성 강화
             HStack {
                 Text("보안 및 인증")
                     .font(KingTypography.headlineSmall)
-                    .fontWeight(.semibold)
+                    .fontWeight(.bold)
                     .foregroundColor(KingColors.textPrimary)
+                    .shadow(color: Color.black.opacity(0.3), radius: 1, x: 0, y: 1)
                 Spacer()
             }
+            .padding(.horizontal, 4)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(.ultraThinMaterial)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(KingColors.glassBorder.opacity(0.1))
+                    )
+            )
             
             VStack(spacing: 16) {
                 // 생체인증 설정 (최우선)
@@ -471,14 +482,25 @@ extension SettingsView {
     @ViewBuilder
     private var preferencesGridSection: some View {
         VStack(spacing: 20) {
-            // 섹션 헤더
+            // 섹션 헤더 - 가독성 강화
             HStack {
                 Text("개인화")
                     .font(KingTypography.headlineSmall)
-                    .fontWeight(.semibold)
+                    .fontWeight(.bold)
                     .foregroundColor(KingColors.textPrimary)
+                    .shadow(color: Color.black.opacity(0.3), radius: 1, x: 0, y: 1)
                 Spacer()
             }
+            .padding(.horizontal, 4)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(.ultraThinMaterial)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(KingColors.glassBorder.opacity(0.1))
+                    )
+            )
             
             // 2x2 그리드
             HStack(spacing: 16) {
@@ -510,14 +532,25 @@ extension SettingsView {
     @ViewBuilder
     private var professionalSupportSection: some View {
         VStack(spacing: 20) {
-            // 섹션 헤더
+            // 섹션 헤더 - 가독성 강화
             HStack {
                 Text("지원 및 정보")
                     .font(KingTypography.headlineSmall)
-                    .fontWeight(.semibold)
+                    .fontWeight(.bold)
                     .foregroundColor(KingColors.textPrimary)
+                    .shadow(color: Color.black.opacity(0.3), radius: 1, x: 0, y: 1)
                 Spacer()
             }
+            .padding(.horizontal, 4)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(.ultraThinMaterial)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(KingColors.glassBorder.opacity(0.1))
+                    )
+            )
             
             VStack(spacing: 12) {
                 professionalSupportRow(
@@ -641,8 +674,9 @@ extension SettingsView {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
                         .font(KingTypography.bodyLarge)
-                        .fontWeight(.medium)
+                        .fontWeight(.semibold)
                         .foregroundColor(KingColors.textPrimary)
+                        .shadow(color: Color.black.opacity(0.2), radius: 0.5, x: 0, y: 0.5)
                     
                     Text(value)
                         .font(KingTypography.bodySmall)
@@ -719,8 +753,9 @@ extension SettingsView {
                 VStack(spacing: 4) {
                     Text(title)
                         .font(KingTypography.bodyMedium)
-                        .fontWeight(.medium)
+                        .fontWeight(.semibold)
                         .foregroundColor(KingColors.textPrimary)
+                        .shadow(color: Color.black.opacity(0.2), radius: 0.5, x: 0, y: 0.5)
                     
                     Text(value)
                         .font(KingTypography.bodySmall)
@@ -757,8 +792,9 @@ extension SettingsView {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
                         .font(KingTypography.bodyMedium)
-                        .fontWeight(.medium)
+                        .fontWeight(.semibold)
                         .foregroundColor(KingColors.textPrimary)
+                        .shadow(color: Color.black.opacity(0.2), radius: 0.5, x: 0, y: 0.5)
                     
                     Text(subtitle)
                         .font(KingTypography.bodySmall)
