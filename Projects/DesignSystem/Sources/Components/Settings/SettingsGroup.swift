@@ -27,12 +27,12 @@ public struct SettingsGroup<Content: View>: View {
                 content
             }
         }
-        .background(KingthereumGradients.card)
+        .background(KingGradients.card)
         .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg))
         .overlay(
             RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
-                .stroke(KingthereumColors.cardBorder, lineWidth: DesignTokens.BorderWidth.normal)
+                .stroke(KingColors.cardBorder, lineWidth: DesignTokens.BorderWidth.normal)
         )
-        .shadow(color: KingthereumColors.cardShadow, radius: 6, x: 0, y: 3)
+        .shadow(color: KingColors.cardShadow, radius: 6, x: 0, y: 3)
     }
 }

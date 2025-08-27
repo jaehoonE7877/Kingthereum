@@ -120,15 +120,15 @@ struct AuthenticationView: View {
         GeometryReader { geometry in
             ZStack {
                 // 프리미엄 배경 그라데이션
-                KingthereumGradients.backgroundAmbient
+                KingGradients.backgroundAmbient
                     .ignoresSafeArea()
                 
                 // 홀로그래픽 오버레이 효과
                 RadialGradient(
                     colors: [
-                        KingthereumColors.accent.opacity(0.1),
+                        KingColors.accent.opacity(0.1),
                         Color.clear,
-                        KingthereumColors.accentSecondary.opacity(0.05)
+                        KingColors.accentSecondary.opacity(0.05)
                     ],
                     center: .topLeading,
                     startRadius: 100,
@@ -217,11 +217,11 @@ struct AuthenticationView: View {
                     .stroke(
                         AngularGradient(
                             colors: [
-                                KingthereumColors.accent,
-                                KingthereumColors.accentSecondary,
-                                KingthereumColors.success,
-                                KingthereumColors.warning,
-                                KingthereumColors.accent
+                                KingColors.accent,
+                                KingColors.accentSecondary,
+                                KingColors.success,
+                                KingColors.warning,
+                                KingColors.accent
                             ],
                             center: .center
                         ),
@@ -235,8 +235,8 @@ struct AuthenticationView: View {
                     .fill(
                         RadialGradient(
                             colors: [
-                                KingthereumColors.accent.opacity(0.3),
-                                KingthereumColors.accent.opacity(0.1),
+                                KingColors.accent.opacity(0.3),
+                                KingColors.accent.opacity(0.1),
                                 Color.clear
                             ],
                             center: .center,
@@ -256,7 +256,7 @@ struct AuthenticationView: View {
                                     LinearGradient(
                                         colors: [
                                             Color.white.opacity(0.6),
-                                            KingthereumColors.accent.opacity(0.3),
+                                            KingColors.accent.opacity(0.3),
                                             Color.clear
                                         ],
                                         startPoint: .topLeading,
@@ -288,7 +288,7 @@ struct AuthenticationView: View {
                         .foregroundStyle(
                             LinearGradient(
                                 colors: [
-                                    KingthereumColors.warning,
+                                    KingColors.warning,
                                     Color.yellow,
                                     Color.orange
                                 ],
@@ -296,10 +296,10 @@ struct AuthenticationView: View {
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .shadow(color: KingthereumColors.warning.opacity(0.5), radius: 8, x: 0, y: 4)
+                        .shadow(color: KingColors.warning.opacity(0.5), radius: 8, x: 0, y: 4)
                 }
-                .shadow(color: KingthereumColors.cardShadow.opacity(0.3), radius: 20, x: 0, y: 10)
-                .shadow(color: KingthereumColors.accent.opacity(0.2), radius: 40, x: 0, y: 20)
+                .shadow(color: KingColors.cardShadow.opacity(0.3), radius: 20, x: 0, y: 10)
+                .shadow(color: KingColors.accent.opacity(0.2), radius: 40, x: 0, y: 20)
             }
             
             // 프리미엄 타이틀 섹션
@@ -307,16 +307,16 @@ struct AuthenticationView: View {
                 // 메인 타이틀
                 VStack(spacing: DesignTokens.Spacing.xs) {
                     Text("Kingthereum")
-                        .kingStyle(KingthereumTextStyle(
-                            font: KingthereumTypography.displayLarge,
-                            color: KingthereumColors.textPrimary
+                        .kingStyle(KingTextStyle(
+                            font: KingTypography.displayLarge,
+                            color: KingColors.textPrimary
                         ))
-                        .foregroundStyle(KingthereumGradients.web3Rainbow)
+                        .foregroundStyle(KingGradients.web3Rainbow)
                         .accessibilityLabel("Kingthereum 지갑")
                     
                     // 언더라인 효과
                     Rectangle()
-                        .fill(KingthereumGradients.accent)
+                        .fill(KingGradients.accent)
                         .frame(height: DesignTokens.Size.Divider.thick)
                         .frame(width: 120)
                         .blur(radius: 1)
@@ -325,15 +325,15 @@ struct AuthenticationView: View {
                 // 서브타이틀 & 설명
                 VStack(spacing: DesignTokens.Spacing.sm) {
                     Text("프리미엄 이더리움 지갑")
-                        .kingStyle(KingthereumTextStyle(
-                            font: KingthereumTypography.headlineMedium,
-                            color: KingthereumColors.textSecondary
+                        .kingStyle(KingTextStyle(
+                            font: KingTypography.headlineMedium,
+                            color: KingColors.textSecondary
                         ))
                     
                     Text("차세대 Web3 보안 기술로 당신의 자산을 보호합니다")
-                        .kingStyle(KingthereumTextStyle(
-                            font: KingthereumTypography.bodyMedium,
-                            color: KingthereumColors.textTertiary
+                        .kingStyle(KingTextStyle(
+                            font: KingTypography.bodyMedium,
+                            color: KingColors.textTertiary
                         ))
                         .multilineTextAlignment(.center)
                         .accessibilityLabel("차세대 Web3 보안 기술로 당신의 자산을 보호합니다")
@@ -355,22 +355,22 @@ struct AuthenticationView: View {
         HStack(spacing: DesignTokens.Spacing.xs) {
             Image(systemName: icon)
                 .font(.caption)
-                .foregroundColor(KingthereumColors.success)
+                .foregroundColor(KingColors.success)
             
             Text(text)
-                .kingStyle(KingthereumTextStyle(
-                    font: KingthereumTypography.helper,
-                    color: KingthereumColors.success
+                .kingStyle(KingTextStyle(
+                    font: KingTypography.helper,
+                    color: KingColors.success
                 ))
         }
         .padding(.horizontal, DesignTokens.Spacing.sm)
         .padding(.vertical, DesignTokens.Spacing.xs)
         .background(
             Capsule()
-                .fill(KingthereumColors.success.opacity(0.1))
+                .fill(KingColors.success.opacity(0.1))
                 .overlay(
                     Capsule()
-                        .stroke(KingthereumColors.success.opacity(0.3), lineWidth: 0.5)
+                        .stroke(KingColors.success.opacity(0.3), lineWidth: 0.5)
                 )
         )
     }
@@ -381,15 +381,15 @@ struct AuthenticationView: View {
             // 섹션 타이틀
             VStack(spacing: DesignTokens.Spacing.sm) {
                 Text("안전한 인증")
-                    .kingStyle(KingthereumTextStyle(
-                        font: KingthereumTypography.headlineLarge,
-                        color: KingthereumColors.textPrimary
+                    .kingStyle(KingTextStyle(
+                        font: KingTypography.headlineLarge,
+                        color: KingColors.textPrimary
                     ))
                 
                 Text("원하는 인증 방법을 선택하세요")
-                    .kingStyle(KingthereumTextStyle(
-                        font: KingthereumTypography.bodyMedium,
-                        color: KingthereumColors.textSecondary
+                    .kingStyle(KingTextStyle(
+                        font: KingTypography.bodyMedium,
+                        color: KingColors.textSecondary
                     ))
             }
             
@@ -419,8 +419,8 @@ struct AuthenticationView: View {
                         .fill(
                             RadialGradient(
                                 colors: [
-                                    KingthereumColors.success.opacity(0.3),
-                                    KingthereumColors.success.opacity(0.1),
+                                    KingColors.success.opacity(0.3),
+                                    KingColors.success.opacity(0.1),
                                     Color.clear
                                 ],
                                 center: .center,
@@ -436,9 +436,9 @@ struct AuthenticationView: View {
                         .foregroundStyle(
                             LinearGradient(
                                 colors: [
-                                    KingthereumColors.success,
+                                    KingColors.success,
                                     Color.green,
-                                    KingthereumColors.success.opacity(0.8)
+                                    KingColors.success.opacity(0.8)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -450,15 +450,15 @@ struct AuthenticationView: View {
                 // 텍스트 정보
                 VStack(spacing: DesignTokens.Spacing.sm) {
                     Text("생체 인증")
-                        .kingStyle(KingthereumTextStyle(
-                            font: KingthereumTypography.headlineMedium,
-                            color: KingthereumColors.textPrimary
+                        .kingStyle(KingTextStyle(
+                            font: KingTypography.headlineMedium,
+                            color: KingColors.textPrimary
                         ))
                     
                     Text("Face ID 또는 Touch ID로 빠르고 안전하게")
-                        .kingStyle(KingthereumTextStyle(
-                            font: KingthereumTypography.bodySmall,
-                            color: KingthereumColors.textSecondary
+                        .kingStyle(KingTextStyle(
+                            font: KingTypography.bodySmall,
+                            color: KingColors.textSecondary
                         ))
                         .multilineTextAlignment(.center)
                 }
@@ -466,13 +466,13 @@ struct AuthenticationView: View {
                 // 상태 인디케이터
                 HStack(spacing: DesignTokens.Spacing.xs) {
                     Circle()
-                        .fill(KingthereumColors.success)
+                        .fill(KingColors.success)
                         .frame(width: 6, height: 6)
                     
                     Text("권장")
-                        .kingStyle(KingthereumTextStyle(
-                            font: KingthereumTypography.helper,
-                            color: KingthereumColors.success
+                        .kingStyle(KingTextStyle(
+                            font: KingTypography.helper,
+                            color: KingColors.success
                         ))
                 }
             }
@@ -488,7 +488,7 @@ struct AuthenticationView: View {
                     .fill(.ultraThinMaterial)
                     .background(
                         RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xl)
-                            .fill(KingthereumGradients.success.opacity(0.05))
+                            .fill(KingGradients.success.opacity(0.05))
                     )
                 
                 // 상단 하이라이트
@@ -509,9 +509,9 @@ struct AuthenticationView: View {
                     .stroke(
                         LinearGradient(
                             colors: [
-                                KingthereumColors.success.opacity(0.4),
+                                KingColors.success.opacity(0.4),
                                 Color.clear,
-                                KingthereumColors.success.opacity(0.2)
+                                KingColors.success.opacity(0.2)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -520,8 +520,8 @@ struct AuthenticationView: View {
                     )
             }
         )
-        .shadow(color: KingthereumColors.success.opacity(0.2), radius: 15, x: 0, y: 8)
-        .shadow(color: KingthereumColors.cardShadow.opacity(0.1), radius: 30, x: 0, y: 15)
+        .shadow(color: KingColors.success.opacity(0.2), radius: 15, x: 0, y: 8)
+        .shadow(color: KingColors.cardShadow.opacity(0.1), radius: 30, x: 0, y: 15)
         .scaleEffect(viewStore.isLoading ? 0.98 : 1.0)
         .animation(.easeInOut(duration: 0.2), value: viewStore.isLoading)
         .accessibilityLabel("생체 인증으로 시작")
@@ -536,25 +536,25 @@ struct AuthenticationView: View {
                 // PIN 아이콘
                 ZStack {
                     Circle()
-                        .fill(KingthereumGradients.neon.opacity(0.2))
+                        .fill(KingGradients.neon.opacity(0.2))
                         .frame(width: 48, height: 48)
                     
                     Image(systemName: "key.fill")
                         .font(.title3)
-                        .foregroundStyle(KingthereumGradients.accent)
+                        .foregroundStyle(KingGradients.accent)
                 }
                 
                 VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
                     Text("6자리 PIN 입력")
-                        .kingStyle(KingthereumTextStyle(
-                            font: KingthereumTypography.bodyEmphasized,
-                            color: KingthereumColors.textPrimary
+                        .kingStyle(KingTextStyle(
+                            font: KingTypography.bodyEmphasized,
+                            color: KingColors.textPrimary
                         ))
                     
                     Text("설정된 PIN 코드를 입력하세요")
-                        .kingStyle(KingthereumTextStyle(
-                            font: KingthereumTypography.bodySmall,
-                            color: KingthereumColors.textSecondary
+                        .kingStyle(KingTextStyle(
+                            font: KingTypography.bodySmall,
+                            color: KingColors.textSecondary
                         ))
                 }
                 
@@ -564,11 +564,11 @@ struct AuthenticationView: View {
                 HStack(spacing: DesignTokens.Spacing.xs) {
                     ForEach(0..<6, id: \.self) { index in
                         Circle()
-                            .fill(KingthereumColors.textTertiary.opacity(0.3))
+                            .fill(KingColors.textTertiary.opacity(0.3))
                             .frame(width: 12, height: 12)
                             .overlay(
                                 Circle()
-                                    .stroke(KingthereumColors.accent.opacity(0.5), lineWidth: 1)
+                                    .stroke(KingColors.accent.opacity(0.5), lineWidth: 1)
                             )
                     }
                 }
@@ -579,7 +579,7 @@ struct AuthenticationView: View {
                     .fill(.ultraThinMaterial)
                     .overlay(
                         RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
-                            .stroke(KingthereumColors.accent.opacity(0.2), lineWidth: 1)
+                            .stroke(KingColors.accent.opacity(0.2), lineWidth: 1)
                     )
             )
             
@@ -592,16 +592,16 @@ struct AuthenticationView: View {
                         .font(.title3)
                     
                     Text("PIN으로 잠금 해제")
-                        .kingStyle(KingthereumTextStyle(
-                            font: KingthereumTypography.buttonPrimary,
-                            color: KingthereumColors.textInverse
+                        .kingStyle(KingTextStyle(
+                            font: KingTypography.buttonPrimary,
+                            color: KingColors.textInverse
                         ))
                 }
                 .frame(maxWidth: .infinity)
                 .frame(height: DesignTokens.Size.Button.lg)
-                .background(KingthereumGradients.buttonPrimary)
+                .background(KingGradients.buttonPrimary)
                 .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg))
-                .shadow(color: KingthereumColors.accent.opacity(0.3), radius: 8, x: 0, y: 4)
+                .shadow(color: KingColors.accent.opacity(0.3), radius: 8, x: 0, y: 4)
             }
             .buttonStyle(PlainButtonStyle())
             .disabled(viewStore.isLoading)
@@ -616,18 +616,18 @@ struct AuthenticationView: View {
             // 구분선
             HStack {
                 Rectangle()
-                    .fill(KingthereumColors.textTertiary.opacity(0.3))
+                    .fill(KingColors.textTertiary.opacity(0.3))
                     .frame(height: DesignTokens.Size.Divider.thin)
                 
                 Text("또는")
-                    .kingStyle(KingthereumTextStyle(
-                        font: KingthereumTypography.caption,
-                        color: KingthereumColors.textTertiary
+                    .kingStyle(KingTextStyle(
+                        font: KingTypography.caption,
+                        color: KingColors.textTertiary
                     ))
                     .padding(.horizontal, DesignTokens.Spacing.md)
                 
                 Rectangle()
-                    .fill(KingthereumColors.textTertiary.opacity(0.3))
+                    .fill(KingColors.textTertiary.opacity(0.3))
                     .frame(height: DesignTokens.Size.Divider.thin)
             }
             
@@ -638,7 +638,7 @@ struct AuthenticationView: View {
                     icon: "plus.circle.fill",
                     title: "새 지갑",
                     subtitle: "생성",
-                    color: KingthereumColors.accent
+                    color: KingColors.accent
                 ) {
                     createWallet()
                 }
@@ -648,7 +648,7 @@ struct AuthenticationView: View {
                     icon: "arrow.clockwise.circle.fill",
                     title: "지갑 복원",
                     subtitle: "Import",
-                    color: KingthereumColors.info
+                    color: KingColors.info
                 ) {
                     // 복원 로직 구현 예정
                     print("지갑 복원 요청")
@@ -679,14 +679,14 @@ struct AuthenticationView: View {
                 
                 VStack(spacing: 2) {
                     Text(title)
-                        .kingStyle(KingthereumTextStyle(
-                            font: KingthereumTypography.labelMedium,
-                            color: KingthereumColors.textPrimary
+                        .kingStyle(KingTextStyle(
+                            font: KingTypography.labelMedium,
+                            color: KingColors.textPrimary
                         ))
                     
                     Text(subtitle)
-                        .kingStyle(KingthereumTextStyle(
-                            font: KingthereumTypography.helper,
+                        .kingStyle(KingTextStyle(
+                            font: KingTypography.helper,
                             color: color
                         ))
                 }
@@ -709,15 +709,15 @@ struct AuthenticationView: View {
     private var premiumMnemonicView: some View {
         VStack(spacing: DesignTokens.Spacing.xl) {
             Text("복구 구문")
-                .kingStyle(KingthereumTextStyle(
-                    font: KingthereumTypography.headlineLarge,
-                    color: KingthereumColors.textPrimary
+                .kingStyle(KingTextStyle(
+                    font: KingTypography.headlineLarge,
+                    color: KingColors.textPrimary
                 ))
             
             Text("지갑의 니모닉 복구 구문을 안전하게 보관하세요")
-                .kingStyle(KingthereumTextStyle(
-                    font: KingthereumTypography.bodyMedium,
-                    color: KingthereumColors.textSecondary
+                .kingStyle(KingTextStyle(
+                    font: KingTypography.bodyMedium,
+                    color: KingColors.textSecondary
                 ))
                 .multilineTextAlignment(.center)
             
@@ -725,7 +725,7 @@ struct AuthenticationView: View {
             Spacer()
         }
         .padding(DesignTokens.Spacing.xl)
-        .background(KingthereumGradients.backgroundAmbient)
+        .background(KingGradients.backgroundAmbient)
     }
 }
 

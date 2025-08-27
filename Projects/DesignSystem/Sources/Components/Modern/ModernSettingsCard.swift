@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// 모던 설정 카드 컴포넌트
-/// KingthereumColors와 그라데이션을 활용한 세련된 설정 그룹 표시
+/// KingColors와 그라데이션을 활용한 세련된 설정 그룹 표시
 public struct ModernSettingsCard<Content: View>: View {
     let title: String?
     let content: Content
@@ -42,13 +42,13 @@ public struct ModernSettingsCard<Content: View>: View {
     private var backgroundStyle: some View {
         switch style.backgroundType {
         case .solid:
-            KingthereumColors.cardBackground
+            KingColors.cardBackground
         case .gradient:
-            KingthereumGradients.card
+            KingGradients.card
         case .elevated:
-            KingthereumGradients.cardElevated
+            KingGradients.cardElevated
         case .glass:
-            KingthereumGradients.cardGlass
+            KingGradients.cardGlass
         }
     }
     
@@ -56,7 +56,7 @@ public struct ModernSettingsCard<Content: View>: View {
     private var borderOverlay: some View {
         if style.showBorder {
             RoundedRectangle(cornerRadius: style.cornerRadius)
-                .stroke(KingthereumColors.cardBorder, lineWidth: DesignTokens.BorderWidth.normal)
+                .stroke(KingColors.cardBorder, lineWidth: DesignTokens.BorderWidth.normal)
         }
     }
 }
@@ -81,7 +81,7 @@ public struct ModernCardStyle: Sendable {
         backgroundType: BackgroundType = .gradient,
         cornerRadius: CGFloat = DesignTokens.CornerRadius.lg,
         showBorder: Bool = true,
-        shadowColor: Color = KingthereumColors.cardShadow,
+        shadowColor: Color = KingColors.cardShadow,
         shadowRadius: CGFloat = 6,
         shadowY: CGFloat = 3
     ) {
@@ -159,7 +159,7 @@ public struct ModernSettingsRow: View {
                 }
             }
             .font(.system(size: 18, weight: .medium))
-            .foregroundColor(item.iconColor ?? KingthereumColors.accent)
+            .foregroundColor(item.iconColor ?? KingColors.accent)
             .frame(width: 24, height: 24)
         }
     }
@@ -183,7 +183,7 @@ public struct ModernSettingsRow: View {
         case .navigation:
             Image(systemName: "chevron.right")
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(KingthereumColors.textTertiary)
+                .foregroundColor(KingColors.textTertiary)
         
         case .toggle(let binding):
             Toggle("", isOn: binding)
@@ -196,21 +196,21 @@ public struct ModernSettingsRow: View {
         
         case .badge(let text, let color):
             Text(text)
-                .kingStyle(KingthereumTextStyle(
-                    font: KingthereumTypography.labelSmall,
-                    color: KingthereumColors.textInverse
+                .kingStyle(KingTextStyle(
+                    font: KingTypography.labelSmall,
+                    color: KingColors.textInverse
                 ))
                 .padding(.horizontal, 8)
                 .padding(.vertical, 4)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(color ?? KingthereumColors.accent)
+                        .fill(color ?? KingColors.accent)
                 )
         
         case .icon(let iconName):
             Image(systemName: iconName)
                 .font(.system(size: 16, weight: .medium))
-                .foregroundColor(KingthereumColors.textTertiary)
+                .foregroundColor(KingColors.textTertiary)
         
         case .none:
             EmptyView()
@@ -270,7 +270,7 @@ struct ModernRowButtonStyle: ButtonStyle {
                 RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.md)
                     .fill(
                         configuration.isPressed
-                            ? KingthereumColors.accent.opacity(0.1)
+                            ? KingColors.accent.opacity(0.1)
                             : Color.clear
                     )
             )
@@ -295,7 +295,7 @@ public func ModernSettingsCardWithItems(
             // 마지막 아이템이 아니면 구분선 추가
             if index < items.count - 1 {
                 Divider()
-                    .background(KingthereumColors.separator)
+                    .background(KingColors.separator)
                     .padding(.leading, DesignTokens.Spacing.md)
             }
         }
@@ -312,7 +312,7 @@ public func ModernSettingsCardWithItems(
                     title: "Kingthereum Wallet",
                     subtitle: "0x7b...3020 • 계정보기",
                     iconName: "person.crop.circle.fill",
-                    iconColor: KingthereumColors.accent,
+                    iconColor: KingColors.accent,
                     type: .navigation
                 ) {
                     print("Profile tapped")
@@ -327,7 +327,7 @@ public func ModernSettingsCardWithItems(
                         title: "화면 모드",
                         subtitle: "시스템 설정에 따라 자동으로 전환",
                         iconName: "moon.circle.fill",
-                        iconColor: KingthereumColors.accentSecondary,
+                        iconColor: KingColors.accentSecondary,
                         type: .value("시스템")
                     ) {
                         print("Display mode tapped")
@@ -335,7 +335,7 @@ public func ModernSettingsCardWithItems(
                     SettingsItem(
                         title: "글자 크기",
                         iconName: "textformat.size",
-                        iconColor: KingthereumColors.info,
+                        iconColor: KingColors.info,
                         type: .navigation
                     ) {
                         print("Font size tapped")
@@ -352,15 +352,15 @@ public func ModernSettingsCardWithItems(
                         title: "알림",
                         subtitle: "새로운 트랜잭션 및 보안 알림 수신",
                         iconName: "bell.circle.fill",
-                        iconColor: KingthereumColors.warning,
+                        iconColor: KingColors.warning,
                         type: .toggle(.constant(true))
                     ),
                     SettingsItem(
                         title: "보안",
                         subtitle: "PIN, 생체인증 및 백업 설정",
                         iconName: "lock.circle.fill",
-                        iconColor: KingthereumColors.success,
-                        type: .badge("활성화됨", KingthereumColors.success)
+                        iconColor: KingColors.success,
+                        type: .badge("활성화됨", KingColors.success)
                     ) {
                         print("Security tapped")
                     },
@@ -368,7 +368,7 @@ public func ModernSettingsCardWithItems(
                         title: "네트워크",
                         subtitle: "이더리움 메인넷에 연결됨",
                         iconName: "network",
-                        iconColor: KingthereumColors.ethereum,
+                        iconColor: KingColors.ethereum,
                         type: .navigation
                     ) {
                         print("Network tapped")
@@ -382,7 +382,7 @@ public func ModernSettingsCardWithItems(
                     title: "한국어",
                     subtitle: "시스템 언어",
                     iconName: "globe.circle.fill",
-                    iconColor: KingthereumColors.accent,
+                    iconColor: KingColors.accent,
                     type: .navigation
                 ) {
                     print("Language tapped")
@@ -391,5 +391,5 @@ public func ModernSettingsCardWithItems(
         }
         .padding()
     }
-    .background(KingthereumColors.backgroundPrimary)
+    .background(KingColors.backgroundPrimary)
 }

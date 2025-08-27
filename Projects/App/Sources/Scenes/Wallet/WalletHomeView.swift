@@ -23,8 +23,8 @@ struct WalletHomeView: View {
         NavigationStack(path: $navigationPath) {
             ScrollView {
                 VStack(spacing: 20) {
-                    // 초경량 SwiftUI Glass 잔액 카드
-                    UltraLightweightBalanceCard(
+                    // Glass 잔액 카드
+                    BalanceCard(
                         balance: "2.5",
                         symbol: "ETH",
                         usdValue: "$4,250.00"
@@ -32,9 +32,9 @@ struct WalletHomeView: View {
                     .scaleEffect(isScrollingDown ? 0.95 : 1.0)
                     .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isScrollingDown)
                     
-                    // 초경량 SwiftUI Glass 액션 버튼들
+                    // SwiftUI Glass 액션 버튼들
                     HStack(spacing: 16) {
-                        UltraLightweightSwiftUIButton(
+                        GlassButton(
                             icon: "arrow.up.circle.fill",
                             title: "보내기",
                             style: .crypto
@@ -44,7 +44,7 @@ struct WalletHomeView: View {
                         .accessibilityLabel("이더리움 보내기")
                         .accessibilityHint("탭하여 이더리움을 다른 주소로 전송합니다")
                         
-                        UltraLightweightSwiftUIButton(
+                        GlassButton(
                             icon: "arrow.down.circle.fill",
                             title: "받기",
                             style: .success
@@ -56,14 +56,15 @@ struct WalletHomeView: View {
                     }
                     .padding(.horizontal, 8)
                     
-                    // 초경량 SwiftUI Glass 최근 거래
+                    // SwiftUI Glass 최근 거래
                     VStack(alignment: .leading, spacing: 16) {
                         HStack {
                             Text("최근 거래")
                                 .kingStyle(.headlinePrimary)
                             Spacer()
-                            UltraLightweightSwiftUIButton(
-                                icon: "arrow.right"
+                            GlassButton(
+                                icon: "arrow.right",
+                                style: .icon
                             ) {
                                 // 모든 거래 내역으로 이동
                             }
@@ -71,7 +72,7 @@ struct WalletHomeView: View {
                         .padding(.horizontal)
                         
                         ForEach(0..<3, id: \.self) { index in
-                            UltraLightweightTransactionCard(
+                            TransactionCard(
                                 type: index % 2 == 0 ? .receive : .send,
                                 amount: index == 0 ? "0.5" : index == 1 ? "1.2" : "0.8",
                                 symbol: "ETH",
@@ -213,7 +214,7 @@ struct SendRecipientNavigationView: View {
                         } label: {
                             Image(systemName: "qrcode.viewfinder")
                                 .font(.title2)
-                                .foregroundStyle(KingthereumGradients.accent)
+                                .foregroundStyle(KingGradients.accent)
                                 .frame(width: 48, height: 48)
                                 .background(.ultraThinMaterial)
                                 .cornerRadius(DesignTokens.CornerRadius.md)
@@ -225,12 +226,12 @@ struct SendRecipientNavigationView: View {
                             Image(systemName: isAddressValid ? "checkmark.circle.fill" : "xmark.circle.fill")
                                 .font(.caption)
                             Text(isAddressValid ? "유효한 주소입니다" : "올바른 주소 형식이 아닙니다")
-                                .kingStyle(KingthereumTextStyle(
-                                    font: KingthereumTypography.caption,
-                                    color: isAddressValid ? KingthereumColors.success : KingthereumColors.error
+                                .kingStyle(KingTextStyle(
+                                    font: KingTypography.caption,
+                                    color: isAddressValid ? KingColors.success : KingColors.error
                                 ))
                         }
-                        .foregroundColor(isAddressValid ? KingthereumColors.success : KingthereumColors.error)
+                        .foregroundColor(isAddressValid ? KingColors.success : KingColors.error)
                     }
                 }
                 .padding()
@@ -285,7 +286,7 @@ struct SendAmountNavigationView: View {
                     HStack {
                         Image(systemName: "person.circle.fill")
                             .font(.title2)
-                            .foregroundColor(KingthereumColors.accent)
+                            .foregroundColor(KingColors.accent)
                         
                         VStack(alignment: .leading, spacing: 2) {
                             if let name = recipientData.name {
@@ -329,9 +330,9 @@ struct SendAmountNavigationView: View {
                             .kingStyle(.captionPrimary)
                         Spacer()
                         Text("\(balance) ETH")
-                            .kingStyle(KingthereumTextStyle(
-                                font: KingthereumTypography.caption,
-                                color: KingthereumColors.textPrimary
+                            .kingStyle(KingTextStyle(
+                                font: KingTypography.caption,
+                                color: KingColors.textPrimary
                             ))
                     }
                 }
@@ -395,9 +396,9 @@ struct SendConfirmNavigationView: View {
                         .kingStyle(.headlinePrimary)
                     
                     Text("\(transactionData.amount) ETH")
-                        .kingStyle(KingthereumTextStyle(
-                            font: KingthereumTypography.cryptoBalanceLarge,
-                            color: KingthereumColors.textPrimary
+                        .kingStyle(KingTextStyle(
+                            font: KingTypography.cryptoBalanceLarge,
+                            color: KingColors.textPrimary
                         ))
                 }
                 .padding()
@@ -419,10 +420,10 @@ struct SendConfirmNavigationView: View {
                         }
                     }
                     .font(.headline)
-                    .foregroundColor(KingthereumColors.textInverse)
+                    .foregroundColor(KingColors.textInverse)
                     .frame(maxWidth: .infinity)
                     .frame(height: DesignTokens.Size.Button.lg)
-                    .background(KingthereumGradients.buttonPrimary)
+                    .background(KingGradients.buttonPrimary)
                     .cornerRadius(DesignTokens.CornerRadius.lg)
                 }
                 .disabled(isProcessing)

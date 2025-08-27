@@ -261,7 +261,7 @@ extension SettingsView {
                     ZStack {
                         // 배경 그라데이션 원형
                         Circle()
-                            .fill(KingthereumGradients.accent)
+                            .fill(KingGradients.accent)
                             .frame(width: 80, height: 80)
                         
                         // Glass 효과 테두리
@@ -271,7 +271,7 @@ extension SettingsView {
                                     colors: [
                                         Color.white.opacity(0.6),
                                         Color.clear,
-                                        KingthereumColors.accent.opacity(0.3)
+                                        KingColors.accent.opacity(0.3)
                                     ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
@@ -297,9 +297,9 @@ extension SettingsView {
                         
                         // 아바타 텍스트
                         Text(viewStore.profileData.avatarInitials)
-                            .kingStyle(KingthereumTextStyle(
-                                font: KingthereumTypography.headlineLarge,
-                                color: KingthereumColors.textInverse
+                            .kingStyle(KingTextStyle(
+                                font: KingTypography.headlineLarge,
+                                color: KingColors.textInverse
                             ))
                     }
                     
@@ -311,7 +311,7 @@ extension SettingsView {
                         HStack(spacing: DesignTokens.Spacing.xs) {
                             Image(systemName: "link.circle.fill")
                                 .font(.caption)
-                                .foregroundColor(KingthereumColors.accent)
+                                .foregroundColor(KingColors.accent)
                             
                             Text(viewStore.profileData.formattedAddress)
                                 .kingStyle(.bodySecondary)
@@ -320,13 +320,13 @@ extension SettingsView {
                         // 상태 표시 배지
                         HStack(spacing: DesignTokens.Spacing.xs) {
                             Circle()
-                                .fill(KingthereumColors.success)
+                                .fill(KingColors.success)
                                 .frame(width: 8, height: 8)
                             
                             Text("활성화됨")
-                                .kingStyle(KingthereumTextStyle(
-                                    font: KingthereumTypography.caption,
-                                    color: KingthereumColors.success
+                                .kingStyle(KingTextStyle(
+                                    font: KingTypography.caption,
+                                    color: KingColors.success
                                 ))
                         }
                     }
@@ -336,12 +336,12 @@ extension SettingsView {
                     // 우아한 화살표 아이콘
                     ZStack {
                         Circle()
-                            .fill(KingthereumColors.accent.opacity(0.1))
+                            .fill(KingColors.accent.opacity(0.1))
                             .frame(width: 32, height: 32)
                         
                         Image(systemName: "chevron.right")
                             .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(KingthereumColors.accent)
+                            .foregroundColor(KingColors.accent)
                     }
                 }
                 .padding(DesignTokens.Spacing.lg)
@@ -351,7 +351,7 @@ extension SettingsView {
                 ZStack {
                     // 메인 배경
                     RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xl)
-                        .fill(KingthereumGradients.cardElevated)
+                        .fill(KingGradients.cardElevated)
                     
                     // 상단 하이라이트
                     RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xl)
@@ -371,9 +371,9 @@ extension SettingsView {
                         .stroke(
                             LinearGradient(
                                 colors: [
-                                    KingthereumColors.accent.opacity(0.2),
+                                    KingColors.accent.opacity(0.2),
                                     Color.clear,
-                                    KingthereumColors.accentSecondary.opacity(0.1)
+                                    KingColors.accentSecondary.opacity(0.1)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -382,8 +382,8 @@ extension SettingsView {
                         )
                 }
             )
-            .shadow(color: KingthereumColors.cardShadow, radius: 10, x: 0, y: 4)
-            .shadow(color: KingthereumColors.accent.opacity(0.1), radius: 20, x: 0, y: 8)
+            .shadow(color: KingColors.cardShadow, radius: 10, x: 0, y: 4)
+            .shadow(color: KingColors.accent.opacity(0.1), radius: 20, x: 0, y: 8)
         }
     }
     
@@ -402,7 +402,7 @@ extension SettingsView {
                         // 아이콘 배경
                         ZStack {
                             Circle()
-                                .fill(KingthereumGradients.aurora.opacity(0.3))
+                                .fill(KingGradients.aurora.opacity(0.3))
                                 .frame(width: 48, height: 48)
                             
                             Circle()
@@ -436,8 +436,8 @@ extension SettingsView {
                                 .kingStyle(.bodyPrimary)
                             
                             Text(viewStore.displayMode)
-                                .kingStyle(KingthereumTextStyle(
-                                    font: KingthereumTypography.labelMedium,
+                                .kingStyle(KingTextStyle(
+                                    font: KingTypography.labelMedium,
                                     color: Color.purple
                                 ))
                         }
@@ -446,7 +446,7 @@ extension SettingsView {
                         
                         Image(systemName: "chevron.right")
                             .font(.caption)
-                            .foregroundColor(KingthereumColors.textTertiary)
+                            .foregroundColor(KingColors.textTertiary)
                     }
                     .padding(DesignTokens.Spacing.lg)
                 }
@@ -458,7 +458,7 @@ extension SettingsView {
                             .fill(.ultraThinMaterial)
                             .background(
                                 RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
-                                    .fill(KingthereumGradients.aurora.opacity(0.1))
+                                    .fill(KingGradients.aurora.opacity(0.1))
                             )
                         
                         // 상단 하이라이트
@@ -500,7 +500,7 @@ extension SettingsView {
                         // 아이콘 배경
                         ZStack {
                             Circle()
-                                .fill(KingthereumGradients.neon.opacity(0.3))
+                                .fill(KingGradients.neon.opacity(0.3))
                                 .frame(width: 48, height: 48)
                             
                             Circle()
@@ -534,8 +534,8 @@ extension SettingsView {
                                 .kingStyle(.bodyPrimary)
                             
                             Text(viewStore.fontSize)
-                                .kingStyle(KingthereumTextStyle(
-                                    font: KingthereumTypography.labelMedium,
+                                .kingStyle(KingTextStyle(
+                                    font: KingTypography.labelMedium,
                                     color: Color.blue
                                 ))
                         }
@@ -544,7 +544,7 @@ extension SettingsView {
                         
                         Image(systemName: "chevron.right")
                             .font(.caption)
-                            .foregroundColor(KingthereumColors.textTertiary)
+                            .foregroundColor(KingColors.textTertiary)
                     }
                     .padding(DesignTokens.Spacing.lg)
                 }
@@ -556,7 +556,7 @@ extension SettingsView {
                             .fill(.ultraThinMaterial)
                             .background(
                                 RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
-                                    .fill(KingthereumGradients.neon.opacity(0.1))
+                                    .fill(KingGradients.neon.opacity(0.1))
                             )
                         
                         // 상단 하이라이트
@@ -624,13 +624,13 @@ extension SettingsView {
                 
                 Image(systemName: "chevron.right")
                     .font(.caption)
-                    .foregroundColor(KingthereumColors.textTertiary)
+                    .foregroundColor(KingColors.textTertiary)
             }
             .padding(DesignTokens.Spacing.lg)
         }
         .buttonStyle(PlainButtonStyle())
         .background(notificationBackground)
-        .shadow(color: KingthereumColors.warning.opacity(0.1), radius: 12, x: 0, y: 6)
+        .shadow(color: KingColors.warning.opacity(0.1), radius: 12, x: 0, y: 6)
         .accessibilityLabel("알림 설정")
         .accessibilityValue(viewStore.notificationStatus)
         .accessibilityHint("탭하여 알림을 켜거나 끕니다")
@@ -643,8 +643,8 @@ extension SettingsView {
                 .fill(
                     RadialGradient(
                         colors: [
-                            KingthereumColors.warning.opacity(0.4),
-                            KingthereumColors.warning.opacity(0.2),
+                            KingColors.warning.opacity(0.4),
+                            KingColors.warning.opacity(0.2),
                             Color.clear
                         ],
                         center: .center,
@@ -662,9 +662,9 @@ extension SettingsView {
                 .stroke(
                     AngularGradient(
                         colors: [
-                            KingthereumColors.warning,
+                            KingColors.warning,
                             Color.orange,
-                            KingthereumColors.warning
+                            KingColors.warning
                         ],
                         center: .center
                     ),
@@ -676,7 +676,7 @@ extension SettingsView {
                 .font(.title2)
                 .foregroundStyle(
                     LinearGradient(
-                        colors: [KingthereumColors.warning, Color.orange],
+                        colors: [KingColors.warning, Color.orange],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
@@ -692,15 +692,15 @@ extension SettingsView {
             
             HStack(spacing: DesignTokens.Spacing.xs) {
                 let isEnabled = viewStore.notificationStatus == "켜짐"
-                let statusColor = isEnabled ? KingthereumColors.success : KingthereumColors.textTertiary
+                let statusColor = isEnabled ? KingColors.success : KingColors.textTertiary
                 
                 Circle()
                     .fill(statusColor)
                     .frame(width: 8, height: 8)
                 
                 Text(viewStore.notificationStatus)
-                    .kingStyle(KingthereumTextStyle(
-                        font: KingthereumTypography.labelMedium,
+                    .kingStyle(KingTextStyle(
+                        font: KingTypography.labelMedium,
                         color: statusColor
                     ))
             }
@@ -714,14 +714,14 @@ extension SettingsView {
                 .fill(.ultraThinMaterial)
                 .background(
                     RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xl)
-                        .fill(KingthereumGradients.warning.opacity(0.05))
+                        .fill(KingGradients.warning.opacity(0.05))
                 )
             
             RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.xl)
                 .stroke(
                     LinearGradient(
                         colors: [
-                            KingthereumColors.warning.opacity(0.3),
+                            KingColors.warning.opacity(0.3),
                             Color.clear,
                             Color.orange.opacity(0.1)
                         ],
@@ -741,8 +741,8 @@ extension SettingsView {
                 icon: "lock.circle.fill",
                 title: "보안",
                 value: viewStore.securityMode,
-                accentColor: KingthereumColors.success,
-                gradient: KingthereumGradients.success
+                accentColor: KingColors.success,
+                gradient: KingGradients.success
             ) {
                 selectSecurity()
             }
@@ -755,8 +755,8 @@ extension SettingsView {
                 icon: "network",
                 title: "네트워크",
                 value: viewStore.network,
-                accentColor: KingthereumColors.accent,
-                gradient: LinearGradient(colors: [KingthereumColors.accent.opacity(0.1)], startPoint: .top, endPoint: .bottom)
+                accentColor: KingColors.accent,
+                gradient: LinearGradient(colors: [KingColors.accent.opacity(0.1)], startPoint: .top, endPoint: .bottom)
             ) {
                 selectNetwork()
             }
@@ -766,8 +766,8 @@ extension SettingsView {
                 icon: "dollarsign.circle.fill",
                 title: "통화",
                 value: viewStore.currency,
-                accentColor: KingthereumColors.bitcoin,
-                gradient: LinearGradient(colors: [KingthereumColors.bitcoin.opacity(0.1)], startPoint: .top, endPoint: .bottom)
+                accentColor: KingColors.bitcoin,
+                gradient: LinearGradient(colors: [KingColors.bitcoin.opacity(0.1)], startPoint: .top, endPoint: .bottom)
             ) {
                 selectCurrency()
             }
@@ -777,8 +777,8 @@ extension SettingsView {
                 icon: "globe",
                 title: "언어",
                 value: viewStore.language,
-                accentColor: KingthereumColors.info,
-                gradient: KingthereumGradients.info
+                accentColor: KingColors.info,
+                gradient: KingGradients.info
             ) {
                 selectLanguage()
             }
@@ -797,7 +797,7 @@ extension SettingsView {
                     AboutCompactCard(
                         icon: "questionmark.circle.fill",
                         title: "도움말",
-                        accentColor: KingthereumColors.info
+                        accentColor: KingColors.info
                     ) {
                         selectHelp()
                     }
@@ -805,7 +805,7 @@ extension SettingsView {
                     AboutCompactCard(
                         icon: "doc.text.fill",
                         title: "이용약관",
-                        accentColor: KingthereumColors.textSecondary
+                        accentColor: KingColors.textSecondary
                     ) {
                         selectTermsOfService()
                     }
@@ -818,12 +818,12 @@ extension SettingsView {
                     HStack(spacing: DesignTokens.Spacing.md) {
                         ZStack {
                             Circle()
-                                .fill(KingthereumGradients.holographic.opacity(0.2))
+                                .fill(KingGradients.holographic.opacity(0.2))
                                 .frame(width: 40, height: 40)
                             
                             Image(systemName: "hand.raised.fill")
                                 .font(.title3)
-                                .foregroundStyle(KingthereumGradients.holographic)
+                                .foregroundStyle(KingGradients.holographic)
                         }
                         
                         Text("개인정보 처리방침")
@@ -833,7 +833,7 @@ extension SettingsView {
                         
                         Image(systemName: "chevron.right")
                             .font(.caption2)
-                            .foregroundColor(KingthereumColors.textTertiary)
+                            .foregroundColor(KingColors.textTertiary)
                     }
                     .padding(DesignTokens.Spacing.md)
                 }
@@ -843,7 +843,7 @@ extension SettingsView {
                         .fill(.ultraThinMaterial)
                         .background(
                             RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.md)
-                                .fill(KingthereumGradients.holographic.opacity(0.05))
+                                .fill(KingGradients.holographic.opacity(0.05))
                         )
                 )
                 
@@ -855,11 +855,11 @@ extension SettingsView {
                             .fill(
                                 AngularGradient(
                                     colors: [
-                                        KingthereumColors.accent,
-                                        KingthereumColors.accentSecondary,
-                                        KingthereumColors.success,
-                                        KingthereumColors.warning,
-                                        KingthereumColors.accent
+                                        KingColors.accent,
+                                        KingColors.accentSecondary,
+                                        KingColors.success,
+                                        KingColors.warning,
+                                        KingColors.accent
                                     ],
                                     center: .center
                                 )
@@ -872,7 +872,7 @@ extension SettingsView {
                         
                         Image(systemName: "info.circle.fill")
                             .font(.title2)
-                            .foregroundStyle(KingthereumGradients.accent)
+                            .foregroundStyle(KingGradients.accent)
                     }
                     
                     VStack(alignment: .leading, spacing: DesignTokens.Spacing.xs) {
@@ -880,9 +880,9 @@ extension SettingsView {
                             .kingStyle(.bodyPrimary)
                         
                         Text("v\(viewStore.version)")
-                            .kingStyle(KingthereumTextStyle(
-                                font: KingthereumTypography.labelMedium,
-                                color: KingthereumColors.accent
+                            .kingStyle(KingTextStyle(
+                                font: KingTypography.labelMedium,
+                                color: KingColors.accent
                             ))
                     }
                     
@@ -891,12 +891,12 @@ extension SettingsView {
                     // 앱 로고 미니어처
                     ZStack {
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(KingthereumGradients.accent)
+                            .fill(KingGradients.accent)
                             .frame(width: 32, height: 32)
                         
                         Image(systemName: "crown.fill")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(KingthereumColors.textInverse)
+                            .foregroundColor(KingColors.textInverse)
                     }
                 }
                 .padding(DesignTokens.Spacing.lg)
@@ -906,16 +906,16 @@ extension SettingsView {
                             .fill(.ultraThinMaterial)
                             .background(
                                 RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
-                                    .fill(KingthereumGradients.web3Rainbow.opacity(0.03))
+                                    .fill(KingGradients.web3Rainbow.opacity(0.03))
                             )
                         
                         RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
                             .stroke(
                                 LinearGradient(
                                     colors: [
-                                        KingthereumColors.accent.opacity(0.2),
+                                        KingColors.accent.opacity(0.2),
                                         Color.clear,
-                                        KingthereumColors.accentSecondary.opacity(0.1)
+                                        KingColors.accentSecondary.opacity(0.1)
                                     ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
@@ -968,15 +968,15 @@ struct SettingCompactCard: View {
                 // 제목과 값
                 VStack(spacing: DesignTokens.Spacing.xs) {
                     Text(title)
-                        .kingStyle(KingthereumTextStyle(
-                            font: KingthereumTypography.labelMedium,
-                            color: KingthereumColors.textPrimary
+                        .kingStyle(KingTextStyle(
+                            font: KingTypography.labelMedium,
+                            color: KingColors.textPrimary
                         ))
                         .lineLimit(1)
                     
                     Text(value)
-                        .kingStyle(KingthereumTextStyle(
-                            font: KingthereumTypography.caption,
+                        .kingStyle(KingTextStyle(
+                            font: KingTypography.caption,
                             color: accentColor
                         ))
                         .lineLimit(1)
@@ -1024,9 +1024,9 @@ struct AboutCompactCard: View {
                 }
                 
                 Text(title)
-                    .kingStyle(KingthereumTextStyle(
-                        font: KingthereumTypography.caption,
-                        color: KingthereumColors.textPrimary
+                    .kingStyle(KingTextStyle(
+                        font: KingTypography.caption,
+                        color: KingColors.textPrimary
                     ))
                     .multilineTextAlignment(.center)
                     .lineLimit(2)

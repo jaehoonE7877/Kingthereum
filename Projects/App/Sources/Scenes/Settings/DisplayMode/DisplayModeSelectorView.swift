@@ -44,7 +44,7 @@ struct DisplayModeSelectorView: View {
                         .kingStyle(.buttonPrimary)
                         .frame(maxWidth: .infinity)
                         .frame(height: DesignTokens.Size.Button.md)
-                        .background(KingthereumGradients.buttonPrimary)
+                        .background(KingGradients.buttonPrimary)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
                 .padding(.horizontal, 20)
@@ -118,13 +118,13 @@ struct DisplayModeOptionCard: View {
             .padding()
             .background(
                 RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
-                    .fill(isSelected ? KingthereumGradients.cardElevated : KingthereumGradients.card)
+                    .fill(isSelected ? KingGradients.cardElevated : KingGradients.card)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
-                    .stroke(isSelected ? KingthereumColors.accent : KingthereumColors.cardBorder, lineWidth: isSelected ? 2 : 1)
+                    .stroke(isSelected ? KingColors.accent : KingColors.cardBorder, lineWidth: isSelected ? 2 : 1)
             )
-            .shadow(color: KingthereumColors.cardShadow, radius: isSelected ? 8 : 4, x: 0, y: isSelected ? 4 : 2)
+            .shadow(color: KingColors.cardShadow, radius: isSelected ? 8 : 4, x: 0, y: isSelected ? 4 : 2)
         }
         .buttonStyle(PlainButtonStyle())
     }

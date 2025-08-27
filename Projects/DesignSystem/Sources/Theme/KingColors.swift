@@ -5,9 +5,9 @@ import UIKit
 import AppKit
 #endif
 
-/// Kingthereum 앱 전용 모던 색상 시스템
+/// King 앱 전용 모던 색상 시스템
 /// 라이트/다크 모드에 자연스럽게 어울리는 일관된 색상 팔레트
-public struct KingthereumColors {
+public struct KingColors {
     
     // MARK: - Primary Brand Colors
     
@@ -288,10 +288,10 @@ public extension Color {
             ColorSection(
                 title: "Brand Colors",
                 colors: [
-                    ("Primary Dark", KingthereumColors.primaryDark),
-                    ("Primary Light", KingthereumColors.primaryLight),
-                    ("Accent", KingthereumColors.accent),
-                    ("Accent Secondary", KingthereumColors.accentSecondary)
+                    ("Primary Dark", KingColors.primaryDark),
+                    ("Primary Light", KingColors.primaryLight),
+                    ("Accent", KingColors.accent),
+                    ("Accent Secondary", KingColors.accentSecondary)
                 ]
             )
             
@@ -299,10 +299,10 @@ public extension Color {
             ColorSection(
                 title: "Background Colors",
                 colors: [
-                    ("Background Primary", KingthereumColors.backgroundPrimary),
-                    ("Background Secondary", KingthereumColors.backgroundSecondary),
-                    ("Background Tertiary", KingthereumColors.backgroundTertiary),
-                    ("Surface", KingthereumColors.surface)
+                    ("Background Primary", KingColors.backgroundPrimary),
+                    ("Background Secondary", KingColors.backgroundSecondary),
+                    ("Background Tertiary", KingColors.backgroundTertiary),
+                    ("Surface", KingColors.surface)
                 ]
             )
             
@@ -310,10 +310,10 @@ public extension Color {
             ColorSection(
                 title: "Text Colors",
                 colors: [
-                    ("Text Primary", KingthereumColors.textPrimary),
-                    ("Text Secondary", KingthereumColors.textSecondary),
-                    ("Text Tertiary", KingthereumColors.textTertiary),
-                    ("Text Placeholder", KingthereumColors.textPlaceholder)
+                    ("Text Primary", KingColors.textPrimary),
+                    ("Text Secondary", KingColors.textSecondary),
+                    ("Text Tertiary", KingColors.textTertiary),
+                    ("Text Placeholder", KingColors.textPlaceholder)
                 ]
             )
             
@@ -321,10 +321,10 @@ public extension Color {
             ColorSection(
                 title: "Semantic Colors",
                 colors: [
-                    ("Success", KingthereumColors.success),
-                    ("Warning", KingthereumColors.warning),
-                    ("Error", KingthereumColors.error),
-                    ("Info", KingthereumColors.info)
+                    ("Success", KingColors.success),
+                    ("Warning", KingColors.warning),
+                    ("Error", KingColors.error),
+                    ("Info", KingColors.info)
                 ]
             )
             
@@ -332,16 +332,16 @@ public extension Color {
             ColorSection(
                 title: "Transaction Colors",
                 colors: [
-                    ("Send", KingthereumColors.transactionSend),
-                    ("Receive", KingthereumColors.transactionReceive),
-                    ("Pending", KingthereumColors.transactionPending),
-                    ("Confirmed", KingthereumColors.transactionConfirmed)
+                    ("Send", KingColors.transactionSend),
+                    ("Receive", KingColors.transactionReceive),
+                    ("Pending", KingColors.transactionPending),
+                    ("Confirmed", KingColors.transactionConfirmed)
                 ]
             )
         }
         .padding()
     }
-    .background(KingthereumColors.backgroundPrimary)
+    .background(KingColors.backgroundPrimary)
 }
 
 // MARK: - Helper Views for Preview
@@ -353,7 +353,7 @@ private struct ColorSection: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title)
                 .font(.headline)
-                .foregroundColor(KingthereumColors.textPrimary)
+                .foregroundColor(KingColors.textPrimary)
             
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 12) {
                 ForEach(colors, id: \.0) { name, color in
@@ -364,7 +364,7 @@ private struct ColorSection: View {
                         
                         Text(name)
                             .font(.caption)
-                            .foregroundColor(KingthereumColors.textSecondary)
+                            .foregroundColor(KingColors.textSecondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .padding(.vertical, 4)
@@ -372,11 +372,11 @@ private struct ColorSection: View {
             }
         }
         .padding()
-        .background(KingthereumColors.cardBackground)
+        .background(KingColors.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(KingthereumColors.cardBorder, lineWidth: 1)
+                .stroke(KingColors.cardBorder, lineWidth: 1)
         )
     }
 }

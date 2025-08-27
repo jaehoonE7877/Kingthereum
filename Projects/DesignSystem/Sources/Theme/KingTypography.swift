@@ -1,9 +1,9 @@
 import SwiftUI
 import Core
 
-/// Kingthereum 앱 전용 모던 타이포그래피 시스템
-/// KingthereumColors와 완벽하게 통합된 텍스트 스타일링
-public struct KingthereumTypography {
+/// King 앱 전용 모던 타이포그래피 시스템
+/// KingColors와 완벽하게 통합된 텍스트 스타일링
+public struct KingTypography {
     
     // MARK: - Display Fonts (Large Headings)
     
@@ -105,7 +105,7 @@ public struct KingthereumTypography {
 
 // MARK: - Text Style Definitions
 /// 색상과 폰트가 결합된 완전한 텍스트 스타일 정의
-public struct KingthereumTextStyle: Sendable {
+public struct KingTextStyle: Sendable {
     public let font: Font
     public let color: Color
     public let lineLimit: Int?
@@ -125,173 +125,173 @@ public struct KingthereumTextStyle: Sendable {
 }
 
 // MARK: - Predefined Text Styles
-public extension KingthereumTextStyle {
+public extension KingTextStyle {
     
     // MARK: - Primary Styles
     
     /// 메인 디스플레이 스타일
-    static let displayPrimary = KingthereumTextStyle(
-        font: KingthereumTypography.displayLarge,
-        color: KingthereumColors.textPrimary
+    static let displayPrimary = KingTextStyle(
+        font: KingTypography.displayLarge,
+        color: KingColors.textPrimary
     )
     
     /// 헤드라인 스타일
-    static let headlinePrimary = KingthereumTextStyle(
-        font: KingthereumTypography.headlineLarge,
-        color: KingthereumColors.textPrimary
+    static let headlinePrimary = KingTextStyle(
+        font: KingTypography.headlineLarge,
+        color: KingColors.textPrimary
     )
     
     /// 기본 본문 스타일
-    static let bodyPrimary = KingthereumTextStyle(
-        font: KingthereumTypography.bodyMedium,
-        color: KingthereumColors.textPrimary
+    static let bodyPrimary = KingTextStyle(
+        font: KingTypography.bodyMedium,
+        color: KingColors.textPrimary
     )
     
     /// 세컨더리 본문 스타일
-    static let bodySecondary = KingthereumTextStyle(
-        font: KingthereumTypography.bodyMedium,
-        color: KingthereumColors.textSecondary
+    static let bodySecondary = KingTextStyle(
+        font: KingTypography.bodyMedium,
+        color: KingColors.textSecondary
     )
     
     /// 캡션 스타일
-    static let captionPrimary = KingthereumTextStyle(
-        font: KingthereumTypography.caption,
-        color: KingthereumColors.textTertiary
+    static let captionPrimary = KingTextStyle(
+        font: KingTypography.caption,
+        color: KingColors.textTertiary
     )
     
     // MARK: - Button Styles
     
     /// 프라이머리 버튼 스타일
-    static let buttonPrimary = KingthereumTextStyle(
-        font: KingthereumTypography.buttonPrimary,
-        color: KingthereumColors.textInverse,
+    static let buttonPrimary = KingTextStyle(
+        font: KingTypography.buttonPrimary,
+        color: KingColors.textInverse,
         alignment: .center
     )
     
     /// 세컨더리 버튼 스타일
-    static let buttonSecondary = KingthereumTextStyle(
-        font: KingthereumTypography.buttonSecondary,
-        color: KingthereumColors.accent,
+    static let buttonSecondary = KingTextStyle(
+        font: KingTypography.buttonSecondary,
+        color: KingColors.accent,
         alignment: .center
     )
     
     /// 링크 스타일
-    static let link = KingthereumTextStyle(
-        font: KingthereumTypography.bodyMedium,
-        color: KingthereumColors.link
+    static let link = KingTextStyle(
+        font: KingTypography.bodyMedium,
+        color: KingColors.link
     )
     
     // MARK: - Crypto Specific Styles
     
     /// 크립토 잔고 대형 스타일
-    static let cryptoBalanceLarge = KingthereumTextStyle(
-        font: KingthereumTypography.cryptoBalanceLarge,
-        color: KingthereumColors.textPrimary,
+    static let cryptoBalanceLarge = KingTextStyle(
+        font: KingTypography.cryptoBalanceLarge,
+        color: KingColors.textPrimary,
         alignment: .trailing
     )
     
     /// 크립토 잔고 중형 스타일
-    static let cryptoBalanceMedium = KingthereumTextStyle(
-        font: KingthereumTypography.cryptoBalanceMedium,
-        color: KingthereumColors.textPrimary,
+    static let cryptoBalanceMedium = KingTextStyle(
+        font: KingTypography.cryptoBalanceMedium,
+        color: KingColors.textPrimary,
         alignment: .trailing
     )
     
     /// 이더리움 주소 스타일
-    static let ethereumAddress = KingthereumTextStyle(
-        font: KingthereumTypography.ethereumAddress,
-        color: KingthereumColors.textSecondary,
+    static let ethereumAddress = KingTextStyle(
+        font: KingTypography.ethereumAddress,
+        color: KingColors.textSecondary,
         lineLimit: 1
     )
     
     /// 트랜잭션 해시 스타일
-    static let transactionHash = KingthereumTextStyle(
-        font: KingthereumTypography.transactionHash,
-        color: KingthereumColors.textTertiary,
+    static let transactionHash = KingTextStyle(
+        font: KingTypography.transactionHash,
+        color: KingColors.textTertiary,
         lineLimit: 1
     )
     
     // MARK: - Semantic Styles
     
     /// 성공 메시지 스타일
-    static let success = KingthereumTextStyle(
-        font: KingthereumTypography.status,
-        color: KingthereumColors.success
+    static let success = KingTextStyle(
+        font: KingTypography.status,
+        color: KingColors.success
     )
     
     /// 경고 메시지 스타일
-    static let warning = KingthereumTextStyle(
-        font: KingthereumTypography.status,
-        color: KingthereumColors.warning
+    static let warning = KingTextStyle(
+        font: KingTypography.status,
+        color: KingColors.warning
     )
     
     /// 에러 메시지 스타일
-    static let error = KingthereumTextStyle(
-        font: KingthereumTypography.status,
-        color: KingthereumColors.error
+    static let error = KingTextStyle(
+        font: KingTypography.status,
+        color: KingColors.error
     )
     
     /// 정보 메시지 스타일
-    static let info = KingthereumTextStyle(
-        font: KingthereumTypography.status,
-        color: KingthereumColors.info
+    static let info = KingTextStyle(
+        font: KingTypography.status,
+        color: KingColors.info
     )
     
     // MARK: - Navigation & Interface Styles
     
     /// 네비게이션 타이틀 스타일
-    static let navigationTitle = KingthereumTextStyle(
-        font: KingthereumTypography.navigationTitle,
-        color: KingthereumColors.textPrimary,
+    static let navigationTitle = KingTextStyle(
+        font: KingTypography.navigationTitle,
+        color: KingColors.textPrimary,
         alignment: .center
     )
     
     /// 탭 바 라벨 스타일
-    static let tabBarLabel = KingthereumTextStyle(
-        font: KingthereumTypography.tabBar,
-        color: KingthereumColors.textSecondary,
+    static let tabBarLabel = KingTextStyle(
+        font: KingTypography.tabBar,
+        color: KingColors.textSecondary,
         alignment: .center
     )
     
     /// 탭 바 선택된 라벨 스타일
-    static let tabBarLabelSelected = KingthereumTextStyle(
-        font: KingthereumTypography.tabBar,
-        color: KingthereumColors.accent,
+    static let tabBarLabelSelected = KingTextStyle(
+        font: KingTypography.tabBar,
+        color: KingColors.accent,
         alignment: .center
     )
     
     // MARK: - Card & List Styles
     
     /// 카드 타이틀 스타일
-    static let cardTitle = KingthereumTextStyle(
-        font: KingthereumTypography.headlineSmall,
-        color: KingthereumColors.textPrimary
+    static let cardTitle = KingTextStyle(
+        font: KingTypography.headlineSmall,
+        color: KingColors.textPrimary
     )
     
     /// 카드 서브타이틀 스타일
-    static let cardSubtitle = KingthereumTextStyle(
-        font: KingthereumTypography.bodySmall,
-        color: KingthereumColors.textSecondary
+    static let cardSubtitle = KingTextStyle(
+        font: KingTypography.bodySmall,
+        color: KingColors.textSecondary
     )
     
     /// 리스트 아이템 타이틀 스타일
-    static let listTitle = KingthereumTextStyle(
-        font: KingthereumTypography.bodyLarge,
-        color: KingthereumColors.textPrimary
+    static let listTitle = KingTextStyle(
+        font: KingTypography.bodyLarge,
+        color: KingColors.textPrimary
     )
     
     /// 리스트 아이템 서브타이틀 스타일
-    static let listSubtitle = KingthereumTextStyle(
-        font: KingthereumTypography.bodySmall,
-        color: KingthereumColors.textSecondary
+    static let listSubtitle = KingTextStyle(
+        font: KingTypography.bodySmall,
+        color: KingColors.textSecondary
     )
 }
 
 // MARK: - Text View Extensions
 public extension Text {
     
-    /// KingthereumTextStyle 적용
-    func kingStyle(_ style: KingthereumTextStyle) -> some View {
+    /// KingTextStyle 적용
+    func kingStyle(_ style: KingTextStyle) -> some View {
         self
             .font(style.font)
             .foregroundColor(style.color)
@@ -303,9 +303,9 @@ public extension Text {
 // MARK: - Specialized Text Components
 public struct KingText: View {
     let text: String
-    let style: KingthereumTextStyle
+    let style: KingTextStyle
     
-    public init(_ text: String, style: KingthereumTextStyle) {
+    public init(_ text: String, style: KingTextStyle) {
         self.text = text
         self.style = style
     }
@@ -319,9 +319,9 @@ public struct KingText: View {
 public struct KingCryptoBalanceText: View {
     let balance: String
     let symbol: String
-    let style: KingthereumTextStyle
+    let style: KingTextStyle
     
-    public init(balance: String, symbol: String, style: KingthereumTextStyle = .cryptoBalanceMedium) {
+    public init(balance: String, symbol: String, style: KingTextStyle = .cryptoBalanceMedium) {
         self.balance = balance
         self.symbol = symbol
         self.style = style
@@ -333,8 +333,8 @@ public struct KingCryptoBalanceText: View {
                 .kingStyle(style)
             
             Text(symbol)
-                .kingStyle(KingthereumTextStyle(
-                    font: KingthereumTypography.labelLarge,
+                .kingStyle(KingTextStyle(
+                    font: KingTypography.labelLarge,
                     color: style.color
                 ))
         }
@@ -373,13 +373,13 @@ public struct KingEthereumAddressText: View {
                 
                 VStack(alignment: .leading, spacing: 8) {
                     KingText("Large Display", style: .displayPrimary)
-                    KingText("Medium Display", style: KingthereumTextStyle(
-                        font: KingthereumTypography.displayMedium,
-                        color: KingthereumColors.textPrimary
+                    KingText("Medium Display", style: KingTextStyle(
+                        font: KingTypography.displayMedium,
+                        color: KingColors.textPrimary
                     ))
-                    KingText("Small Display", style: KingthereumTextStyle(
-                        font: KingthereumTypography.displaySmall,
-                        color: KingthereumColors.textPrimary
+                    KingText("Small Display", style: KingTextStyle(
+                        font: KingTypography.displaySmall,
+                        color: KingColors.textPrimary
                     ))
                 }
             }
@@ -432,7 +432,7 @@ public struct KingEthereumAddressText: View {
                 VStack(spacing: 12) {
                     // Primary Button Preview
                     Rectangle()
-                        .fill(KingthereumGradients.buttonPrimary)
+                        .fill(KingGradients.buttonPrimary)
                         .frame(height: 48)
                         .overlay(
                             KingText("Primary Button", style: .buttonPrimary)
@@ -441,7 +441,7 @@ public struct KingEthereumAddressText: View {
                     
                     // Secondary Button Preview
                     Rectangle()
-                        .fill(KingthereumGradients.buttonSecondary)
+                        .fill(KingGradients.buttonSecondary)
                         .frame(height: 48)
                         .overlay(
                             KingText("Secondary Button", style: .buttonSecondary)
@@ -449,12 +449,12 @@ public struct KingEthereumAddressText: View {
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(KingthereumColors.accent, lineWidth: 1.5)
+                                .stroke(KingColors.accent, lineWidth: 1.5)
                         )
                 }
             }
         }
         .padding()
     }
-    .background(KingthereumColors.backgroundPrimary)
+    .background(KingColors.backgroundPrimary)
 }

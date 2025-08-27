@@ -1,16 +1,16 @@
 import SwiftUI
 
-/// Kingthereum 앱 전용 세련된 그라데이션 시스템
+/// King 앱 전용 세련된 그라데이션 시스템
 /// 다양한 용도별 그라데이션을 제공하여 프리미엄 느낌의 UI 구현
-public struct KingthereumGradients {
+public struct KingGradients {
     
     // MARK: - Primary Brand Gradients
     
     /// 메인 브랜드 그라데이션 - 네이비 to 퍼플
     public static let primary = LinearGradient(
         colors: [
-            KingthereumColors.primaryDark,
-            KingthereumColors.accentSecondary
+            KingColors.primaryDark,
+            KingColors.accentSecondary
         ],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
@@ -19,8 +19,8 @@ public struct KingthereumGradients {
     /// 라이트 브랜드 그라데이션 - 더 서브틀한 톤
     public static let primaryLight = LinearGradient(
         colors: [
-            KingthereumColors.primaryLight,
-            KingthereumColors.accent.opacity(0.8)
+            KingColors.primaryLight,
+            KingColors.accent.opacity(0.8)
         ],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
@@ -29,8 +29,8 @@ public struct KingthereumGradients {
     /// 액센트 그라데이션 - 블루 to 퍼플
     public static let accent = LinearGradient(
         colors: [
-            KingthereumColors.accent,
-            KingthereumColors.accentSecondary
+            KingColors.accent,
+            KingColors.accentSecondary
         ],
         startPoint: .leading,
         endPoint: .trailing
@@ -41,8 +41,8 @@ public struct KingthereumGradients {
     /// 메인 배경 그라데이션 - 매우 서브틀
     public static let background = LinearGradient(
         colors: [
-            KingthereumColors.backgroundPrimary,
-            KingthereumColors.backgroundSecondary.opacity(0.6)
+            KingColors.backgroundPrimary,
+            KingColors.backgroundSecondary.opacity(0.6)
         ],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
@@ -51,9 +51,9 @@ public struct KingthereumGradients {
     /// 앰비언트 배경 그라데이션 - 분위기 있는 배경용
     public static let backgroundAmbient = LinearGradient(
         colors: [
-            KingthereumColors.backgroundPrimary,
-            KingthereumColors.accent.opacity(0.02),
-            KingthereumColors.backgroundSecondary.opacity(0.4)
+            KingColors.backgroundPrimary,
+            KingColors.accent.opacity(0.02),
+            KingColors.backgroundSecondary.opacity(0.4)
         ],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
@@ -62,8 +62,8 @@ public struct KingthereumGradients {
     /// 서피스 그라데이션 - 카드 및 패널용
     public static let surface = LinearGradient(
         colors: [
-            KingthereumColors.surface,
-            KingthereumColors.backgroundSecondary.opacity(0.3)
+            KingColors.surface,
+            KingColors.backgroundSecondary.opacity(0.3)
         ],
         startPoint: .top,
         endPoint: .bottom
@@ -74,9 +74,9 @@ public struct KingthereumGradients {
     /// 기본 카드 그라데이션 - 3단계 서브틀
     public static let card = LinearGradient(
         colors: [
-            KingthereumColors.cardBackground,
-            KingthereumColors.cardBackground.opacity(0.95),
-            KingthereumColors.backgroundSecondary.opacity(0.8)
+            KingColors.cardBackground,
+            KingColors.cardBackground.opacity(0.95),
+            KingColors.backgroundSecondary.opacity(0.8)
         ],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
@@ -85,9 +85,9 @@ public struct KingthereumGradients {
     /// 엘리베이티드 카드 그라데이션
     public static let cardElevated = LinearGradient(
         colors: [
-            KingthereumColors.cardElevated,
-            KingthereumColors.cardElevated.opacity(0.9),
-            KingthereumColors.backgroundTertiary.opacity(0.6)
+            KingColors.cardElevated,
+            KingColors.cardElevated.opacity(0.9),
+            KingColors.backgroundTertiary.opacity(0.6)
         ],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
@@ -109,8 +109,8 @@ public struct KingthereumGradients {
     /// 프라이머리 버튼 그라데이션
     public static let buttonPrimary = LinearGradient(
         colors: [
-            KingthereumColors.accent,
-            KingthereumColors.accentSecondary
+            KingColors.accent,
+            KingColors.accentSecondary
         ],
         startPoint: .top,
         endPoint: .bottom
@@ -119,8 +119,8 @@ public struct KingthereumGradients {
     /// 세컨더리 버튼 그라데이션
     public static let buttonSecondary = LinearGradient(
         colors: [
-            KingthereumColors.buttonSecondary,
-            KingthereumColors.backgroundTertiary
+            KingColors.buttonSecondary,
+            KingColors.backgroundTertiary
         ],
         startPoint: .top,
         endPoint: .bottom
@@ -129,8 +129,8 @@ public struct KingthereumGradients {
     /// 버튼 호버 그라데이션
     public static let buttonHover = LinearGradient(
         colors: [
-            KingthereumColors.accent.opacity(0.9),
-            KingthereumColors.accentSecondary.opacity(0.8)
+            KingColors.accent.opacity(0.9),
+            KingColors.accentSecondary.opacity(0.8)
         ],
         startPoint: .top,
         endPoint: .bottom
@@ -139,8 +139,8 @@ public struct KingthereumGradients {
     /// 성공 버튼 그라데이션
     public static let buttonSuccess = LinearGradient(
         colors: [
-            KingthereumColors.success,
-            KingthereumColors.success.opacity(0.8)
+            KingColors.success,
+            KingColors.success.opacity(0.8)
         ],
         startPoint: .top,
         endPoint: .bottom
@@ -149,8 +149,8 @@ public struct KingthereumGradients {
     /// 위험 버튼 그라데이션
     public static let buttonDanger = LinearGradient(
         colors: [
-            KingthereumColors.error,
-            KingthereumColors.error.opacity(0.8)
+            KingColors.error,
+            KingColors.error.opacity(0.8)
         ],
         startPoint: .top,
         endPoint: .bottom
@@ -161,8 +161,8 @@ public struct KingthereumGradients {
     /// 성공 상태 그라데이션
     public static let success = LinearGradient(
         colors: [
-            KingthereumColors.success.opacity(0.2),
-            KingthereumColors.success.opacity(0.1),
+            KingColors.success.opacity(0.2),
+            KingColors.success.opacity(0.1),
             Color.clear
         ],
         startPoint: .topLeading,
@@ -172,8 +172,8 @@ public struct KingthereumGradients {
     /// 경고 상태 그라데이션
     public static let warning = LinearGradient(
         colors: [
-            KingthereumColors.warning.opacity(0.2),
-            KingthereumColors.warning.opacity(0.1),
+            KingColors.warning.opacity(0.2),
+            KingColors.warning.opacity(0.1),
             Color.clear
         ],
         startPoint: .topLeading,
@@ -183,8 +183,8 @@ public struct KingthereumGradients {
     /// 에러 상태 그라데이션
     public static let error = LinearGradient(
         colors: [
-            KingthereumColors.error.opacity(0.2),
-            KingthereumColors.error.opacity(0.1),
+            KingColors.error.opacity(0.2),
+            KingColors.error.opacity(0.1),
             Color.clear
         ],
         startPoint: .topLeading,
@@ -194,8 +194,8 @@ public struct KingthereumGradients {
     /// 정보 상태 그라데이션
     public static let info = LinearGradient(
         colors: [
-            KingthereumColors.info.opacity(0.2),
-            KingthereumColors.info.opacity(0.1),
+            KingColors.info.opacity(0.2),
+            KingColors.info.opacity(0.1),
             Color.clear
         ],
         startPoint: .topLeading,
@@ -207,8 +207,8 @@ public struct KingthereumGradients {
     /// 송금 트랜잭션 그라데이션
     public static let transactionSend = LinearGradient(
         colors: [
-            KingthereumColors.transactionSend.opacity(0.15),
-            KingthereumColors.transactionSend.opacity(0.05)
+            KingColors.transactionSend.opacity(0.15),
+            KingColors.transactionSend.opacity(0.05)
         ],
         startPoint: .leading,
         endPoint: .trailing
@@ -217,8 +217,8 @@ public struct KingthereumGradients {
     /// 수신 트랜잭션 그라데이션
     public static let transactionReceive = LinearGradient(
         colors: [
-            KingthereumColors.transactionReceive.opacity(0.15),
-            KingthereumColors.transactionReceive.opacity(0.05)
+            KingColors.transactionReceive.opacity(0.15),
+            KingColors.transactionReceive.opacity(0.05)
         ],
         startPoint: .leading,
         endPoint: .trailing
@@ -227,8 +227,8 @@ public struct KingthereumGradients {
     /// 대기중 트랜잭션 그라데이션
     public static let transactionPending = LinearGradient(
         colors: [
-            KingthereumColors.transactionPending.opacity(0.15),
-            KingthereumColors.transactionPending.opacity(0.05)
+            KingColors.transactionPending.opacity(0.15),
+            KingColors.transactionPending.opacity(0.05)
         ],
         startPoint: .leading,
         endPoint: .trailing
@@ -239,9 +239,9 @@ public struct KingthereumGradients {
     /// 이더리움 그라데이션
     public static let ethereum = LinearGradient(
         colors: [
-            KingthereumColors.ethereum,
-            KingthereumColors.ethereum.opacity(0.7),
-            KingthereumColors.accent.opacity(0.3)
+            KingColors.ethereum,
+            KingColors.ethereum.opacity(0.7),
+            KingColors.accent.opacity(0.3)
         ],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
@@ -250,8 +250,8 @@ public struct KingthereumGradients {
     /// 비트코인 그라데이션
     public static let bitcoin = LinearGradient(
         colors: [
-            KingthereumColors.bitcoin,
-            KingthereumColors.warning.opacity(0.8)
+            KingColors.bitcoin,
+            KingColors.warning.opacity(0.8)
         ],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
@@ -260,10 +260,10 @@ public struct KingthereumGradients {
     /// 웹3 글로벌 그라데이션 - 멀티컬러
     public static let web3Rainbow = LinearGradient(
         colors: [
-            KingthereumColors.accent,
-            KingthereumColors.accentSecondary,
-            KingthereumColors.success,
-            KingthereumColors.bitcoin
+            KingColors.accent,
+            KingColors.accentSecondary,
+            KingColors.success,
+            KingColors.bitcoin
         ],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
@@ -320,13 +320,13 @@ public struct KingthereumGradients {
 }
 
 // MARK: - Radial Gradients
-public extension KingthereumGradients {
+public extension KingGradients {
     
     /// 중심에서 퍼지는 라디얼 그라데이션
     static let radialSpotlight = RadialGradient(
         colors: [
-            KingthereumColors.accent.opacity(0.3),
-            KingthereumColors.accent.opacity(0.1),
+            KingColors.accent.opacity(0.3),
+            KingColors.accent.opacity(0.1),
             Color.clear
         ],
         center: .center,
@@ -359,17 +359,17 @@ public extension KingthereumGradients {
 }
 
 // MARK: - Angular Gradients
-public extension KingthereumGradients {
+public extension KingGradients {
     
     /// 회전하는 앵귤러 그라데이션
     static let angularRainbow = AngularGradient(
         colors: [
-            KingthereumColors.accent,
-            KingthereumColors.accentSecondary,
-            KingthereumColors.success,
-            KingthereumColors.warning,
-            KingthereumColors.error,
-            KingthereumColors.accent
+            KingColors.accent,
+            KingColors.accentSecondary,
+            KingColors.success,
+            KingColors.warning,
+            KingColors.error,
+            KingColors.accent
         ],
         center: .center
     )
@@ -377,9 +377,9 @@ public extension KingthereumGradients {
     /// 서브틀 앵귤러 그라데이션
     static let angularSubtle = AngularGradient(
         colors: [
-            KingthereumColors.accent.opacity(0.3),
-            KingthereumColors.accentSecondary.opacity(0.2),
-            KingthereumColors.accent.opacity(0.3)
+            KingColors.accent.opacity(0.3),
+            KingColors.accentSecondary.opacity(0.2),
+            KingColors.accent.opacity(0.3)
         ],
         center: .center
     )
@@ -408,11 +408,11 @@ public extension View {
     
     /// 카드 스타일 그라데이션 적용
     func cardGradientStyle() -> some View {
-        background(KingthereumGradients.card)
+        background(KingGradients.card)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(KingthereumColors.cardBorder, lineWidth: 1)
+                    .stroke(KingColors.cardBorder, lineWidth: 1)
             )
     }
 }
@@ -425,9 +425,9 @@ public extension View {
             GradientSection(
                 title: "Brand Gradients",
                 gradients: [
-                    ("Primary", KingthereumGradients.primary),
-                    ("Primary Light", KingthereumGradients.primaryLight),
-                    ("Accent", KingthereumGradients.accent)
+                    ("Primary", KingGradients.primary),
+                    ("Primary Light", KingGradients.primaryLight),
+                    ("Accent", KingGradients.accent)
                 ]
             )
             
@@ -435,9 +435,9 @@ public extension View {
             GradientSection(
                 title: "Background Gradients",
                 gradients: [
-                    ("Background", KingthereumGradients.background),
-                    ("Background Ambient", KingthereumGradients.backgroundAmbient),
-                    ("Surface", KingthereumGradients.surface)
+                    ("Background", KingGradients.background),
+                    ("Background Ambient", KingGradients.backgroundAmbient),
+                    ("Surface", KingGradients.surface)
                 ]
             )
             
@@ -445,9 +445,9 @@ public extension View {
             GradientSection(
                 title: "Card Gradients",
                 gradients: [
-                    ("Card", KingthereumGradients.card),
-                    ("Card Elevated", KingthereumGradients.cardElevated),
-                    ("Card Glass", KingthereumGradients.cardGlass)
+                    ("Card", KingGradients.card),
+                    ("Card Elevated", KingGradients.cardElevated),
+                    ("Card Glass", KingGradients.cardGlass)
                 ]
             )
             
@@ -455,9 +455,9 @@ public extension View {
             GradientSection(
                 title: "Button Gradients",
                 gradients: [
-                    ("Primary", KingthereumGradients.buttonPrimary),
-                    ("Secondary", KingthereumGradients.buttonSecondary),
-                    ("Success", KingthereumGradients.buttonSuccess)
+                    ("Primary", KingGradients.buttonPrimary),
+                    ("Secondary", KingGradients.buttonSecondary),
+                    ("Success", KingGradients.buttonSuccess)
                 ]
             )
             
@@ -465,9 +465,9 @@ public extension View {
             GradientSection(
                 title: "Transaction Gradients",
                 gradients: [
-                    ("Send", KingthereumGradients.transactionSend),
-                    ("Receive", KingthereumGradients.transactionReceive),
-                    ("Pending", KingthereumGradients.transactionPending)
+                    ("Send", KingGradients.transactionSend),
+                    ("Receive", KingGradients.transactionReceive),
+                    ("Pending", KingGradients.transactionPending)
                 ]
             )
             
@@ -475,15 +475,15 @@ public extension View {
             GradientSection(
                 title: "Special Effects",
                 gradients: [
-                    ("Holographic", KingthereumGradients.holographic),
-                    ("Aurora", KingthereumGradients.aurora),
-                    ("Neon", KingthereumGradients.neon)
+                    ("Holographic", KingGradients.holographic),
+                    ("Aurora", KingGradients.aurora),
+                    ("Neon", KingGradients.neon)
                 ]
             )
         }
         .padding()
     }
-    .background(KingthereumColors.backgroundPrimary)
+    .background(KingColors.backgroundPrimary)
 }
 
 // MARK: - Helper Views for Preview
@@ -495,7 +495,7 @@ private struct GradientSection: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title)
                 .font(.headline)
-                .foregroundColor(KingthereumColors.textPrimary)
+                .foregroundColor(KingColors.textPrimary)
             
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 1), spacing: 12) {
                 ForEach(gradients, id: \.0) { name, gradient in
@@ -506,7 +506,7 @@ private struct GradientSection: View {
                         
                         Text(name)
                             .font(.caption)
-                            .foregroundColor(KingthereumColors.textSecondary)
+                            .foregroundColor(KingColors.textSecondary)
                     }
                 }
             }
