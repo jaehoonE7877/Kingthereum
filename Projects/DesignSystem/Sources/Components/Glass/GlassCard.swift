@@ -147,7 +147,7 @@ public struct GlassCardStyle: Sendable {
     
     public static let wallet = GlassCardStyle(
         material: .regularMaterial,
-        cornerRadius: DesignTokens.MetalGlass.Card.prominentCornerRadius,
+        cornerRadius: DesignTokens.Glass.Card.prominentCornerRadius,
         borderColor: .glassBorderAccent,
         borderWidth: 1.1,
         shadowColor: .glassShadowMedium,
@@ -157,7 +157,7 @@ public struct GlassCardStyle: Sendable {
     
     public static let transaction = GlassCardStyle(
         material: .thinMaterial,
-        cornerRadius: DesignTokens.MetalGlass.Card.subtleCornerRadius,
+        cornerRadius: DesignTokens.Glass.Card.subtleCornerRadius,
         borderColor: .glassBorderSecondary,
         borderWidth: 0.6,
         shadowColor: .glassShadowLight,
