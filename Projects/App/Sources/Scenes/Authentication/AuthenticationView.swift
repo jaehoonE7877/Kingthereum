@@ -108,6 +108,11 @@ struct AuthenticationView: View {
     @EnvironmentObject private var appCoordinator: AppCoordinator
     @State private var viewStore = AuthenticationViewStore()
     
+    // MARK: - Animation States
+    @State private var contentOpacity: Double = 0.0
+    @State private var contentScale: CGFloat = 0.95
+    @State private var cardOffset: CGFloat = 30
+    
     // MARK: - VIP Architecture Components
     private let interactor: AuthenticationBusinessLogic
     private let presenter: AuthenticationPresenter
@@ -132,10 +137,13 @@ struct AuthenticationView: View {
                 
                 // 중앙 메인 카드 - 하나로 통합
                 mainAuthenticationCard
+                    .scaleEffect(contentScale)
+                    .offset(y: cardOffset)
                 
                 Spacer()
             }
             .padding(.horizontal, 24)
+            .opacity(contentOpacity)
         }
         .alert("알림", isPresented: Binding<Bool>(
             get: { viewStore.errorMessage != nil },
@@ -155,6 +163,9 @@ struct AuthenticationView: View {
             presenter.viewController = viewStore
             viewStore.appCoordinator = appCoordinator
             checkBiometricAvailability()
+            
+            // 프리미엄 진입 애니메이션
+            startPremiumEntryAnimation()
         }
         .sheet(isPresented: $viewStore.showMnemonicView) {
             minimalistMnemonicView
@@ -331,6 +342,21 @@ struct AuthenticationView: View {
     private func createWallet() {
         let request = AuthenticationScene.CreateWallet.Request(walletName: "My Wallet")
         interactor.createWallet(request: request)
+    }
+    
+    // MARK: - Premium Entry Animation
+    
+    private func startPremiumEntryAnimation() {
+        // 1. 콘텐츠 부드러운 페이드인 및 스케일
+        withAnimation(.spring(response: 1.5, dampingFraction: 0.8)) {
+            contentOpacity = 1.0
+            contentScale = 1.0
+        }
+        
+        // 2. 카드 위에서 아래로 미묘하게 슬라이드
+        withAnimation(.spring(response: 1.8, dampingFraction: 0.7).delay(0.2)) {
+            cardOffset = 0
+        }
     }
 }
 

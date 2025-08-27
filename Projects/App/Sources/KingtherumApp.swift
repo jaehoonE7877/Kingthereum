@@ -47,19 +47,36 @@ struct KingthereumApp: App {
 
 struct ContentView: View {
     @EnvironmentObject var appCoordinator: AppCoordinator
+    @State private var showTransition = false
     
     var body: some View {
-        Group {
-            switch appCoordinator.currentFlow {
-            case .splash:
-                SplashView()
-            case .authentication:
-                AuthenticationView()
-            case .main:
-                MainTabView()
+        ZStack {
+            // 배경 그라데이션
+            LinearGradient.enhancedBackgroundGradient
+                .ignoresSafeArea()
+            
+            // 메인 콘텐츠
+            Group {
+                switch appCoordinator.currentFlow {
+                case .splash:
+                    SplashView()
+                        .transition(.identity)
+                case .authentication:
+                    AuthenticationView()
+                        .transition(.asymmetric(
+                            insertion: .opacity.combined(with: .scale(scale: 0.95)).combined(with: .move(edge: .bottom)),
+                            removal: .opacity.combined(with: .scale(scale: 1.05)).combined(with: .move(edge: .top))
+                        ))
+                case .main:
+                    MainTabView()
+                        .transition(.asymmetric(
+                            insertion: .opacity.combined(with: .scale(scale: 0.95)).combined(with: .move(edge: .bottom)),
+                            removal: .opacity.combined(with: .scale(scale: 1.05)).combined(with: .move(edge: .top))
+                        ))
+                }
             }
+            .animation(.easeInOut(duration: 1.2), value: appCoordinator.currentFlow)
         }
-        .background(LinearGradient.enhancedBackgroundGradient.ignoresSafeArea())
         .onAppear {
             appCoordinator.start()
         }

@@ -35,7 +35,7 @@ public final class AppCoordinator: ObservableObject {
             isLoading = true
         }
         
-        try? await Task.sleep(nanoseconds: 2_000_000_000) // 2 second splash
+        try? await Task.sleep(nanoseconds: 3_600_000_000) // 3.6 second splash with smooth transition
         
         let hasCompletedOnboarding = UserDefaults.standard.bool(forKey: Constants.UserDefaults.hasCompletedOnboarding)
         let isSecuritySetup = await securityService.isSecuritySetup()
