@@ -51,7 +51,7 @@ struct CustomTabBar: View {
                     .background(
                         RoundedRectangle(cornerRadius: 24)
                             .fill(
-                                KingthereumGradients.glassMorphism
+                                KingGradients.glassMorphism
                                     .opacity(0.3)
                             )
                     )
@@ -61,8 +61,8 @@ struct CustomTabBar: View {
                     .stroke(
                         LinearGradient(
                             colors: [
-                                KingthereumColors.accent.opacity(0.2),
-                                KingthereumColors.accentSecondary.opacity(0.1),
+                                KingColors.accent.opacity(0.2),
+                                KingColors.accentSecondary.opacity(0.1),
                                 Color.clear
                             ],
                             startPoint: .topLeading,
@@ -88,8 +88,8 @@ struct CustomTabBar: View {
                     .blendMode(.overlay)
             }
         )
-        .shadow(color: KingthereumColors.cardShadow, radius: 12, x: 0, y: 8)
-        .shadow(color: KingthereumColors.accent.opacity(0.1), radius: 6, x: 0, y: 4)
+        .shadow(color: KingColors.cardShadow, radius: 12, x: 0, y: 8)
+        .shadow(color: KingColors.accent.opacity(0.1), radius: 6, x: 0, y: 4)
         .padding(.horizontal, horizontalPadding)
         .padding(.bottom, DesignTokens.Spacing.sm)
     }
@@ -114,9 +114,9 @@ struct TabBarItem: View {
                     .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(
                         isSelected ? 
-                        KingthereumGradients.accent : 
+                        KingGradients.accent : 
                         LinearGradient(
-                            colors: [KingthereumColors.textSecondary],
+                            colors: [KingColors.textSecondary],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -128,13 +128,13 @@ struct TabBarItem: View {
                 // 라벨
                 Text(tab.title)
                     .kingStyle(isSelected ? 
-                        KingthereumTextStyle(
-                            font: KingthereumTypography.tabBar,
-                            color: KingthereumColors.textPrimary
+                        KingTextStyle(
+                            font: KingTypography.tabBar,
+                            color: KingColors.textPrimary
                         ) : 
-                        KingthereumTextStyle(
-                            font: KingthereumTypography.tabBar,
-                            color: KingthereumColors.textSecondary
+                        KingTextStyle(
+                            font: KingTypography.tabBar,
+                            color: KingColors.textSecondary
                         )
                     )
                     .scaleEffect(isSelected ? 1.02 : 1.0)
@@ -150,8 +150,8 @@ struct TabBarItem: View {
                             .fill(
                                 LinearGradient(
                                     colors: [
-                                        KingthereumColors.accent.opacity(0.15),
-                                        KingthereumColors.accentSecondary.opacity(0.1)
+                                        KingColors.accent.opacity(0.15),
+                                        KingColors.accentSecondary.opacity(0.1)
                                     ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
@@ -164,8 +164,8 @@ struct TabBarItem: View {
                             .stroke(
                                 LinearGradient(
                                     colors: [
-                                        KingthereumColors.accent.opacity(0.3),
-                                        KingthereumColors.accentSecondary.opacity(0.2)
+                                        KingColors.accent.opacity(0.3),
+                                        KingColors.accentSecondary.opacity(0.2)
                                     ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
@@ -178,7 +178,7 @@ struct TabBarItem: View {
                     if isHovered && !isSelected {
                         // 호버 효과
                         Capsule()
-                            .fill(KingthereumColors.textSecondary.opacity(0.08))
+                            .fill(KingColors.textSecondary.opacity(0.08))
                             .animation(.easeInOut(duration: 0.2), value: isHovered)
                     }
                 }

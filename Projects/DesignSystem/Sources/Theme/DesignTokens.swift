@@ -120,11 +120,11 @@ public enum DesignTokens {
         }
         
         public static let none = ShadowStyle(color: .clear, radius: 0, x: 0, y: 0)
-        public static let subtle = ShadowStyle(color: KingthereumColors.cardShadow.opacity(0.5), radius: 2, x: 0, y: 1)
-        public static let light = ShadowStyle(color: KingthereumColors.cardShadow.opacity(0.8), radius: 4, x: 0, y: 2)
-        public static let medium = ShadowStyle(color: KingthereumColors.cardShadow, radius: 8, x: 0, y: 4)
-        public static let heavy = ShadowStyle(color: KingthereumColors.cardShadow.opacity(1.5), radius: 16, x: 0, y: 8)
-        public static let card = ShadowStyle(color: KingthereumColors.cardShadow, radius: 6, x: 0, y: 3)
+        public static let subtle = ShadowStyle(color: KingColors.cardShadow.opacity(0.5), radius: 2, x: 0, y: 1)
+        public static let light = ShadowStyle(color: KingColors.cardShadow.opacity(0.8), radius: 4, x: 0, y: 2)
+        public static let medium = ShadowStyle(color: KingColors.cardShadow, radius: 8, x: 0, y: 4)
+        public static let heavy = ShadowStyle(color: KingColors.cardShadow.opacity(1.5), radius: 16, x: 0, y: 8)
+        public static let card = ShadowStyle(color: KingColors.cardShadow, radius: 6, x: 0, y: 3)
     }
     
     // MARK: - Opacity
@@ -255,36 +255,36 @@ public extension Color {
     
     // MARK: - Status Colors
     
-    static let success = KingthereumColors.success
-    static let warning = KingthereumColors.warning
-    static let error = KingthereumColors.error
-    static let info = KingthereumColors.info
+    static let success = KingColors.success
+    static let warning = KingColors.warning
+    static let error = KingColors.error
+    static let info = KingColors.info
     
     // MARK: - Surface Colors
     
-    static let surfacePrimary = KingthereumColors.backgroundPrimary
-    static let surfaceSecondary = KingthereumColors.backgroundSecondary
-    static let surfaceTertiary = KingthereumColors.backgroundTertiary
+    static let surfacePrimary = KingColors.backgroundPrimary
+    static let surfaceSecondary = KingColors.backgroundSecondary
+    static let surfaceTertiary = KingColors.backgroundTertiary
     
     // MARK: - Border Colors
     
-    static let borderPrimary = KingthereumColors.border
-    static let borderSecondary = KingthereumColors.borderSubtle
-    static let borderFocus = KingthereumColors.focus
+    static let borderPrimary = KingColors.border
+    static let borderSecondary = KingColors.borderSubtle
+    static let borderFocus = KingColors.focus
     
     // MARK: - Text Colors
     
-    static let textPrimary = KingthereumColors.textPrimary
-    static let textSecondary = KingthereumColors.textSecondary
-    static let textTertiary = KingthereumColors.textTertiary
-    static let textDisabled = KingthereumColors.textPlaceholder
+    static let textPrimary = KingColors.textPrimary
+    static let textSecondary = KingColors.textSecondary
+    static let textTertiary = KingColors.textTertiary
+    static let textDisabled = KingColors.textPlaceholder
     
     // MARK: - Interactive Colors
     
-    static let interactive = KingthereumColors.accent
-    static let interactiveHover = KingthereumColors.accent.opacity(0.8)
-    static let interactivePressed = KingthereumColors.accent.opacity(0.6)
-    static let interactiveDisabled = KingthereumColors.buttonDisabled
+    static let interactive = KingColors.accent
+    static let interactiveHover = KingColors.accent.opacity(0.8)
+    static let interactivePressed = KingColors.accent.opacity(0.6)
+    static let interactiveDisabled = KingColors.buttonDisabled
 }
 
 // MARK: - Advanced Design Tokens
@@ -496,7 +496,7 @@ public extension View {
                     )
             )
             .shadow(
-                color: KingthereumColors.cardShadow.opacity(0.3),
+                color: KingColors.cardShadow.opacity(0.3),
                 radius: DesignTokens.Glass.Card.shadowRadius,
                 x: DesignTokens.Glass.Card.shadowOffset.x,
                 y: DesignTokens.Glass.Card.shadowOffset.y
@@ -521,7 +521,7 @@ public extension View {
         
         return self
             .font(.system(size: fontSize, weight: .semibold, design: .rounded))
-            .foregroundStyle(isPrimary ? KingthereumColors.textPrimary : KingthereumColors.textSecondary)
+            .foregroundStyle(isPrimary ? KingColors.textPrimary : KingColors.textSecondary)
     }
     
     // MARK: - Accessibility Helpers
