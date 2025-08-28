@@ -74,7 +74,7 @@ struct MainTabView: View {
                 showReceiveView: $showReceiveView
             )
         case .history:
-            HistoryView(showTabBar: .constant(true))
+            HistoryView(showTabBar: .constant(true), selectedTab: $selectedTab)
         case .settings:
             SettingsView(showTabBar: .constant(true))
         }
@@ -97,7 +97,7 @@ struct MainTabView: View {
                         showReceiveView: $showReceiveView
                     )
                 case .history:
-                    HistoryView(showTabBar: $showTabBar)
+                    HistoryView(showTabBar: $showTabBar, selectedTab: $selectedTab)
                 case .settings:
                     SettingsView(showTabBar: $showTabBar)
                 }

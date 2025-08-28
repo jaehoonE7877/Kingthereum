@@ -170,10 +170,10 @@ public extension Text {
             .multilineTextAlignment(style.multilineTextAlignment)
     }
     
-    // Backward compatibility with existing kingStyle
-    func kingStyle(_ style: NativeTextStyle) -> some View {
-        self.nativeStyle(style)
-    }
+    // DEPRECATED: Use KingTypography.KingTextStyle instead
+    // func kingStyle(_ style: NativeTextStyle) -> some View {
+    //     self.nativeStyle(style)
+    // }
 }
 
 // MARK: - Native Text Components
