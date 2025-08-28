@@ -4,8 +4,8 @@ import Entity
 import Core
 import Factory
 
-/// Phase 2.4-1: 프리미엄 핀테크 SendView - VIP 아키텍처 완전 구현
-/// Modern Minimalism + Premium Fintech + Glassmorphism 3요소 완전 적용
+/// Phase 2.6: 신뢰감 있는 미니멀 송금 - 극도 미니멀리즘 완성
+/// 각 단계를 하나의 클린한 글래스 카드로 통합, 골드는 최종 Send만
 
 // MARK: - VIP Architecture Protocols
 
@@ -199,36 +199,27 @@ struct SendView: View {
     
     var body: some View {
         ZStack {
-            // 프리미엄 배경 그라데이션
-            KingGradients.minimalistBackground
+            // 극도 미니멀 배경
+            KingColors.primaryDark
                 .ignoresSafeArea()
             
             ScrollView {
                 VStack(spacing: 0) {
-                    // 프리미엄 헤더
-                    premiumHeader
-                        .padding(.top, 8)
-                        .padding(.bottom, 32)
+                    // 미니멀 헤더
+                    minimalHeader
+                        .padding(.top, 16)
+                        .padding(.bottom, 40)
                     
-                    // 단계별 플로우
-                    VStack(spacing: 24) {
-                        switch viewStore.currentStep {
-                        case .address:
-                            addressInputSection
-                        case .amount:
-                            amountInputSection  
-                        case .confirmation:
-                            confirmationSection
-                        }
-                    }
-                    .padding(.horizontal, 24)
+                    // 통합 송금 카드 (모든 단계 하나로)
+                    unifiedSendCard
+                        .padding(.horizontal, 20)
                     
-                    Spacer(minLength: 120)
+                    Spacer(minLength: 140)
                 }
             }
             
-            // 하단 액션 버튼 영역
-            bottomActionArea
+            // 단순한 하단 액션 영역
+            minimalBottomAction
         }
         .gesture(
             DragGesture()
@@ -266,242 +257,290 @@ struct SendView: View {
         }
     }
     
-    // MARK: - Premium Components
+    // MARK: - Minimal Trust Components
     
     @ViewBuilder
-    private var premiumHeader: some View {
-        VStack(spacing: 20) {
-            // 닫기 제스처 힌트
-            RoundedRectangle(cornerRadius: 2.5)
-                .fill(KingColors.textTertiary.opacity(0.4))
-                .frame(width: 36, height: 5)
-                .padding(.top, 8)
+    private var minimalHeader: some View {
+        VStack(spacing: 24) {
+            // 닫기 제스처 힌트 - 더 서브틀하게
+            RoundedRectangle(cornerRadius: 2)
+                .fill(KingColors.textSecondary.opacity(0.3))
+                .frame(width: 32, height: 4)
             
-            // 프리미엄 아이콘
+            // 극도로 미니멀한 아이콘
             ZStack {
                 Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [
-                                KingColors.trustPurple.opacity(0.3),
-                                KingColors.trustPurple.opacity(0.1),
-                                Color.clear
-                            ],
-                            center: .center,
-                            startRadius: 20,
-                            endRadius: 40
-                        )
-                    )
-                    .frame(width: 80, height: 80)
-                
-                ZStack {
-                    Circle()
-                        .fill(.ultraThinMaterial)
-                        .background(
-                            Circle()
-                                .fill(KingColors.trustPurple.opacity(0.15))
-                        )
-                        .frame(width: 64, height: 64)
-                    
-                    Image(systemName: "arrow.up.right.circle.fill")
-                        .font(.system(size: 28, weight: .medium))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [
-                                    KingColors.trustPurple,
-                                    KingColors.exclusiveGold.opacity(0.8)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                }
-                .shadow(color: KingColors.trustPurple.opacity(0.3), radius: 12, x: 0, y: 6)
-            }
-            
-            VStack(spacing: 8) {
-                Text("이더리움 송금")
-                    .font(KingTypography.displaySmall)
-                    .fontWeight(.bold)
-                    .foregroundColor(KingColors.textPrimary)
-                    .shadow(color: Color.black.opacity(0.2), radius: 1, x: 0, y: 0.5)
-                
-                Text("안전하게 ETH를 전송하세요")
-                    .font(KingTypography.bodyMedium)
-                    .fontWeight(.medium)
-                    .foregroundColor(KingColors.textSecondary)
-                    .multilineTextAlignment(.center)
-                    .shadow(color: Color.black.opacity(0.15), radius: 0.5, x: 0, y: 0.25)
-            }
-            
-            // 단계 표시기
-            stepIndicator
-        }
-    }
-    
-    @ViewBuilder
-    private var stepIndicator: some View {
-        HStack(spacing: 12) {
-            ForEach(Array(SendViewStore.SendStep.allCases.enumerated()), id: \.offset) { index, step in
-                HStack(spacing: 8) {
-                    // 원형 인디케이터
-                    ZStack {
+                    .fill(.ultraThinMaterial)
+                    .background(
                         Circle()
-                            .fill(
-                                step.rawValue <= viewStore.currentStep.rawValue 
-                                ? KingColors.trustPurple.opacity(0.2)
-                                : KingColors.textTertiary.opacity(0.1)
-                            )
-                            .frame(width: 24, height: 24)
-                        
-                        if step.rawValue < viewStore.currentStep.rawValue {
-                            Image(systemName: "checkmark")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(KingColors.trustPurple)
-                        } else {
-                            Text("\(index + 1)")
-                                .font(KingTypography.caption)
-                                .fontWeight(.semibold)
-                                .foregroundColor(
-                                    step == viewStore.currentStep 
-                                    ? KingColors.trustPurple
-                                    : KingColors.textTertiary
-                                )
-                        }
-                    }
-                    
-                    if index < 2 {
-                        RoundedRectangle(cornerRadius: 1)
-                            .fill(
-                                step.rawValue < viewStore.currentStep.rawValue
-                                ? KingColors.trustPurple.opacity(0.3)
-                                : KingColors.textTertiary.opacity(0.2)
-                            )
-                            .frame(width: 20, height: 2)
-                    }
+                            .fill(KingColors.buttonTrust.opacity(0.08))
+                    )
+                    .frame(width: 56, height: 56)
+                
+                Image(systemName: "arrow.up.right")
+                    .font(.system(size: 22, weight: .medium))
+                    .foregroundColor(KingColors.textInverse.opacity(0.9))
+            }
+            
+            // 미니멀 타이틀
+            VStack(spacing: 6) {
+                Text("송금")
+                    .font(KingTypography.cleanDisplay)
+                    .foregroundColor(KingColors.textInverse)
+                
+                Text("신뢰할 수 있는 ETH 전송")
+                    .font(KingTypography.minimalistBody)
+                    .foregroundColor(KingColors.textSecondary)
+            }
+        }
+    }
+    
+    // 단계 표시기 완전 제거 - 미니멀리즘에 집중
+    
+    // MARK: - Unified Send Card (All Steps in One)
+    
+    @ViewBuilder
+    private var unifiedSendCard: some View {
+        VStack(spacing: 28) {
+            // 주소 입력 - 항상 표시
+            trustAddressSection
+            
+            // 금액 입력 - 주소 입력 후 표시
+            if viewStore.canProceedToAmount {
+                Divider()
+                    .background(KingColors.glassBorder)
+                    .padding(.horizontal, 8)
+                
+                trustAmountSection
+                
+                // 가스비 - 미니멀하게
+                if viewStore.canProceedToConfirmation {
+                    trustGasSection
                 }
             }
         }
-        .padding(.top, 8)
+        .padding(24)
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(.ultraThinMaterial)
+                .background(
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(KingColors.textInverse.opacity(0.05))
+                )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(KingColors.textInverse.opacity(0.08), lineWidth: 1)
+        )
+        .shadow(
+            color: Color.black.opacity(0.3), 
+            radius: 20, 
+            x: 0, 
+            y: 8
+        )
     }
     
-    // MARK: - Step Sections
-    
     @ViewBuilder
-    private var addressInputSection: some View {
-        VStack(spacing: 20) {
-            PremiumSectionHeader(
-                title: "받는 사람 주소",
-                subtitle: "이더리움 주소를 입력하거나 스캔하세요"
-            )
+    private var trustAddressSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("받는 주소")
+                .font(KingTypography.trustHeadline)
+                .foregroundColor(KingColors.textInverse.opacity(0.9))
             
-            PremiumAddressField(
-                address: $viewStore.recipientAddress,
-                isValid: viewStore.isAddressValid,
-                validationMessage: viewStore.addressValidationMessage,
-                onQRScan: scanQRCode,
-                onAddressBook: showAddressBook,
-                onValidation: validateAddress
-            )
+            HStack(spacing: 16) {
+                TextField("0x...", text: $viewStore.recipientAddress)
+                    .font(KingTypography.minimalistBody)
+                    .foregroundColor(KingColors.textInverse)
+                    .padding(16)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(KingColors.backgroundSecondary.opacity(0.1))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(
+                                viewStore.isAddressValid && !viewStore.recipientAddress.isEmpty 
+                                ? KingColors.buttonPrimary.opacity(0.4) 
+                                : KingColors.glassBorder, 
+                                lineWidth: 1
+                            )
+                    )
+                    .onChange(of: viewStore.recipientAddress) { _, _ in
+                        validateAddress()
+                    }
+                
+                // QR 스캔 버튼 - 미니멀
+                Button(action: scanQRCode) {
+                    Image(systemName: "qrcode.viewfinder")
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundColor(KingColors.textSecondary)
+                        .padding(12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(KingColors.backgroundSecondary.opacity(0.2))
+                        )
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            
+            // 유효성 메시지 - 서브틀
+            if !viewStore.addressValidationMessage.isEmpty {
+                Text(viewStore.addressValidationMessage)
+                    .font(KingTypography.subtleCaption)
+                    .foregroundColor(
+                        viewStore.isAddressValid 
+                        ? KingColors.buttonPrimary.opacity(0.8) 
+                        : KingColors.textSecondary
+                    )
+            }
         }
     }
     
     @ViewBuilder
-    private var amountInputSection: some View {
-        VStack(spacing: 20) {
-            PremiumSectionHeader(
-                title: "송금 금액",
-                subtitle: "전송할 ETH 금액을 입력하세요"
+    private var trustAmountSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("금액")
+                .font(KingTypography.trustHeadline)
+                .foregroundColor(KingColors.textInverse.opacity(0.9))
+            
+            HStack {
+                TextField("0.0", text: $viewStore.amount)
+                    .font(KingTypography.cleanDisplay)
+                    .foregroundColor(KingColors.textInverse)
+                    .keyboardType(.decimalPad)
+                    .onChange(of: viewStore.amount) { _, _ in
+                        validateAmount()
+                    }
+                
+                Text("ETH")
+                    .font(KingTypography.trustHeadline)
+                    .foregroundColor(KingColors.textSecondary)
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(KingColors.backgroundSecondary.opacity(0.1))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(
+                        viewStore.isAmountValid && !viewStore.amount.isEmpty 
+                        ? KingColors.buttonPrimary.opacity(0.4) 
+                        : KingColors.glassBorder, 
+                        lineWidth: 1
+                    )
             )
             
-            PremiumAmountField(
-                amount: $viewStore.amount,
-                isValid: viewStore.isAmountValid,
-                validationMessage: viewStore.amountValidationMessage,
-                onValidation: validateAmount
-            )
-            
-            // 가스비 선택
-            PremiumGasFeeSelector(
-                selectedFee: $viewStore.selectedGasFee,
-                estimatedGas: viewStore.estimatedGas,
-                onEstimateGas: estimateGas
-            )
+            if !viewStore.amountValidationMessage.isEmpty {
+                Text(viewStore.amountValidationMessage)
+                    .font(KingTypography.subtleCaption)
+                    .foregroundColor(
+                        viewStore.isAmountValid 
+                        ? KingColors.buttonPrimary.opacity(0.8) 
+                        : KingColors.textSecondary
+                    )
+            }
         }
     }
     
     @ViewBuilder
-    private var confirmationSection: some View {
-        VStack(spacing: 20) {
-            PremiumSectionHeader(
-                title: "거래 확인",
-                subtitle: "송금 정보를 확인하세요"
-            )
+    private var trustGasSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("네트워크 수수료")
+                    .font(KingTypography.minimalistBody)
+                    .foregroundColor(KingColors.textSecondary)
+                
+                Spacer()
+                
+                if !viewStore.estimatedGas.isEmpty {
+                    Text(viewStore.estimatedGas)
+                        .font(KingTypography.subtleCaption)
+                        .foregroundColor(KingColors.textTertiary)
+                }
+            }
             
-            PremiumTransactionSummary(
-                recipientAddress: viewStore.recipientAddress,
-                amount: viewStore.amount,
-                gasFee: viewStore.selectedGasFee,
-                estimatedGas: viewStore.estimatedGas
-            )
+            // 미니멀 가스 선택
+            HStack(spacing: 8) {
+                ForEach(GasFeeLevel.allCases, id: \.self) { fee in
+                    Button {
+                        viewStore.selectedGasFee = fee
+                        estimateGas()
+                    } label: {
+                        Text(fee.rawValue)
+                            .font(KingTypography.subtleCaption)
+                            .foregroundColor(
+                                viewStore.selectedGasFee == fee 
+                                ? KingColors.buttonPrimary 
+                                : KingColors.textSecondary
+                            )
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(
+                                        viewStore.selectedGasFee == fee 
+                                        ? KingColors.buttonPrimary.opacity(0.15) 
+                                        : Color.clear
+                                    )
+                            )
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
         }
     }
     
     @ViewBuilder
-    private var bottomActionArea: some View {
+    private var minimalBottomAction: some View {
         VStack {
             Spacer()
             
-            VStack(spacing: 16) {
-                switch viewStore.currentStep {
-                case .address:
-                    PremiumActionButton(
-                        title: "다음",
-                        isEnabled: viewStore.canProceedToAmount,
-                        isLoading: viewStore.isLoading,
-                        action: proceedToAmount
+            // 미니멀 송금 버튼 - 골드는 오직 여기에만
+            if viewStore.canProceedToConfirmation {
+                Button(action: sendTransaction) {
+                    HStack(spacing: 12) {
+                        if viewStore.isLoading {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: KingColors.primaryDark))
+                                .scaleEffect(0.9)
+                        } else {
+                            Image(systemName: "arrow.up.right")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(KingColors.primaryDark)
+                        }
+                        
+                        Text("송금")
+                            .font(KingTypography.trustHeadline)
+                            .fontWeight(.bold)
+                            .foregroundColor(KingColors.primaryDark)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 54)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(KingColors.buttonPrimary)
                     )
-                    
-                case .amount:
-                    HStack(spacing: 12) {
-                        PremiumSecondaryButton(
-                            title: "이전",
-                            action: goBackToAddress
-                        )
-                        
-                        PremiumActionButton(
-                            title: "다음",
-                            isEnabled: viewStore.canProceedToConfirmation,
-                            isLoading: viewStore.isLoading,
-                            action: proceedToConfirmation
-                        )
-                    }
-                    
-                case .confirmation:
-                    HStack(spacing: 12) {
-                        PremiumSecondaryButton(
-                            title: "이전",
-                            action: goBackToAmount
-                        )
-                        
-                        PremiumActionButton(
-                            title: "송금하기",
-                            isEnabled: true,
-                            isLoading: viewStore.isLoading,
-                            action: sendTransaction
-                        )
-                    }
+                    .shadow(
+                        color: KingColors.buttonPrimary.opacity(0.4),
+                        radius: 12,
+                        x: 0,
+                        y: 6
+                    )
                 }
+                .buttonStyle(PlainButtonStyle())
+                .disabled(viewStore.isLoading)
+                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: viewStore.canProceedToConfirmation)
             }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 32)
         }
+        .padding(.horizontal, 20)
+        .padding(.bottom, 32)
         .background(
             LinearGradient(
                 colors: [
                     Color.clear,
-                    KingColors.backgroundPrimary.opacity(0.8),
-                    KingColors.backgroundPrimary
+                    KingColors.primaryDark.opacity(0.8),
+                    KingColors.primaryDark
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -545,30 +584,7 @@ struct SendView: View {
         viewStore.showAddressBook = true
     }
     
-    private func proceedToAmount() {
-        withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-            viewStore.currentStep = .amount
-        }
-        estimateGas()
-    }
-    
-    private func proceedToConfirmation() {
-        withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-            viewStore.currentStep = .confirmation
-        }
-    }
-    
-    private func goBackToAddress() {
-        withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-            viewStore.currentStep = .address
-        }
-    }
-    
-    private func goBackToAmount() {
-        withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-            viewStore.currentStep = .amount
-        }
-    }
+    // 단계별 네비게이션 제거 - 모든 입력을 하나의 카드에서 처리
     
     private func sendTransaction() {
         let request = SendScene.SendTransaction.Request(
@@ -580,432 +596,11 @@ struct SendView: View {
     }
 }
 
-// MARK: - Premium Components
+// MARK: - Minimal Trust Components (Simplified)
 
-/// 프리미엄 섹션 헤더
-struct PremiumSectionHeader: View {
-    let title: String
-    let subtitle: String
-    
-    var body: some View {
-        VStack(spacing: 8) {
-            Text(title)
-                .font(KingTypography.headlineSmall)
-                .fontWeight(.bold)
-                .foregroundColor(KingColors.textPrimary)
-                .shadow(color: Color.black.opacity(0.2), radius: 1, x: 0, y: 0.5)
-            
-            Text(subtitle)
-                .font(KingTypography.bodySmall)
-                .fontWeight(.medium)
-                .foregroundColor(KingColors.textSecondary)
-                .multilineTextAlignment(.center)
-                .shadow(color: Color.black.opacity(0.15), radius: 0.5, x: 0, y: 0.25)
-        }
-    }
-}
-
-/// 프리미엄 주소 입력 필드
-struct PremiumAddressField: View {
-    @Binding var address: String
-    let isValid: Bool
-    let validationMessage: String
-    let onQRScan: () -> Void
-    let onAddressBook: () -> Void
-    let onValidation: () -> Void
-    
-    var body: some View {
-        VStack(spacing: 16) {
-            // 메인 입력 필드
-            VStack(spacing: 12) {
-                TextField("0x1234...abcd", text: $address)
-                    .font(KingTypography.bodyMedium)
-                    .foregroundColor(KingColors.textPrimary)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 16)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(.ultraThinMaterial)
-                            .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(KingColors.glassMinimalBase)
-                            )
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(
-                                isValid && !address.isEmpty ? KingColors.success.opacity(0.5) : 
-                                !validationMessage.isEmpty ? KingColors.error.opacity(0.5) :
-                                KingColors.glassBorder,
-                                lineWidth: 1
-                            )
-                    )
-                    .onChange(of: address) { oldValue, newValue in
-                        onValidation()
-                    }
-                
-                // 유효성 검증 메시지
-                if !validationMessage.isEmpty {
-                    Text(validationMessage)
-                        .font(KingTypography.caption)
-                        .foregroundColor(isValid ? KingColors.success : KingColors.error)
-                        .shadow(color: Color.black.opacity(0.1), radius: 0.5, x: 0, y: 0.25)
-                }
-            }
-            
-            // 액션 버튼들
-            HStack(spacing: 12) {
-                PremiumIconButton(
-                    icon: "qrcode.viewfinder",
-                    title: "QR 스캔",
-                    color: KingColors.info,
-                    action: onQRScan
-                )
-                
-                PremiumIconButton(
-                    icon: "person.2.fill",
-                    title: "주소록",
-                    color: KingColors.trustPurple,
-                    action: onAddressBook
-                )
-            }
-        }
-        .trustGlassCard(level: .subtle, cornerRadius: 20)
-        .padding(.horizontal, 4)
-    }
-}
-
-/// 프리미엄 금액 입력 필드  
-struct PremiumAmountField: View {
-    @Binding var amount: String
-    let isValid: Bool
-    let validationMessage: String
-    let onValidation: () -> Void
-    
-    var body: some View {
-        VStack(spacing: 16) {
-            VStack(spacing: 12) {
-                HStack {
-                    TextField("0.0", text: $amount)
-                        .font(KingTypography.cryptoBalanceLarge)
-                        .fontWeight(.semibold)
-                        .foregroundColor(KingColors.textPrimary)
-                        .keyboardType(.decimalPad)
-                        .multilineTextAlignment(.center)
-                    
-                    Text("ETH")
-                        .font(KingTypography.labelLarge)
-                        .fontWeight(.bold)
-                        .foregroundColor(KingColors.exclusiveGold)
-                }
-                .padding(.horizontal, 24)
-                .padding(.vertical, 20)
-                
-                if !validationMessage.isEmpty {
-                    Text(validationMessage)
-                        .font(KingTypography.caption)
-                        .foregroundColor(isValid ? KingColors.success : KingColors.error)
-                        .shadow(color: Color.black.opacity(0.1), radius: 0.5, x: 0, y: 0.25)
-                }
-            }
-            .onChange(of: amount) { oldValue, newValue in
-                onValidation()
-            }
-        }
-        .premiumFinTechGlass(level: .standard)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(
-                    isValid && !amount.isEmpty ? KingColors.success.opacity(0.3) :
-                    !validationMessage.isEmpty ? KingColors.error.opacity(0.3) :
-                    Color.clear,
-                    lineWidth: 1
-                )
-        )
-    }
-}
-
-/// 프리미엄 가스비 선택기
-struct PremiumGasFeeSelector: View {
-    @Binding var selectedFee: GasFeeLevel
-    let estimatedGas: String
-    let onEstimateGas: () -> Void
-    
-    var body: some View {
-        VStack(spacing: 16) {
-            HStack {
-                Text("네트워크 수수료")
-                    .font(KingTypography.labelLarge)
-                    .fontWeight(.semibold)
-                    .foregroundColor(KingColors.textPrimary)
-                
-                Spacer()
-                
-                if !estimatedGas.isEmpty {
-                    Text(estimatedGas)
-                        .font(KingTypography.bodySmall)
-                        .fontWeight(.medium)
-                        .foregroundColor(KingColors.textSecondary)
-                }
-            }
-            
-            HStack(spacing: 12) {
-                ForEach(GasFeeLevel.allCases, id: \.self) { fee in
-                    Button {
-                        selectedFee = fee
-                        onEstimateGas()
-                    } label: {
-                        VStack(spacing: 8) {
-                            Image(systemName: fee.icon)
-                                .font(.system(size: 20, weight: .medium))
-                                .foregroundColor(fee.color)
-                            
-                            Text(fee.rawValue)
-                                .font(KingTypography.caption)
-                                .fontWeight(.semibold)
-                                .foregroundColor(
-                                    selectedFee == fee ? KingColors.textPrimary : KingColors.textSecondary
-                                )
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(
-                                selectedFee == fee ? 
-                                fee.color.opacity(0.1) : 
-                                Color.clear
-                            )
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(
-                                selectedFee == fee ? 
-                                fee.color.opacity(0.4) : 
-                                KingColors.glassBorder,
-                                lineWidth: selectedFee == fee ? 1.5 : 0.5
-                            )
-                    )
-                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: selectedFee)
-                }
-            }
-        }
-        .ultraMinimalGlass(level: .subtle)
-        .padding(.horizontal, 4)
-    }
-}
-
-/// 프리미엄 거래 요약
-struct PremiumTransactionSummary: View {
-    let recipientAddress: String
-    let amount: String
-    let gasFee: GasFeeLevel
-    let estimatedGas: String
-    
-    var body: some View {
-        VStack(spacing: 20) {
-            // 받는 사람
-            PremiumInfoRow(
-                title: "받는 사람",
-                value: recipientAddress,
-                icon: "person.circle.fill",
-                iconColor: KingColors.info
-            )
-            
-            // 송금 금액
-            PremiumInfoRow(
-                title: "송금 금액",
-                value: "\(amount) ETH",
-                icon: "bitcoinsign.circle.fill",
-                iconColor: KingColors.exclusiveGold
-            )
-            
-            // 네트워크 수수료
-            PremiumInfoRow(
-                title: "네트워크 수수료",
-                value: estimatedGas,
-                icon: gasFee.icon,
-                iconColor: gasFee.color
-            )
-            
-            Divider()
-                .background(KingColors.glassBorder)
-            
-            // 총 금액
-            PremiumInfoRow(
-                title: "총 금액",
-                value: "계산 중...",
-                icon: "sum",
-                iconColor: KingColors.trustPurple,
-                isHighlighted: true
-            )
-        }
-        .trustGlassCard(level: .prominent)
-        .padding(.horizontal, 4)
-    }
-}
-
-/// 프리미엄 정보 행
-struct PremiumInfoRow: View {
-    let title: String
-    let value: String
-    let icon: String
-    let iconColor: Color
-    var isHighlighted: Bool = false
-    
-    var body: some View {
-        HStack(spacing: 16) {
-            // 아이콘
-            ZStack {
-                Circle()
-                    .fill(iconColor.opacity(0.15))
-                    .frame(width: 32, height: 32)
-                
-                Image(systemName: icon)
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(iconColor)
-            }
-            
-            // 텍스트
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(KingTypography.bodySmall)
-                    .fontWeight(.medium)
-                    .foregroundColor(KingColors.textSecondary)
-                
-                Text(value)
-                    .font(isHighlighted ? KingTypography.labelLarge : KingTypography.bodyMedium)
-                    .fontWeight(isHighlighted ? .bold : .medium)
-                    .foregroundColor(isHighlighted ? KingColors.trustPurple : KingColors.textPrimary)
-                    .lineLimit(1)
-            }
-            
-            Spacer()
-        }
-    }
-}
-
-/// 프리미엄 아이콘 버튼
-struct PremiumIconButton: View {
-    let icon: String
-    let title: String
-    let color: Color
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 8) {
-                ZStack {
-                    Circle()
-                        .fill(color.opacity(0.15))
-                        .frame(width: 40, height: 40)
-                    
-                    Image(systemName: icon)
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(color)
-                }
-                
-                Text(title)
-                    .font(KingTypography.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(KingColors.textSecondary)
-            }
-        }
-        .buttonStyle(PlainButtonStyle())
-        .frame(maxWidth: .infinity)
-    }
-}
-
-/// 프리미엄 액션 버튼
-struct PremiumActionButton: View {
-    let title: String
-    let isEnabled: Bool
-    let isLoading: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 12) {
-                if isLoading {
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: KingColors.textInverse))
-                        .scaleEffect(0.8)
-                } else {
-                    Image(systemName: "arrow.right.circle.fill")
-                        .font(KingTypography.labelLarge)
-                        .foregroundColor(KingColors.textInverse)
-                }
-                
-                Text(title)
-                    .font(KingTypography.buttonPrimary)
-                    .fontWeight(.bold)
-                    .foregroundColor(KingColors.textInverse)
-            }
-            .frame(maxWidth: .infinity)
-            .frame(height: 56)
-            .background(
-                LinearGradient(
-                    colors: [
-                        KingColors.trustPurple,
-                        KingColors.trustPurple.opacity(0.8)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 16))
-            .shadow(
-                color: KingColors.trustPurple.opacity(0.4),
-                radius: 12,
-                x: 0,
-                y: 6
-            )
-            .opacity(isEnabled ? 1.0 : 0.6)
-            .scaleEffect(isEnabled ? 1.0 : 0.98)
-        }
-        .buttonStyle(PlainButtonStyle())
-        .disabled(!isEnabled || isLoading)
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isEnabled)
-    }
-}
-
-/// 프리미엄 보조 버튼
-struct PremiumSecondaryButton: View {
-    let title: String
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 8) {
-                Image(systemName: "arrow.left.circle")
-                    .font(KingTypography.labelMedium)
-                    .foregroundColor(KingColors.trustPurple)
-                
-                Text(title)
-                    .font(KingTypography.buttonSecondary)
-                    .fontWeight(.semibold)
-                    .foregroundColor(KingColors.trustPurple)
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
-        }
-        .buttonStyle(PlainButtonStyle())
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(.ultraThinMaterial)
-                .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(KingColors.trustPurple.opacity(0.05))
-                )
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(KingColors.trustPurple.opacity(0.3), lineWidth: 1)
-        )
-    }
-}
+// 모든 프리미엄 컴포넌트 제거 - 미니멀리즘에 집중
+// 주소, 금액, 가스비 모두 하나의 카드에서 처리
+// 골드는 최종 송금 버튼에만 사용
 
 // MARK: - VIP Components (Stubs for compilation)
 

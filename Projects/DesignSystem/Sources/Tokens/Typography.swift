@@ -37,6 +37,47 @@ public extension Font {
     static let currencyValue = Font.system(.title, design: .default).weight(.medium)
     static let currencyLarge = Font.system(.largeTitle, design: .default).weight(.semibold)
     static let percentageValue = Font.callout.weight(.medium)
+    
+    // MARK: - Legacy Support for Phase 2.4
+    static let cryptoBalanceLarge = Font.system(.largeTitle, design: .default).weight(.semibold)
+}
+
+// MARK: - Phase 2.6: Kingthereum Minimal Typography
+// 극도 미니멀리즘에 최적화된 타이포그래피 시스템
+public struct KingTypography {
+    private init() {}
+    
+    // MARK: - Modern Minimalism Typography
+    
+    /// Clean Display - 극도로 미니멀한 대형 텍스트 (헤더용)
+    public static let cleanDisplay = Font.system(.largeTitle, design: .default, weight: .ultraLight)
+    
+    /// Trust Headline - 신뢰감 있는 제목 (섹션 제목용)
+    public static let trustHeadline = Font.system(.title3, design: .default, weight: .medium)
+    
+    /// Minimalist Body - 미니멀한 본문 텍스트
+    public static let minimalistBody = Font.system(.callout, design: .default, weight: .regular)
+    
+    /// Subtle Caption - 서브틀한 캡션 (부가 정보용)
+    public static let subtleCaption = Font.system(.caption, design: .default, weight: .light)
+    
+    // MARK: - Legacy Support (기존 호환성)
+    
+    /// 기존 호환성을 위한 타이포그래피들
+    public static let displaySmall = Font.system(.title, design: .default, weight: .bold)
+    public static let headlineSmall = Font.system(.headline, design: .default, weight: .bold)
+    public static let bodyMedium = Font.system(.body, design: .default, weight: .medium)
+    public static let bodySmall = Font.system(.callout, design: .default, weight: .regular)
+    public static let labelLarge = Font.system(.callout, design: .default, weight: .semibold)
+    public static let labelMedium = Font.system(.footnote, design: .default, weight: .medium)
+    public static let caption = Font.system(.caption, design: .default, weight: .regular)
+    
+    /// 버튼용 타이포그래피
+    public static let buttonPrimary = Font.system(.callout, design: .default, weight: .semibold)
+    public static let buttonSecondary = Font.system(.footnote, design: .default, weight: .medium)
+    
+    /// 암호화폐 관련
+    public static let cryptoBalanceLarge = Font.system(.largeTitle, design: .default, weight: .semibold)
 }
 
 // MARK: - Native iOS Text Styles
