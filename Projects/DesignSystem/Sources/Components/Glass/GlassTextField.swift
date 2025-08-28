@@ -94,7 +94,7 @@ public struct GlassTextField: View {
                 // Validation Icon
                 if !text.isEmpty {
                     Image(systemName: validation.isValid ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .foregroundColor(validation.isValid ? .green : .red)
+                        .foregroundColor(validation.isValid ? KingColors.success : KingColors.error)
                         .font(.system(size: 16))
                 }
                 
@@ -114,7 +114,7 @@ public struct GlassTextField: View {
             .overlay(
                 RoundedRectangle(cornerRadius: style.cornerRadius)
                     .stroke(
-                        !validation.isValid ? .red :
+                        !validation.isValid ? KingColors.error :
                         isEditing ? style.focusedBorderColor : style.borderColor,
                         lineWidth: style.borderWidth
                     )
@@ -130,7 +130,7 @@ public struct GlassTextField: View {
             if let errorMessage = validation.errorMessage, !text.isEmpty {
                 Text(errorMessage)
                     .font(.caption)
-                    .foregroundColor(.red)
+                    .foregroundColor(KingColors.error)
                     .padding(.horizontal, 4)
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }
@@ -155,18 +155,18 @@ public struct GlassTextFieldStyle: Sendable {
     
     public init(
         backgroundColor: Material = .ultraThinMaterial,
-        textColor: Color = .primary,
-        borderColor: Color = .glassBorderSecondary,
-        focusedBorderColor: Color = .glassBorderPrimary,
+        textColor: Color = KingColors.textPrimary,
+        borderColor: Color = KingColors.glassBorder.opacity(0.6),
+        focusedBorderColor: Color = KingColors.glassBorder,
         borderWidth: CGFloat = 1,
         cornerRadius: CGFloat = Constants.UI.cornerRadius,
-        shadowColor: Color = .glassShadowLight,
+        shadowColor: Color = KingColors.glassShadow,
         shadowRadius: CGFloat = 5,
         shadowOffset: CGFloat = 2,
         font: Font = .body,
         horizontalPadding: CGFloat = Constants.UI.padding,
         verticalPadding: CGFloat = Constants.UI.smallPadding,
-        iconColor: Color = .secondary
+        iconColor: Color = KingColors.textSecondary
     ) {
         self.backgroundColor = backgroundColor
         self.textColor = textColor
@@ -187,9 +187,9 @@ public struct GlassTextFieldStyle: Sendable {
     
     public static let prominent = GlassTextFieldStyle(
         backgroundColor: .thickMaterial,
-        borderColor: .glassBorderPrimary,
-        focusedBorderColor: .glassBorderAccent,
-        shadowColor: .glassShadowMedium,
+        borderColor: KingColors.glassBorder,
+        focusedBorderColor: KingColors.accent,
+        shadowColor: KingColors.glassShadow,
         shadowRadius: 8,
         shadowOffset: 4
     )
@@ -219,7 +219,7 @@ public struct GlassTextEditor: View {
         ZStack(alignment: .topLeading) {
             if text.isEmpty {
                 Text(placeholder)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(KingColors.textSecondary)
                     .font(style.font)
                     .padding(.horizontal, style.horizontalPadding)
                     .padding(.vertical, style.verticalPadding + 8)
