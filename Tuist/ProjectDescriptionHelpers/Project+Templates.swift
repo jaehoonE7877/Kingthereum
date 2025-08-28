@@ -50,6 +50,11 @@ public extension Project {
         var projectTargets: [Target] = []
         
         // MARK: - Framework Target
+        var buildableFolders: [BuildableFolder] = [.folder("Sources"), .folder("Derived")]
+        if hasResources {
+            buildableFolders.append(.folder("Resources"))
+        }
+        
         let frameworkTarget = Target.target(
             name: name,
             destinations: destination,
@@ -57,8 +62,7 @@ public extension Project {
             bundleId: "\(organizationName).\(name)",
             deploymentTargets: deploymentTarget,
             infoPlist: .default,
-            sources: ["Sources/**"],
-            resources: hasResources ? ["Resources/**"] : nil,
+            buildableFolders: buildableFolders,
             dependencies: dependencies,
             settings: .settings(
                 base: baseSettings
@@ -85,7 +89,7 @@ public extension Project {
                 bundleId: "\(organizationName).\(name)Tests",
                 deploymentTargets: deploymentTarget,
                 infoPlist: .default,
-                sources: ["Tests/**"],
+                buildableFolders: [.folder("Tests")],
                 dependencies: [.target(name: name)],
                 settings: .settings(base: testSettings, configurations: [debugConfiguration])
             )
@@ -186,8 +190,7 @@ public extension Project {
                 "INFURA_PROJECT_SECRET": "$(INFURA_PROJECT_SECRET)",
                 "ETHERSCAN_API_KEY": "$(ETHERSCAN_API_KEY)"
             ]),
-            sources: ["Sources/**"],
-            resources: ["Resources/**"],
+            buildableFolders: [.folder("Sources"), .folder("Resources"), .folder("Derived")],
             dependencies: dependencies,
             settings: .settings(
                 base: baseSettings
@@ -211,7 +214,7 @@ public extension Project {
                 bundleId: "\(organizationName).\(name)Tests",
                 deploymentTargets: deploymentTarget,
                 infoPlist: .default,
-                sources: ["Tests/**"],
+                buildableFolders: [.folder("Tests")],
                 dependencies: [.target(name: name)],
                 settings: .settings(
                     base: debugSettings
