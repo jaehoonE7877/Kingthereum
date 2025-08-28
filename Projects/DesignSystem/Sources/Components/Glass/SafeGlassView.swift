@@ -52,11 +52,11 @@ public struct SafeGlassView<Content: View>: View {
             // 글로시 오버레이
             LinearGradient(
                 colors: [
-                    Color.white.opacity(0.3),
-                    Color.white.opacity(0.1),
-                    Color.white.opacity(0.05),
-                    Color.white.opacity(0.1),
-                    Color.white.opacity(0.2)
+                    KingColors.glassBorder,
+                    KingColors.glassBorder.opacity(0.3),
+                    KingColors.glassBorder.opacity(0.15),
+                    KingColors.glassBorder.opacity(0.3),
+                    KingColors.glassBorder.opacity(0.6)
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -69,7 +69,7 @@ public struct SafeGlassView<Content: View>: View {
                     LinearGradient(
                         colors: [
                             Color.clear,
-                            Color.white.opacity(0.15),
+                            KingColors.glassBorder.opacity(0.5),
                             Color.clear
                         ],
                         startPoint: .topLeading,
@@ -96,10 +96,10 @@ public struct SafeGlassView<Content: View>: View {
                 .strokeBorder(
                     LinearGradient(
                         colors: [
-                            Color.white.opacity(0.3),
+                            KingColors.glassBorder,
                             Color.clear,
                             Color.clear,
-                            Color.white.opacity(0.2)
+                            KingColors.glassBorder.opacity(0.6)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
