@@ -114,6 +114,5 @@ DerivedData/
 # Logs
 *.log
 
-# Temporary files
-*.tmp
-*.temp
+# Serena MCP
+.serena
