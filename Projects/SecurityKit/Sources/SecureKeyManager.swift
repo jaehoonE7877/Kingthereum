@@ -122,7 +122,13 @@ public actor SecureKeyManager {
             kSecAttrTokenID: kSecAttrTokenIDSecureEnclave,
             kSecPrivateKeyAttrs: [
                 kSecAttrIsPermanent: true,
-                kSecAttrApplicationTag: tag.data(using: .utf8)!,
+                kSecAttrApplicationTag: {
+                    guard let data = tag.data(using: .utf8) else {
+                        Logger.error("❌ 키 태그를 UTF-8 데이터로 변환 실패")
+                        return Data() // 빈 데이터 fallback
+                    }
+                    return data
+                }(),
                 kSecAttrAccessControl: accessControl
             ]
         ]
@@ -214,7 +220,13 @@ public actor SecureKeyManager {
         // Keychain에서 개인키 참조 가져오기
         let query: [CFString: Any] = [
             kSecClass: kSecClassKey,
-            kSecAttrApplicationTag: tag.data(using: .utf8)!,
+            kSecAttrApplicationTag: {
+                guard let data = tag.data(using: .utf8) else {
+                    Logger.error("❌ 서명용 키 태그를 UTF-8 데이터로 변환 실패")
+                    return Data() // 빈 데이터 fallback
+                }
+                return data
+            }(),
             kSecAttrKeyType: kSecAttrKeyTypeECSECPrimeRandom,
             kSecReturnRef: true
         ]
@@ -222,10 +234,15 @@ public actor SecureKeyManager {
         var item: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &item)
         
-        guard status == errSecSuccess,
-              let privateKey = item as! SecKey? else {
-            Logger.error("❌ Secure Enclave 키를 찾을 수 없음")
+        guard status == errSecSuccess else {
+            Logger.error("❌ Secure Enclave 키 검색 실패")
             throw SecurityError.keyNotFound(tag)
+        }
+        
+        // 안전한 타입 캐스팅
+        guard let privateKey = item as? SecKey else {
+            Logger.error("❌ 잘못된 키 타입")
+            throw SecurityError.authenticationRequired // 기존 에러 케이스 사용
         }
         
         // 메시지 해시 (SHA-256)
@@ -282,7 +299,13 @@ public actor SecureKeyManager {
         
         let query: [CFString: Any] = [
             kSecClass: kSecClassKey,
-            kSecAttrApplicationTag: keyReference.tag.data(using: .utf8)!
+            kSecAttrApplicationTag: {
+                guard let data = keyReference.tag.data(using: .utf8) else {
+                    Logger.error("❌ 삭제용 키 태그를 UTF-8 데이터로 변환 실패")
+                    return Data() // 빈 데이터 fallback
+                }
+                return data
+            }()
         ]
         
         let status = SecItemDelete(query as CFDictionary)

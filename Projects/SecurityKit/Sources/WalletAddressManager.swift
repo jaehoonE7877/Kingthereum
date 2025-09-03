@@ -222,7 +222,13 @@ public actor WalletAddressManager {
             kSecClass: kSecClassGenericPassword,
             kSecAttrService: service,
             kSecAttrAccount: account,
-            kSecValueData: value.data(using: .utf8)!,
+            kSecValueData: {
+                guard let data = value.data(using: .utf8) else {
+                    Logger.error("❌ 문자열을 UTF-8 데이터로 변환 실패")
+                    return Data() // 빈 데이터 반환
+                }
+                return data
+            }(),
             kSecAttrAccessible: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
         ]
         

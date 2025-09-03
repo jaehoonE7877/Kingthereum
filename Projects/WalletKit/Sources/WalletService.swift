@@ -359,7 +359,12 @@ extension WalletService {
         
         var randomBytes = Data(count: 32) // 256비트 랜덤 데이터
         let result = randomBytes.withUnsafeMutableBytes { bytes in
-            SecRandomCopyBytes(kSecRandomDefault, 32, bytes.bindMemory(to: UInt8.self).baseAddress!)
+            // 안전한 포인터 접근
+            guard let baseAddress = bytes.bindMemory(to: UInt8.self).baseAddress else {
+                Logger.error("❌ 메모리 포인터 접근 실패")
+                return errSecParam // 파라미터 에러 반환
+            }
+            return SecRandomCopyBytes(kSecRandomDefault, 32, baseAddress)
         }
         
         guard result == errSecSuccess else {
@@ -427,7 +432,13 @@ extension WalletService {
             kSecClass: kSecClassGenericPassword,
             kSecAttrService: "com.kingthereum.passwords",
             kSecAttrAccount: keyTag,
-            kSecValueData: password.data(using: .utf8)!,
+            kSecValueData: {
+                guard let data = password.data(using: .utf8) else {
+                    Logger.error("❌ 비밀번호를 UTF-8 데이터로 변환 실패")
+                    return Data() // 빈 데이터 fallback
+                }
+                return data
+            }(),
             kSecAttrAccessible: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
         ]
         
