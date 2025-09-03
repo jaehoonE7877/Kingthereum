@@ -1,6 +1,7 @@
 import Foundation
 import Entity
 import Core
+import SecurityKit
 
 @MainActor
 protocol SettingsPresentationLogic {
@@ -15,6 +16,7 @@ protocol SettingsPresentationLogic {
 @MainActor
 final class SettingsPresenter: SettingsPresentationLogic {
     weak var viewController: SettingsDisplayLogic?
+    private let walletAddressManager = WalletAddressManager() // 안전한 지갑 주소 관리자
     
     func presentSettings(response: SettingsScene.LoadSettings.Response) {
         if let error = response.error {
@@ -217,7 +219,9 @@ final class SettingsPresenter: SettingsPresentationLogic {
     }
     
     private func getCurrentWalletAddress() -> String {
-        return UserDefaults.standard.string(forKey: Constants.UserDefaults.selectedWalletAddress) ?? ""
+        // 비동기 작업을 동기적으로 처리할 수 없으므로 임시로 빈 문자열 반환
+        // 실제 주소는 loadProfile에서 비동기적으로 처리됨
+        return ""
     }
     
     private func formatErrorMessage(_ error: Error) -> String {

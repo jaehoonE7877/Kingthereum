@@ -2,6 +2,7 @@ import Foundation
 import Entity
 import Core
 import Factory
+import SecurityKit
 
 @MainActor
 protocol SettingsBusinessLogic {
@@ -24,6 +25,7 @@ protocol SettingsDataStore {
 final class SettingsInteractor: SettingsBusinessLogic, SettingsDataStore {
     var presenter: SettingsPresentationLogic?
     private let worker: SettingsWorkerProtocol
+    private let walletAddressManager = WalletAddressManager() // 안전한 지갑 주소 관리자
     
     @Injected(\.displayModeService) private var displayModeService
     
@@ -254,8 +256,15 @@ final class SettingsInteractor: SettingsBusinessLogic, SettingsDataStore {
     
     func loadProfile(request: SettingsScene.LoadProfile.Request) {
         Task { [weak self] in
+            guard let self = self else { return }
+            
             do {
-                let profile = try await self?.worker.loadWalletProfile(address: request.walletAddress)
+                // 안전한 방식으로 지갑 주소 가져오기
+                let walletAddress = request.walletAddress.isEmpty ? 
+                    (try await self.walletAddressManager.getSelectedWalletAddress() ?? "") : 
+                    request.walletAddress
+                
+                let profile = try await self.worker.loadWalletProfile(address: walletAddress)
                 
                 guard let profile = profile else { return }
                 
@@ -302,10 +311,11 @@ final class SettingsInteractor: SettingsBusinessLogic, SettingsDataStore {
     }
     
     private func getDefaultProfile() -> WalletProfile {
-        let address = UserDefaults.standard.string(forKey: Constants.UserDefaults.selectedWalletAddress) ?? ""
+        // 비동기로 주소를 가져와야 하므로 임시로 빈 프로필을 반환하고
+        // loadProfile에서 실제 주소를 로드하도록 함
         return WalletProfile(
             name: "Kingthereum Wallet",
-            address: address,
+            address: "", // 임시 빈 값, loadProfile에서 실제 주소 로드
             balance: 0.0,
             avatarURL: nil
         )

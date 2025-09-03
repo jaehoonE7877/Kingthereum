@@ -25,6 +25,7 @@ protocol AuthenticationDataStore {
 final class AuthenticationInteractor: AuthenticationBusinessLogic, AuthenticationDataStore {
     var presenter: AuthenticationPresentationLogic?
     private let worker: AuthenticationWorker
+    private let walletAddressManager = WalletAddressManager() // 안전한 지갑 주소 관리자
     
     // MARK: - Data Store
     var isSetupMode = false
@@ -196,7 +197,26 @@ final class AuthenticationInteractor: AuthenticationBusinessLogic, Authenticatio
     }
     
     private func checkExistingWallet() {
-        hasExistingWallet = UserDefaults.standard.string(forKey: Constants.UserDefaults.selectedWalletAddress) != nil
-        isSetupMode = !UserDefaults.standard.bool(forKey: Constants.UserDefaults.hasCompletedOnboarding)
+        Task { [weak self] in
+            guard let self = self else { return }
+            
+            // 안전한 방식으로 지갑 주소 확인
+            do {
+                let hasWalletAddress = try await self.walletAddressManager.hasSelectedWallet()
+                let hasCompletedOnboarding = UserDefaults.standard.bool(forKey: Constants.UserDefaults.hasCompletedOnboarding)
+                
+                await MainActor.run {
+                    self.hasExistingWallet = hasWalletAddress
+                    self.isSetupMode = !hasCompletedOnboarding
+                }
+            } catch {
+                Logger.error("❌ 기존 지갑 확인 중 오류: \(error)")
+                // 오류 발생 시 보수적으로 설정
+                await MainActor.run {
+                    self.hasExistingWallet = false
+                    self.isSetupMode = true
+                }
+            }
+        }
     }
 }

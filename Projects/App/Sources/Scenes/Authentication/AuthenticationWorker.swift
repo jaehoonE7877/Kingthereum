@@ -8,6 +8,7 @@ actor AuthenticationWorker {
     private let securityService: SecurityServiceProtocol
     private var walletService: WalletService?
     private let maxRetryAttempts = 3
+    private let walletAddressManager = WalletAddressManager() // 안전한 지갑 주소 관리자
     
     init(securityService: SecurityServiceProtocol = SecurityService()) {
         self.securityService = securityService
@@ -90,8 +91,9 @@ actor AuthenticationWorker {
         // 4. 지갑 주소 저장
         try await securityService.storeWalletAddress(result.wallet.address)
         
-        // 5. UserDefaults에 지갑 정보 저장
-        UserDefaults.standard.set(result.wallet.address, forKey: Constants.UserDefaults.selectedWalletAddress)
+        // 5. 안전하게 Keychain에 지갑 정보 저장
+        try await walletAddressManager.setSelectedWalletAddress(result.wallet.address)
+        try await walletAddressManager.addWalletAddress(result.wallet.address)
         UserDefaults.standard.set(true, forKey: Constants.UserDefaults.hasCompletedOnboarding)
         
         return result.wallet
@@ -110,8 +112,9 @@ actor AuthenticationWorker {
         // 4. 지갑 주소 저장
         try await securityService.storeWalletAddress(result.wallet.address)
         
-        // 5. UserDefaults에 지갑 정보 저장
-        UserDefaults.standard.set(result.wallet.address, forKey: Constants.UserDefaults.selectedWalletAddress)
+        // 5. 안전하게 Keychain에 지갑 정보 저장
+        try await walletAddressManager.setSelectedWalletAddress(result.wallet.address)
+        try await walletAddressManager.addWalletAddress(result.wallet.address)
         UserDefaults.standard.set(true, forKey: Constants.UserDefaults.hasCompletedOnboarding)
         
         return (wallet: result.wallet, mnemonic: result.mnemonic ?? "")
@@ -130,8 +133,9 @@ actor AuthenticationWorker {
         // 4. 지갑 주소 저장
         try await securityService.storeWalletAddress(result.wallet.address)
         
-        // 5. UserDefaults에 지갑 정보 저장
-        UserDefaults.standard.set(result.wallet.address, forKey: Constants.UserDefaults.selectedWalletAddress)
+        // 5. 안전하게 Keychain에 지갑 정보 저장
+        try await walletAddressManager.setSelectedWalletAddress(result.wallet.address)
+        try await walletAddressManager.addWalletAddress(result.wallet.address)
         UserDefaults.standard.set(true, forKey: Constants.UserDefaults.hasCompletedOnboarding)
         
         return result.wallet
@@ -139,8 +143,9 @@ actor AuthenticationWorker {
     
     /// 로그인 시 기존 지갑을 복원
     func restoreExistingWallet() async throws -> Wallet? {
-        // 저장된 지갑 주소 확인
-        guard let walletAddress = UserDefaults.standard.string(forKey: Constants.UserDefaults.selectedWalletAddress) else {
+        // 안전한 방식으로 저장된 지갑 주소 확인
+        guard let walletAddress = try await walletAddressManager.getSelectedWalletAddress() else {
+            Logger.debug("⚠️ Keychain에 저장된 지갑 주소가 없습니다")
             return nil
         }
         

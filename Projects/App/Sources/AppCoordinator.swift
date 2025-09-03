@@ -18,6 +18,7 @@ public final class AppCoordinator: ObservableObject {
     
     private let securityService: SecurityServiceProtocol
     private var walletService: WalletService?
+    private let walletAddressManager = WalletAddressManager() // 안전한 지갑 주소 관리자
     
     public init(securityService: SecurityServiceProtocol = SecurityService()) {
         self.securityService = securityService
@@ -73,23 +74,23 @@ public final class AppCoordinator: ObservableObject {
         
         Logger.debug("🔄 기존 지갑 복원을 시도합니다...")
         
-        // 저장된 지갑 주소 확인
-        if let savedAddress = UserDefaults.standard.string(forKey: Constants.UserDefaults.selectedWalletAddress) {
-            Logger.debug("📱 UserDefaults에 저장된 지갑 주소: \(savedAddress)")
-        } else {
-            Logger.debug("⚠️ UserDefaults에 지갑 주소가 없습니다")
-        }
-        
         do {
+            // 안전한 방식으로 저장된 지갑 주소 확인
+            if let savedAddress = try await walletAddressManager.getSelectedWalletAddress() {
+                Logger.debug("📱 Keychain에 저장된 지갑 주소: \(savedAddress)")
+            } else {
+                Logger.debug("⚠️ Keychain에 지갑 주소가 없습니다")
+            }
+            
             let authWorker = AuthenticationWorker()
             if let restoredWallet = try await authWorker.restoreExistingWallet() {
                 Logger.debug("✅ 지갑 복원 성공: \(restoredWallet.address)")
                 
-                // 지갑 주소가 UserDefaults에 정확히 저장되었는지 재확인
-                let currentSavedAddress = UserDefaults.standard.string(forKey: Constants.UserDefaults.selectedWalletAddress)
+                // 지갑 주소가 Keychain에 정확히 저장되었는지 재확인
+                let currentSavedAddress = try await walletAddressManager.getSelectedWalletAddress()
                 if currentSavedAddress != restoredWallet.address {
                     Logger.debug("🔧 지갑 주소 불일치 발견, 업데이트합니다: \(currentSavedAddress ?? "nil") -> \(restoredWallet.address)")
-                    UserDefaults.standard.set(restoredWallet.address, forKey: Constants.UserDefaults.selectedWalletAddress)
+                    try await walletAddressManager.setSelectedWalletAddress(restoredWallet.address)
                 }
             } else {
                 Logger.debug("⚠️ 복원할 지갑이 없습니다")
@@ -108,7 +109,8 @@ public final class AppCoordinator: ObservableObject {
             do {
                 try await self.securityService.deleteWalletData()
                 UserDefaults.standard.removeObject(forKey: Constants.UserDefaults.hasCompletedOnboarding)
-                UserDefaults.standard.removeObject(forKey: Constants.UserDefaults.selectedWalletAddress)
+                // 안전하게 Keychain에서 지갑 주소 삭제
+                try await self.walletAddressManager.clearAllWalletData()
                 
                 await MainActor.run {
                     self.currentFlow = .authentication

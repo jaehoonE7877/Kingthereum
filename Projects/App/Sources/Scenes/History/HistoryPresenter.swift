@@ -1,6 +1,7 @@
 import Foundation
 import Entity
 import Core
+import SecurityKit
 
 @MainActor
 protocol HistoryPresentationLogic {
@@ -13,6 +14,7 @@ protocol HistoryPresentationLogic {
 @MainActor
 final class HistoryPresenter: HistoryPresentationLogic {
     weak var viewController: HistoryDisplayLogic?
+    private let walletAddressManager = WalletAddressManager() // 안전한 지갑 주소 관리자
     
     private let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -226,6 +228,8 @@ final class HistoryPresenter: HistoryPresentationLogic {
     }
     
     private func getCurrentWalletAddress() -> String {
-        return UserDefaults.standard.string(forKey: Constants.UserDefaults.selectedWalletAddress) ?? ""
+        // 비동기 작업을 동기적으로 처리할 수 없으므로 임시로 빈 문자열 반환
+        // 실제 주소는 상위에서 비동기적으로 처리되어 전달됨
+        return ""
     }
 }

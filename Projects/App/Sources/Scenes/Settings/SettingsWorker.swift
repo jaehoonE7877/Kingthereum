@@ -16,6 +16,7 @@ protocol SettingsWorkerProtocol: Sendable {
 actor SettingsWorker: SettingsWorkerProtocol {
     private let userDefaults: UserDefaults
     private let keychain: KeychainManagerProtocol
+    private let walletAddressManager = WalletAddressManager() // 안전한 지갑 주소 관리자
     
     init(userDefaults: UserDefaults = UserDefaults.standard, keychain: KeychainManagerProtocol = KeychainManager()) {
         self.userDefaults = userDefaults
@@ -123,7 +124,8 @@ actor SettingsWorker: SettingsWorkerProtocol {
     }
     
     func loadWalletProfile(address: String? = nil) async throws -> WalletProfile {
-        let walletAddress = address ?? userDefaults.string(forKey: Constants.UserDefaults.selectedWalletAddress) ?? ""
+        // 안전한 방식으로 지갑 주소 가져오기
+        let walletAddress = address ?? (try await walletAddressManager.getSelectedWalletAddress()) ?? ""
         
         guard !walletAddress.isEmpty else {
             throw SettingsError.walletAddressNotFound

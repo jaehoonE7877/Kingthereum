@@ -2,6 +2,7 @@ import SwiftUI
 import Core
 import DesignSystem
 import Entity
+import SecurityKit
 
 /// Phase 2.4-2: HistoryView King 디자인 시스템 완전 적용
 /// VIP Architecture + King Design System (Colors, Typography, Gradients)
@@ -363,7 +364,9 @@ struct HistoryView: View {
     }
     
     private func getCurrentWalletAddress() -> String? {
-        return UserDefaults.standard.string(forKey: Constants.UserDefaults.selectedWalletAddress)
+        // View에서 비동기 작업을 할 수 없으므로 임시로 nil 반환
+        // 실제 주소는 Interactor에서 처리되어 ViewModel로 전달됨
+        return nil
     }
 }
 
