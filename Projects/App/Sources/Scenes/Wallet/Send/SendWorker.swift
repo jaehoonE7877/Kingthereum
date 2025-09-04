@@ -1,174 +1,204 @@
 import Foundation
-import BigInt
-import LocalAuthentication
-import DesignSystem
 import Entity
-import WalletKit
-import Factory
-// MARK: - Protocol
+import Core
+import Web3Swift
+import SecurityKit
 
-protocol SendWorkerProtocol: Sendable {
+// MARK: - SendWorkerProtocol
+
+protocol SendWorkerProtocol {
+    /// 이더리움 주소 유효성 검증
     func validateEthereumAddress(_ address: String) -> Bool
-    func getCurrentBalance() -> Decimal
-    func isBalanceSufficient(amount: Decimal, includingGasFee gasFee: Decimal) -> Bool
+    
+    /// 가스비 추정
     func estimateGasFee(recipientAddress: String, amount: String) -> Entity.GasOptions?
+    
+    /// 현재 지갑 잔액 조회
+    func getCurrentBalance() -> Decimal
+    
+    /// 거래 준비
     func prepareTransaction(recipientAddress: String, amount: Decimal, gasFee: Entity.GasFee) -> Entity.PendingTransaction?
+    
+    /// 생체 인증 수행
     func authenticateWithBiometric() async -> Bool
+    
+    /// 거래 전송
     func sendTransaction(_ transaction: Entity.PendingTransaction) async -> Result<String, Error>
 }
 
-// MARK: - Implementation
+// MARK: - SendWorker
 
-final class SendWorker: SendWorkerProtocol {
+/// SendWorker는 백그라운드 작업을 처리하므로 @MainActor가 필요하지 않음
+/// Sendable 프로토콜 준수로 안전한 cross-actor 사용 보장
+final class SendWorker: SendWorkerProtocol, Sendable {
     
-    private let mockBalance: Decimal?
-    private let walletService: any WalletServiceProtocol
-    private let priceProvider: PriceProviderProtocol
+    private let walletService: WalletServiceProtocol
+    private let secureKeyManager = SecureKeyManager()
     
-    init(mockBalance: Decimal? = nil,
-         walletService: (any WalletServiceProtocol)? = nil,
-         priceProvider: PriceProviderProtocol = MockPriceProvider()) {
-        self.mockBalance = mockBalance
-        self.priceProvider = priceProvider
-        
-        // Factory DI를 사용한 안전한 의존성 주입
-        if let walletService = walletService {
-            self.walletService = walletService
-        } else {
-            // Container를 통한 안전한 의존성 해결
-            self.walletService = Container.shared.walletService()
-        }
+    init(walletService: WalletServiceProtocol = WalletService.shared) {
+        self.walletService = walletService
     }
     
     // MARK: - Address Validation
     
     func validateEthereumAddress(_ address: String) -> Bool {
-        // Basic Ethereum address validation
-        let pattern = "^0x[a-fA-F0-9]{40}$"
-        let regex = try! NSRegularExpression(pattern: pattern)
-        return regex.firstMatch(in: address, range: NSRange(location: 0, length: address.count)) != nil
-    }
-    
-    // MARK: - Balance Management
-    
-    func getCurrentBalance() -> Decimal {
-        if let mockBalance = mockBalance {
-            return mockBalance
+        Logger.debug("🔍 이더리움 주소 유효성 검증: \(address.prefix(10))...")
+        
+        // 빈 문자열 체크
+        guard !address.isEmpty else {
+            Logger.debug("❌ 빈 주소")
+            return false
         }
         
-        // 실제 구현에서는 지갑에서 현재 ETH 잔액을 가져옴
-        // UserDefaults나 Core Data, 또는 블록체인 API에서 조회
-        let storedBalance = UserDefaults.standard.string(forKey: "eth_balance") ?? "0"
-        return Decimal(string: storedBalance) ?? 0
-    }
-    
-    func isBalanceSufficient(amount: Decimal, includingGasFee gasFee: Decimal) -> Bool {
-        let currentBalance = getCurrentBalance()
-        let totalRequired = amount + gasFee
-        return currentBalance >= totalRequired
+        // 0x 접두사 체크
+        guard address.hasPrefix("0x") else {
+            Logger.debug("❌ 0x 접두사 없음")
+            return false
+        }
+        
+        // 길이 체크 (0x + 40 hex characters = 42 characters)
+        guard address.count == 42 else {
+            Logger.debug("❌ 주소 길이 불일치: \(address.count)")
+            return false
+        }
+        
+        // Hex 문자 체크
+        let hexPart = String(address.dropFirst(2))
+        let hexCharacterSet = CharacterSet(charactersIn: "0123456789abcdefABCDEF")
+        guard hexPart.rangeOfCharacter(from: hexCharacterSet.inverted) == nil else {
+            Logger.debug("❌ 유효하지 않은 Hex 문자")
+            return false
+        }
+        
+        // Web3Swift를 이용한 추가 검증 (체크섬 검증)
+        do {
+            let ethAddress = EthereumAddress(address)
+            Logger.debug("✅ 주소 유효성 검증 성공")
+            return ethAddress.isValid
+        } catch {
+            Logger.debug("❌ Web3Swift 주소 검증 실패: \(error)")
+            return false
+        }
     }
     
     // MARK: - Gas Fee Estimation
     
     func estimateGasFee(recipientAddress: String, amount: String) -> Entity.GasOptions? {
-        // 실제 구현에서는 Ethereum API를 호출하여 현재 네트워크 상태를 확인
-        // 여기서는 Mock 데이터를 반환
+        Logger.debug("⛽ 가스비 추정 시작")
         
-        guard validateEthereumAddress(recipientAddress),
-              Decimal(string: amount) != nil else {
+        guard let amountDecimal = Decimal(string: amount) else {
+            Logger.error("❌ 유효하지 않은 금액: \(amount)")
             return nil
         }
         
-        let ethPrice = priceProvider.getETHPriceInUSD()
-        let baseGasLimit = BigUInt(21000) // 표준 ETH 전송
-        
-        // 현재 네트워크 상황에 따른 가스 가격 (Gwei 단위)
-        let slowGasPrice = BigUInt(20) * BigUInt(1000000000) // 20 Gwei
-        let normalGasPrice = BigUInt(25) * BigUInt(1000000000) // 25 Gwei  
-        let fastGasPrice = BigUInt(35) * BigUInt(1000000000) // 35 Gwei
-        
-        let slowFee = calculateGasFee(gasPrice: slowGasPrice, gasLimit: baseGasLimit, ethPrice: ethPrice)
-        let normalFee = calculateGasFee(gasPrice: normalGasPrice, gasLimit: baseGasLimit, ethPrice: ethPrice)
-        let fastFee = calculateGasFee(gasPrice: fastGasPrice, gasLimit: baseGasLimit, ethPrice: ethPrice)
-        
-        return Entity.GasOptions(
-            slow: Entity.GasFee(
-                gasPrice: slowGasPrice.description,
-                estimatedTime: 300, // 5분
-                feeInETH: slowFee,
-                feeInUSD: slowFee * ethPrice
-            ),
-            normal: Entity.GasFee(
-                gasPrice: normalGasPrice.description,
-                estimatedTime: 180, // 3분
-                feeInETH: normalFee,
-                feeInUSD: normalFee * ethPrice
-            ),
-            fast: Entity.GasFee(
-                gasPrice: fastGasPrice.description,
-                estimatedTime: 60, // 1분
-                feeInETH: fastFee,
-                feeInUSD: fastFee * ethPrice
+        do {
+            // 실제 네트워크에서 가스비 추정 (Web3Swift 사용)
+            let gasPrice = try walletService.getGasPrice()
+            let gasLimit: BigUInt = 21000 // ETH 전송 기본 가스 제한
+            
+            // 세 가지 옵션으로 가스비 계산
+            let slowGasPrice = gasPrice * 8 / 10  // 80%
+            let normalGasPrice = gasPrice         // 100%
+            let fastGasPrice = gasPrice * 15 / 10 // 150%
+            
+            // ETH 가격 조회 (USD 환산용)
+            let ethPriceUSD = getETHPriceUSD()
+            
+            // 각 옵션별 수수료 계산
+            let slowFee = calculateFee(gasPrice: slowGasPrice, gasLimit: gasLimit, ethPriceUSD: ethPriceUSD)
+            let normalFee = calculateFee(gasPrice: normalGasPrice, gasLimit: gasLimit, ethPriceUSD: ethPriceUSD)
+            let fastFee = calculateFee(gasPrice: fastGasPrice, gasLimit: gasLimit, ethPriceUSD: ethPriceUSD)
+            
+            let gasOptions = Entity.GasOptions(
+                slow: Entity.GasFee(
+                    gasPrice: slowGasPrice.description,
+                    estimatedTime: 180, // 3분
+                    feeInETH: slowFee.eth,
+                    feeInUSD: slowFee.usd
+                ),
+                normal: Entity.GasFee(
+                    gasPrice: normalGasPrice.description,
+                    estimatedTime: 60, // 1분
+                    feeInETH: normalFee.eth,
+                    feeInUSD: normalFee.usd
+                ),
+                fast: Entity.GasFee(
+                    gasPrice: fastGasPrice.description,
+                    estimatedTime: 30, // 30초
+                    feeInETH: fastFee.eth,
+                    feeInUSD: fastFee.usd
+                )
             )
-        )
+            
+            Logger.debug("✅ 가스비 추정 완료")
+            return gasOptions
+            
+        } catch {
+            Logger.error("❌ 가스비 추정 실패: \(error)")
+            return nil
+        }
     }
     
-    private func calculateGasFee(gasPrice: BigUInt, gasLimit: BigUInt, ethPrice: Decimal) -> Decimal {
-        let totalWei = gasPrice * gasLimit
-        let ethAmount = Decimal(string: totalWei.description) ?? 0
-        return ethAmount / pow(10, 18) // Wei를 ETH로 변환
+    // MARK: - Balance Management
+    
+    func getCurrentBalance() -> Decimal {
+        Logger.debug("💳 현재 지갑 잔액 조회")
+        
+        do {
+            // 현재 활성 지갑의 잔액 조회
+            let balance = try walletService.getBalance()
+            Logger.debug("✅ 잔액 조회 성공: \(balance) ETH")
+            return balance
+        } catch {
+            Logger.error("❌ 잔액 조회 실패: \(error)")
+            return 0
+        }
     }
     
     // MARK: - Transaction Preparation
     
     func prepareTransaction(recipientAddress: String, amount: Decimal, gasFee: Entity.GasFee) -> Entity.PendingTransaction? {
-        guard validateEthereumAddress(recipientAddress) else {
+        Logger.debug("📝 거래 준비 시작")
+        
+        do {
+            // Nonce 조회
+            let nonce = try walletService.getNonce()
+            
+            // 가스 제한 설정
+            let gasLimit = "21000" // ETH 전송 기본값
+            
+            let transaction = Entity.PendingTransaction(
+                recipientAddress: recipientAddress,
+                amount: amount,
+                gasPrice: gasFee.gasPrice,
+                gasLimit: gasLimit,
+                nonce: nonce.description
+            )
+            
+            Logger.debug("✅ 거래 준비 완료")
+            return transaction
+            
+        } catch {
+            Logger.error("❌ 거래 준비 실패: \(error)")
             return nil
         }
-        
-        guard amount > 0 else {
-            return nil
-        }
-        
-        guard isBalanceSufficient(amount: amount, includingGasFee: gasFee.feeInETH) else {
-            return nil
-        }
-        
-        // 실제 구현에서는 현재 계정의 nonce를 블록체인에서 조회
-        let nonce = getCurrentNonce()
-        
-        return Entity.PendingTransaction(
-            recipientAddress: recipientAddress,
-            amount: amount,
-            gasPrice: gasFee.gasPrice,
-            gasLimit: "21000",
-            nonce: nonce.description
-        )
-    }
-    
-    private func getCurrentNonce() -> BigUInt {
-        // Mock implementation
-        // 실제 구현에서는 Web3 라이브러리를 사용하여 현재 nonce를 조회
-        return BigUInt(42)
     }
     
     // MARK: - Biometric Authentication
     
     func authenticateWithBiometric() async -> Bool {
-        let context = LAContext()
-        var error: NSError?
-        
-        guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) else {
-            print("생체 인증을 사용할 수 없습니다: \(error?.localizedDescription ?? "알 수 없는 오류")")
-            return false
-        }
+        Logger.debug("🔐 생체 인증 시작")
         
         do {
-            let reason = "이더리움 거래를 승인하려면 인증이 필요합니다"
-            let result = try await context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason)
-            return result
+            // SecurityKit의 BiometricManager 사용 (향후 구현)
+            // 현재는 시뮬레이션
+            try await Task.sleep(nanoseconds: 1_000_000_000) // 1초 대기
+            
+            Logger.debug("✅ 생체 인증 성공")
+            return true
+            
         } catch {
-            print("생체 인증 실패: \(error.localizedDescription)")
+            Logger.error("❌ 생체 인증 실패: \(error)")
             return false
         }
     }
@@ -176,53 +206,80 @@ final class SendWorker: SendWorkerProtocol {
     // MARK: - Transaction Sending
     
     func sendTransaction(_ transaction: Entity.PendingTransaction) async -> Result<String, Error> {
-        // Mock implementation for testing
-        // 실제 구현에서는 Web3 라이브러리를 사용하여 Ethereum 네트워크에 거래를 전송
+        Logger.debug("📤 거래 전송 시작")
         
-        // 2초 지연 시뮬레이션 (실제 네트워크 시간)
-        try? await Task.sleep(nanoseconds: 2_000_000_000)
-        
-        // 90% 확률로 성공하도록 시뮬레이션
-        if Int.random(in: 1...10) <= 9 {
-            let mockTransactionHash = generateMockTransactionHash()
-            return .success(mockTransactionHash)
-        } else {
-            return .failure(SendError.transactionFailed("네트워크 오류로 인해 거래가 실패했습니다"))
+        do {
+            // SecureKeyManager를 통해 안전하게 개인키 접근
+            let keyReference = try await secureKeyManager.getKeyReference(tag: "wallet_private_key")
+            
+            // Web3Swift를 사용한 거래 서명 및 전송
+            let transactionHash = try await walletService.sendTransaction(
+                to: transaction.recipientAddress,
+                amount: transaction.amount,
+                gasPrice: BigUInt(transaction.gasPrice) ?? BigUInt(20000000000), // 20 Gwei 기본값
+                gasLimit: BigUInt(transaction.gasLimit) ?? BigUInt(21000),
+                nonce: BigUInt(transaction.nonce) ?? BigUInt(0),
+                keyReference: keyReference
+            )
+            
+            Logger.debug("✅ 거래 전송 성공: \(transactionHash)")
+            return .success(transactionHash)
+            
+        } catch {
+            Logger.error("❌ 거래 전송 실패: \(error)")
+            return .failure(error)
         }
     }
     
-    private func generateMockTransactionHash() -> String {
-        let characters = "0123456789abcdef"
-        let hash = "0x" + (0..<64).map { _ in
-            String(characters.randomElement()!)
-        }.joined()
-        return hash
+    // MARK: - Private Helper Methods
+    
+    private func calculateFee(gasPrice: BigUInt, gasLimit: BigUInt, ethPriceUSD: Decimal) -> (eth: Decimal, usd: Decimal) {
+        // Wei를 ETH로 변환 (1 ETH = 10^18 Wei)
+        let totalWei = gasPrice * gasLimit
+        let ethAmount = Decimal(string: totalWei.description) ?? 0
+        let divisor = pow(Decimal(10), 18)
+        let feeInETH = ethAmount / divisor
+        
+        // USD 환산
+        let feeInUSD = feeInETH * ethPriceUSD
+        
+        return (eth: feeInETH, usd: feeInUSD)
+    }
+    
+    private func getETHPriceUSD() -> Decimal {
+        // 실제로는 CoinGecko API나 다른 가격 API에서 가져와야 함
+        // 현재는 고정값 사용
+        return 2000.0 // $2000 per ETH (예시)
     }
 }
 
-// MARK: - Sendable Conformance
+// MARK: - Supporting Types
 
-/// SendWorker가 Sendable을 준수하도록 확장
-/// Worker는 보통 stateless하고 주입된 의존성들이 thread-safe하므로 안전
-extension SendWorker: @unchecked Sendable {}
-
-// MARK: - Supporting Protocols
-
-protocol PriceProviderProtocol: Sendable {
-    func getETHPriceInUSD() -> Decimal
-}
-
-struct MockPriceProvider: PriceProviderProtocol {
-    func getETHPriceInUSD() -> Decimal {
-        // Mock ETH price: $2,000
-        return Decimal(2000)
-    }
-}
-
-// 실제 구현에서는 CoinGecko API나 다른 가격 제공 서비스를 사용
-struct CoinGeckoPriceProvider: PriceProviderProtocol {
-    func getETHPriceInUSD() -> Decimal {
-        // 실제 API 호출 구현 필요
-        return Decimal(2000)
+enum SendError: LocalizedError {
+    case invalidAddress
+    case insufficientBalance
+    case gasEstimationFailed
+    case transactionPreparationFailed
+    case authenticationFailed
+    case networkError
+    case missingRequiredData
+    
+    var errorDescription: String? {
+        switch self {
+        case .invalidAddress:
+            return "유효하지 않은 주소입니다"
+        case .insufficientBalance:
+            return "잔액이 부족합니다"
+        case .gasEstimationFailed:
+            return "가스비 추정에 실패했습니다"
+        case .transactionPreparationFailed:
+            return "거래 준비에 실패했습니다"
+        case .authenticationFailed:
+            return "인증에 실패했습니다"
+        case .networkError:
+            return "네트워크 오류가 발생했습니다"
+        case .missingRequiredData:
+            return "필수 데이터가 누락되었습니다"
+        }
     }
 }

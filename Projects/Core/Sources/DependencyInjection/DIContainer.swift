@@ -2,9 +2,8 @@ import Foundation
 
 /// 의존성 주입 컨테이너
 /// Clean Swift VIP 패턴을 위한 중앙집중식 의존성 관리 시스템
-/// Thread-safe하고 Swift Concurrency를 지원하는 DI Container
-@MainActor
-public final class DIContainer {
+/// Swift 6.0 Strict Concurrency를 지원하는 Actor 기반 DI Container
+public actor DIContainer {
     
     // MARK: - Singleton
     
@@ -20,12 +19,14 @@ public final class DIContainer {
     /// 싱글톤 서비스들을 저장하는 딕셔너리  
     private var singletons: [String: Any] = [:]
     
-    /// 스레드 안전성을 위한 큐
-    private let queue = DispatchQueue(label: "com.kingthereum.di.container", attributes: .concurrent)
-    
     private init() {
-        Logger.debug("🏭 DIContainer 초기화")
-        registerCoreServices()
+        // Actor 내부에서는 직접 비동기 작업 수행 가능
+        Task {
+            await MainActor.run {
+                Logger.debug("🏭 DIContainer 초기화")
+            }
+            await registerCoreServices()
+        }
     }
     
     // MARK: - Service Registration
@@ -34,12 +35,14 @@ public final class DIContainer {
     /// - Parameters:
     ///   - serviceType: 등록할 서비스의 프로토콜 타입
     ///   - factory: 서비스 인스턴스를 생성하는 팩토리 클로저
-    public func register<T>(_ serviceType: T.Type, factory: @escaping @MainActor () -> T) {
+    public func register<T>(_ serviceType: T.Type, factory: @escaping @Sendable () async -> T) {
         let key = String(reflecting: serviceType)
-        Logger.debug("📝 서비스 등록 (Transient): \(key)")
+        // Actor 내부에서 직접 동기 작업 수행
+        services[key] = factory
         
-        queue.async(flags: .barrier) {
-            self.services[key] = factory
+        // 로깅은 필요시에만 MainActor로
+        Task { @MainActor in
+            Logger.debug("📝 서비스 등록 (Transient): \(key)")
         }
     }
     
@@ -47,12 +50,13 @@ public final class DIContainer {
     /// - Parameters:
     ///   - serviceType: 등록할 서비스의 프로토콜 타입
     ///   - factory: 서비스 인스턴스를 생성하는 팩토리 클로저
-    public func registerSingleton<T>(_ serviceType: T.Type, factory: @escaping @MainActor () -> T) {
+    public func registerSingleton<T>(_ serviceType: T.Type, factory: @escaping @Sendable () async -> T) {
         let key = String(reflecting: serviceType)
-        Logger.debug("📝 서비스 등록 (Singleton): \(key)")
+        services[key] = SingletonFactory(factory: factory)
         
-        queue.async(flags: .barrier) {
-            self.services[key] = factory
+        // 로깅은 필요시에만 MainActor로
+        Task { @MainActor in
+            Logger.debug("📝 서비스 등록 (Singleton): \(key)")
         }
     }
     
@@ -60,12 +64,13 @@ public final class DIContainer {
     /// - Parameters:
     ///   - serviceType: 등록할 서비스의 프로토콜 타입
     ///   - instance: 등록할 서비스 인스턴스
-    public func registerSingleton<T>(_ serviceType: T.Type, instance: T) {
+    public func registerSingleton<T>(_ serviceType: T.Type, instance: T) where T: Sendable {
         let key = String(reflecting: serviceType)
-        Logger.debug("📝 인스턴스 등록 (Singleton): \(key)")
+        singletons[key] = instance
         
-        queue.async(flags: .barrier) {
-            self.singletons[key] = instance
+        // 로깅은 필요시에만 MainActor로
+        Task { @MainActor in
+            Logger.debug("📝 인스턴스 등록 (Singleton): \(key)")
         }
     }
     
@@ -75,50 +80,62 @@ public final class DIContainer {
     /// - Parameter serviceType: 가져올 서비스의 프로토콜 타입
     /// - Returns: 요청된 서비스 인스턴스
     /// - Throws: DIError.serviceNotRegistered 서비스가 등록되지 않은 경우
-    public func resolve<T>(_ serviceType: T.Type) throws -> T {
+    public func resolve<T>(_ serviceType: T.Type) async throws -> T {
         let key = String(reflecting: serviceType)
         
         // 1. 먼저 싱글톤 캐시에서 확인
-        if let singleton = queue.sync(execute: { singletons[key] }) as? T {
-            Logger.debug("🔍 싱글톤 서비스 반환: \(key)")
+        if let singleton = singletons[key] as? T {
+            await MainActor.run {
+                Logger.debug("🔍 싱글톤 서비스 반환: \(key)")
+            }
             return singleton
         }
         
         // 2. 팩토리에서 새 인스턴스 생성
-        guard let factory = queue.sync(execute: { services[key] }) else {
-            Logger.error("❌ 등록되지 않은 서비스: \(key)")
+        guard let factory = services[key] else {
+            await MainActor.run {
+                Logger.error("❌ 등록되지 않은 서비스: \(key)")
+            }
             throw DIError.serviceNotRegistered(String(describing: serviceType))
         }
         
-        if let transientFactory = factory as? (() -> T) {
-            Logger.debug("🔍 Transient 서비스 생성: \(key)")
-            return transientFactory()
+        // Transient factory
+        if let transientFactory = factory as? (@Sendable () async -> T) {
+            await MainActor.run {
+                Logger.debug("🔍 Transient 서비스 생성: \(key)")
+            }
+            return await transientFactory()
         }
         
-        if let singletonFactory = factory as? (() -> T) {
-            Logger.debug("🔍 Singleton 서비스 생성 및 캐시: \(key)")
-            let instance = singletonFactory()
+        // Singleton factory
+        if let singletonFactory = factory as? SingletonFactory<T> {
+            await MainActor.run {
+                Logger.debug("🔍 Singleton 서비스 생성 및 캐시: \(key)")
+            }
+            let instance = await singletonFactory.createInstance()
             
             // 싱글톤 캐시에 저장
-            queue.async(flags: .barrier) {
-                self.singletons[key] = instance
-            }
+            singletons[key] = instance
             
             return instance
         }
         
-        Logger.error("❌ 잘못된 팩토리 타입: \(key)")
+        await MainActor.run {
+            Logger.error("❌ 잘못된 팩토리 타입: \(key)")
+        }
         throw DIError.invalidFactory(String(describing: serviceType))
     }
     
     /// Optional 서비스 해결 (실패 시 nil 반환)
     /// - Parameter serviceType: 가져올 서비스의 프로토콜 타입
     /// - Returns: 요청된 서비스 인스턴스 또는 nil
-    public func resolveOptional<T>(_ serviceType: T.Type) -> T? {
+    public func resolveOptional<T>(_ serviceType: T.Type) async -> T? {
         do {
-            return try resolve(serviceType)
+            return try await resolve(serviceType)
         } catch {
-            Logger.debug("⚠️ Optional 서비스 해결 실패: \(String(describing: serviceType))")
+            await MainActor.run {
+                Logger.debug("⚠️ Optional 서비스 해결 실패: \(String(describing: serviceType))")
+            }
             return nil
         }
     }
@@ -129,51 +146,72 @@ public final class DIContainer {
     /// - Parameter serviceType: 등록 해제할 서비스 타입
     public func unregister<T>(_ serviceType: T.Type) {
         let key = String(reflecting: serviceType)
-        Logger.debug("🗑️ 서비스 등록 해제: \(key)")
-        
-        queue.async(flags: .barrier) {
-            self.services.removeValue(forKey: key)
-            self.singletons.removeValue(forKey: key)
+        Task { @MainActor in
+            Logger.debug("🗑️ 서비스 등록 해제: \(key)")
         }
+        
+        services.removeValue(forKey: key)
+        singletons.removeValue(forKey: key)
     }
     
     /// 모든 서비스 등록 해제 (테스트용)
-    public func reset() {
-        Logger.debug("🧹 DI Container 초기화")
-        
-        queue.async(flags: .barrier) {
-            self.services.removeAll()
-            self.singletons.removeAll()
+    public func reset() async {
+        await MainActor.run {
+            Logger.debug("🧹 DI Container 초기화")
         }
         
+        services.removeAll()
+        singletons.removeAll()
+        
         // 핵심 서비스 재등록
-        registerCoreServices()
+        await registerCoreServices()
     }
     
     /// 등록된 서비스 목록 확인 (디버깅용)
     public func listRegisteredServices() -> [String] {
-        return queue.sync {
-            Array(services.keys)
-        }
+        return Array(services.keys)
     }
     
     // MARK: - Core Services Registration
     
     /// 핵심 서비스들을 자동으로 등록
-    private func registerCoreServices() {
-        Logger.debug("🔧 핵심 서비스 등록 시작")
+    private func registerCoreServices() async {
+        await MainActor.run {
+            Logger.debug("🔧 핵심 서비스 등록 시작")
+        }
         
         // Configuration Service
-        registerSingleton(ConfigurationServiceProtocol.self) {
-            ConfigurationService()
+        await registerSingleton(ConfigurationServiceProtocol.self) {
+            return ConfigurationService()
         }
         
         // Display Mode Service  
-        registerSingleton(DisplayModeServiceProtocol.self) {
-            DisplayModeService()
+        await registerSingleton(DisplayModeServiceProtocol.self) {
+            await MainActor.run {
+                return DisplayModeService()
+            }
         }
         
-        Logger.debug("✅ 핵심 서비스 등록 완료")
+        await MainActor.run {
+            Logger.debug("✅ 핵심 서비스 등록 완료")
+        }
+    }
+}
+
+// MARK: - Supporting Types
+
+/// Singleton factory wrapper for lazy instantiation
+/// Actor 내부에서만 사용되므로 별도의 동기화 메커니즘 불필요
+private struct SingletonFactory<T>: Sendable where T: Sendable {
+    private let factory: @Sendable () async -> T
+    
+    init(factory: @escaping @Sendable () async -> T) {
+        self.factory = factory
+    }
+    
+    func createInstance() async -> T {
+        // Actor가 이미 동기화를 보장하므로 추가 lock 불필요
+        return await factory()
     }
 }
 
@@ -222,45 +260,54 @@ public extension DIContainer {
     /// - Parameters:
     ///   - interactorType: Interactor 프로토콜 타입
     ///   - factory: Interactor 인스턴스를 생성하는 팩토리 클로저
-    func registerInteractor<T>(_ interactorType: T.Type, factory: @escaping @MainActor () -> T) {
-        Logger.debug("🎭 Interactor 등록: \(String(describing: interactorType))")
-        register(interactorType, factory: factory)
+    func registerInteractor<T>(_ interactorType: T.Type, factory: @escaping @Sendable () async -> T) async {
+        await MainActor.run {
+            Logger.debug("🎭 Interactor 등록: \(String(describing: interactorType))")
+        }
+        await register(interactorType, factory: factory)
     }
     
     /// VIP 패턴의 Presenter 등록을 위한 헬퍼  
     /// - Parameters:
     ///   - presenterType: Presenter 프로토콜 타입
     ///   - factory: Presenter 인스턴스를 생성하는 팩토리 클로저
-    func registerPresenter<T>(_ presenterType: T.Type, factory: @escaping @MainActor () -> T) {
-        Logger.debug("🎨 Presenter 등록: \(String(describing: presenterType))")
-        register(presenterType, factory: factory)
+    func registerPresenter<T>(_ presenterType: T.Type, factory: @escaping @Sendable () async -> T) async {
+        await MainActor.run {
+            Logger.debug("🎨 Presenter 등록: \(String(describing: presenterType))")
+        }
+        await register(presenterType, factory: factory)
     }
     
     /// VIP 패턴의 Worker 등록을 위한 헬퍼
     /// - Parameters:
     ///   - workerType: Worker 프로토콜 타입
     ///   - factory: Worker 인스턴스를 생성하는 팩토리 클로저
-    func registerWorker<T>(_ workerType: T.Type, factory: @escaping @MainActor () -> T) {
-        Logger.debug("⚙️ Worker 등록: \(String(describing: workerType))")
-        register(workerType, factory: factory)
+    func registerWorker<T>(_ workerType: T.Type, factory: @escaping @Sendable () async -> T) async {
+        await MainActor.run {
+            Logger.debug("⚙️ Worker 등록: \(String(describing: workerType))")
+        }
+        await register(workerType, factory: factory)
     }
     
     /// VIP 패턴의 Router 등록을 위한 헬퍼
     /// - Parameters:
     ///   - routerType: Router 프로토콜 타입
     ///   - factory: Router 인스턴스를 생성하는 팩토리 클로저
-    func registerRouter<T>(_ routerType: T.Type, factory: @escaping @MainActor () -> T) {
-        Logger.debug("🧭 Router 등록: \(String(describing: routerType))")
-        registerSingleton(routerType, factory: factory)
+    func registerRouter<T>(_ routerType: T.Type, factory: @escaping @Sendable () async -> T) async {
+        await MainActor.run {
+            Logger.debug("🧭 Router 등록: \(String(describing: routerType))")
+        }
+        await registerSingleton(routerType, factory: factory)
     }
 }
 
 // MARK: - PropertyWrapper for Dependency Injection
 
-/// 속성 래퍼를 통한 편리한 의존성 주입
-/// 사용법: @Injected var service: ServiceProtocol
+/// 비동기 의존성 주입을 위한 속성 래퍼
+/// Swift 6.0 Strict Concurrency 호환
+/// 사용법: @AsyncInjected var service: ServiceProtocol
 @propertyWrapper
-public struct Injected<T> {
+public struct AsyncInjected<T> {
     private var value: T?
     
     public init() {
@@ -268,27 +315,29 @@ public struct Injected<T> {
     }
     
     public var wrappedValue: T {
-        mutating get {
+        get async {
             if let existingValue = value {
                 return existingValue
             }
             
             do {
-                let newValue = try DIContainer.shared.resolve(T.self)
+                let newValue = try await DIContainer.shared.resolve(T.self)
                 value = newValue
                 return newValue
             } catch {
-                Logger.error("❌ 의존성 주입 실패: \(String(describing: T.self)) - \(error)")
+                await MainActor.run {
+                    Logger.error("❌ 의존성 주입 실패: \(String(describing: T.self)) - \(error)")
+                }
                 fatalError("의존성 주입 실패: \(String(describing: T.self))")
             }
         }
     }
 }
 
-/// Optional 의존성 주입을 위한 속성 래퍼
-/// 사용법: @OptionalInjected var service: ServiceProtocol?
+/// Optional 비동기 의존성 주입을 위한 속성 래퍼
+/// 사용법: @AsyncOptionalInjected var service: ServiceProtocol?
 @propertyWrapper  
-public struct OptionalInjected<T> {
+public struct AsyncOptionalInjected<T> {
     private var value: T??
     
     public init() {
@@ -296,9 +345,9 @@ public struct OptionalInjected<T> {
     }
     
     public var wrappedValue: T? {
-        mutating get {
+        get async {
             if value == nil {
-                value = DIContainer.shared.resolveOptional(T.self)
+                value = await DIContainer.shared.resolveOptional(T.self)
             }
             
             // Optional의 optional을 안전하게 해제

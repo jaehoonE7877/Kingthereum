@@ -26,7 +26,8 @@ protocol WalletAddressProviderProtocol {
 protocol ReceiveWorkerProtocol: QRCodeGeneratorProtocol, WalletAddressProviderProtocol {}
 
 // MARK: - SOLID 원칙 적용된 ReceiveWorker 구현
-final class ReceiveWorker: ReceiveWorkerProtocol {
+/// Sendable 프로토콜 준수로 안전한 cross-actor 사용 보장
+final class ReceiveWorker: ReceiveWorkerProtocol, Sendable {
     
     private let walletService: WalletServiceProtocol
     private let walletAddressManager = WalletAddressManager() // 안전한 지갑 주소 관리자
