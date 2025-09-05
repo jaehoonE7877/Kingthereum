@@ -2,12 +2,11 @@ import SwiftUI
 import Core
 import DesignSystem
 import UIKit
-import Factory
 
 @main
 struct KingthereumApp: App {
     @StateObject private var appCoordinator = AppCoordinator()
-    @StateObject private var displayModeService = Container.shared.displayModeService()
+    @State private var displayModeService: DisplayModeService?
     
     init() {
         configureNavigationBar()
@@ -17,11 +16,18 @@ struct KingthereumApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(appCoordinator)
-                .environmentObject(displayModeService) // 환경 객체로도 전달
-                .preferredColorScheme(displayModeService.effectiveColorScheme)
-                .animation(.easeInOut(duration: 0.3), value: displayModeService.effectiveColorScheme)
+                .task {
+                    // DisplayModeService 직접 생성으로 단순화
+                    if displayModeService == nil {
+                        displayModeService = DisplayModeService()
+                    }
+                }
+                .environmentObject(displayModeService ?? DisplayModeService())
+                .preferredColorScheme(displayModeService?.effectiveColorScheme ?? .light)
+                .animation(.easeInOut(duration: 0.3), value: displayModeService?.effectiveColorScheme)
         }
     }
+    
     
     private func configureNavigationBar() {
         // 네비게이션 바 투명 스타일 설정
@@ -52,31 +58,29 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             // 배경 그라데이션
-            LinearGradient.enhancedBackgroundGradient
+            KingGradients.minimalistBackground
                 .ignoresSafeArea()
             
             // 메인 콘텐츠
-            Group {
-                switch appCoordinator.currentFlow {
-                case .splash:
-                    SplashView()
-                        .transition(.identity)
-                case .authentication:
-                    AuthenticationView()
-                        .transition(.asymmetric(
-                            insertion: .opacity.combined(with: .scale(scale: 0.95)).combined(with: .move(edge: .bottom)),
-                            removal: .opacity.combined(with: .scale(scale: 1.05)).combined(with: .move(edge: .top))
-                        ))
-                case .main:
-                    MainTabView()
-                        .transition(.asymmetric(
-                            insertion: .opacity.combined(with: .scale(scale: 0.95)).combined(with: .move(edge: .bottom)),
-                            removal: .opacity.combined(with: .scale(scale: 1.05)).combined(with: .move(edge: .top))
-                        ))
-                }
+            switch appCoordinator.currentFlow {
+            case .splash:
+                SplashView()
+                    .transition(.identity)
+            case .authentication:
+                SimpleViewFactory.shared.createAuthenticationView()
+                    .transition(.asymmetric(
+                        insertion: .opacity.combined(with: .scale(scale: 0.95)).combined(with: .move(edge: .bottom)),
+                        removal: .opacity.combined(with: .scale(scale: 1.05)).combined(with: .move(edge: .top))
+                    ))
+            case .main:
+                MainTabView()
+                    .transition(.asymmetric(
+                        insertion: .opacity.combined(with: .scale(scale: 0.95)).combined(with: .move(edge: .bottom)),
+                        removal: .opacity.combined(with: .scale(scale: 1.05)).combined(with: .move(edge: .top))
+                    ))
             }
-            .animation(.easeInOut(duration: 1.2), value: appCoordinator.currentFlow)
         }
+        .animation(.easeInOut(duration: 1.2), value: appCoordinator.currentFlow)
         .onAppear {
             appCoordinator.start()
         }

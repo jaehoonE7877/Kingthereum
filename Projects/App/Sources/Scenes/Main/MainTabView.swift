@@ -38,13 +38,13 @@ struct MainTabView: View {
                             Text(tab.title)
                         } icon: {
                             Image(systemName: tab.icon)
-                                .foregroundStyle(selectedTab == tab ? Color.kingBlue : Color.secondary)
+                                .foregroundStyle(selectedTab == tab ? KingColors.bitcoin : Color.secondary)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .buttonStyle(PlainButtonStyle())
                     .listRowBackground(
-                        selectedTab == tab ? Color.kingBlue.opacity(0.1) : Color.clear
+                        selectedTab == tab ? KingColors.bitcoin.opacity(0.1) : Color.clear
                     )
                 }
             }
