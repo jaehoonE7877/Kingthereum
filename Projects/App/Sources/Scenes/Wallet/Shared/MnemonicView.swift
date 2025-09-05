@@ -46,7 +46,7 @@ struct MnemonicView: View {
                 .padding(.horizontal, 20)
                 .padding(.vertical, 32)
             }
-            .background(LinearGradient.enhancedBackgroundGradient.ignoresSafeArea())
+            .background(KingGradients.background.ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
             .navigationTitle(mode == .display ? "지갑 백업" : "지갑 복원")
         }
@@ -89,7 +89,7 @@ struct MnemonicView: View {
                                 Text("이전")
                                     .font(.subheadline)
                             }
-                            .foregroundColor(focusedField == nil || focusedField == 0 ? .secondary : .kingBlue)
+                            .foregroundColor(focusedField == nil || focusedField == 0 ? KingColors.textSecondary : KingColors.accent)
                         }
                         .disabled(focusedField == nil || focusedField == 0)
                         
@@ -102,7 +102,7 @@ struct MnemonicView: View {
                                 Image(systemName: "chevron.right")
                                     .font(.caption)
                             }
-                            .foregroundColor(focusedField == nil || focusedField == 11 ? .secondary : .kingBlue)
+                            .foregroundColor(focusedField == nil || focusedField == 11 ? KingColors.textSecondary : KingColors.accent)
                         }
                         .disabled(focusedField == nil || focusedField == 11)
                         
@@ -117,7 +117,7 @@ struct MnemonicView: View {
                                 Text("완료")
                                     .font(.subheadline)
                             }
-                            .foregroundStyle(LinearGradient.primaryGradient)
+                            .foregroundStyle(KingGradients.primary)
                         }
                     }
                 }
@@ -139,14 +139,14 @@ struct MnemonicView: View {
                     .fill(.ultraThickMaterial)
                     .overlay(
                         Circle()
-                            .stroke(Color.glassBorderPrimary, lineWidth: 2)
+                            .stroke(KingColors.border, lineWidth: 2)
                     )
                     .frame(width: 96, height: 96)
-                    .shadow(color: .glassShadowMedium, radius: 12, x: 0, y: 6)
+                    .shadow(color: KingColors.glassShadow.opacity(0.3), radius: 12, x: 0, y: 6)
                 
                 Image(systemName: mode == .display ? "shield.lefthalf.filled" : "key.fill")
                     .font(.system(size: 40, weight: .medium))
-                    .foregroundStyle(LinearGradient.primaryGradient)
+                    .foregroundStyle(KingGradients.primary)
             }
             
             VStack(spacing: 8) {
@@ -157,10 +157,10 @@ struct MnemonicView: View {
                 HStack(spacing: 6) {
                     Image(systemName: mode == .display ? "doc.text.fill" : "arrow.clockwise")
                         .font(.caption)
-                        .foregroundStyle(LinearGradient.primaryGradient)
+                        .foregroundStyle(KingGradients.primary)
                     Text(mode == .display ? "12개 단어 보관" : "12개 단어 입력")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(KingColors.textSecondary)
                 }
             }
         }
@@ -173,7 +173,7 @@ struct MnemonicView: View {
             HStack {
                 Image(systemName: "list.number")
                     .font(.title3)
-                    .foregroundColor(.kingBlue)
+                    .foregroundColor(KingColors.accent)
                 Text("복구 문구")
                     .font(.headline)
                     .fontWeight(.semibold)
@@ -190,7 +190,7 @@ struct MnemonicView: View {
                             Text("\(index + 1)")
                                 .font(.caption2)
                                 .fontWeight(.semibold)
-                                .foregroundColor(.kingBlue)
+                                .foregroundColor(KingColors.accent)
                         }
                         
                         Text(word)
@@ -213,16 +213,16 @@ struct MnemonicView: View {
             HStack {
                 ZStack {
                     Circle()
-                        .fill(Color.systemOrange.opacity(0.15))
+                        .fill(KingColors.warning.opacity(0.15))
                         .frame(width: 32, height: 32)
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.title3)
-                        .foregroundColor(Color.systemOrange)
+                        .foregroundColor(KingColors.warning)
                 }
                 Text("보안 경고")
                     .font(.headline)
                     .fontWeight(.semibold)
-                    .foregroundColor(Color.systemOrange)
+                    .foregroundColor(KingColors.warning)
                 Spacer()
             }
             
@@ -237,7 +237,7 @@ struct MnemonicView: View {
         .glassCard(level: .prominent, context: .card)
         .overlay(
             RoundedRectangle(cornerRadius: Constants.UI.cornerRadius)
-                .stroke(Color.systemOrange.opacity(0.3), lineWidth: 1)
+                .stroke(KingColors.warning.opacity(0.3), lineWidth: 1)
         )
     }
     
@@ -245,11 +245,11 @@ struct MnemonicView: View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.subheadline)
-                .foregroundColor(Color.systemOrange)
+                .foregroundColor(KingColors.warning)
                 .frame(width: 20)
             Text(text)
                 .font(.footnote)
-                .foregroundColor(.primary)
+                .foregroundColor(KingColors.textPrimary)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
@@ -301,7 +301,7 @@ struct MnemonicView: View {
             HStack {
                 Image(systemName: "key.fill")
                     .font(.title3)
-                    .foregroundColor(.kingBlue)
+                    .foregroundColor(KingColors.accent)
                 
                 Text("복구 문구")
                     .font(.headline)
@@ -331,7 +331,7 @@ struct MnemonicView: View {
                     HStack(spacing: 8) {
                         Text("\(index + 1)")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(KingColors.textSecondary)
                             .frame(width: 20)
                         
                         GlassTextField(
@@ -390,21 +390,21 @@ struct MnemonicView: View {
                 HStack(spacing: 12) {
                     ZStack {
                         Circle()
-                            .fill((filledCount == 12 ? Color.systemGreen : Color.systemOrange).opacity(0.15))
+                            .fill((filledCount == 12 ? KingColors.success : KingColors.warning).opacity(0.15))
                             .frame(width: 28, height: 28)
                         Image(systemName: filledCount == 12 ? "checkmark.circle.fill" : "clock.fill")
                             .font(.subheadline)
-                            .foregroundColor(filledCount == 12 ? Color.systemGreen : Color.systemOrange)
+                            .foregroundColor(filledCount == 12 ? KingColors.success : KingColors.warning)
                     }
                     
                     VStack(alignment: .leading, spacing: 2) {
                         Text("\(filledCount)/12")
                             .font(.subheadline)
                             .fontWeight(.semibold)
-                            .foregroundColor(.primary)
+                            .foregroundColor(KingColors.textPrimary)
                         Text("단어 입력됨")
                             .font(.caption2)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(KingColors.textSecondary)
                     }
                     
                     Spacer()
@@ -414,10 +414,10 @@ struct MnemonicView: View {
                         Text("\(Int((Double(filledCount) / 12.0) * 100))%")
                             .font(.caption2)
                             .fontWeight(.medium)
-                            .foregroundColor(filledCount == 12 ? Color.systemGreen : Color.systemOrange)
+                            .foregroundColor(filledCount == 12 ? KingColors.success : KingColors.warning)
                         ProgressView(value: Double(filledCount), total: 12)
                             .frame(width: 60)
-                            .tint(filledCount == 12 ? Color.systemGreen : Color.systemOrange)
+                            .tint(filledCount == 12 ? KingColors.success : KingColors.warning)
                     }
                 }
                 .padding(12)
@@ -428,15 +428,15 @@ struct MnemonicView: View {
                 HStack(spacing: 8) {
                     ZStack {
                         Circle()
-                            .fill(Color.systemGreen.opacity(0.15))
+                            .fill(KingColors.success.opacity(0.15))
                             .frame(width: 24, height: 24)
                         Image(systemName: "checkmark.circle.fill")
                             .font(.caption)
-                            .foregroundColor(Color.systemGreen)
+                            .foregroundColor(KingColors.success)
                     }
                     Text(pastedMnemonic.contains("12개") ? pastedMnemonic : "자동 입력 완료")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(KingColors.textSecondary)
                     Spacer()
                 }
                 .padding(.horizontal, 12)
