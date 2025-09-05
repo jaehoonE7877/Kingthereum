@@ -5,13 +5,16 @@ public enum Logger {
     
     /// 디버그 로그 출력 (DEBUG 빌드에서만)
     public static func debug(_ message: String) {
-        guard Constants.Debug.isLoggingEnabled else { return }
-        print(message)
+        #if DEBUG
+        print("🔍 \(message)")
+        #endif
     }
     
-    /// 정보 로그 출력 (항상 출력)
+    /// 정보 로그 출력 (DEBUG 빌드에서만)
     public static func info(_ message: String) {
-        print(message)
+        #if DEBUG
+        print("ℹ️ \(message)")
+        #endif
     }
     
     /// 경고 로그 출력 (항상 출력)
