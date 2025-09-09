@@ -4,11 +4,6 @@ import WalletKit
 import SecurityKit
 import Factory
 
-// MARK: - Sendable Protocol Conformance
-
-/// Sendable을 준수하는 타입 별칭들 (Swift 6.0 호환성)
-public typealias SendableDisplayModeService = DisplayModeService
-
 // MARK: - App Module Services Factory Registration
 
 /// App 모듈의 서비스들을 Factory 방식으로 등록
@@ -91,22 +86,3 @@ public actor ContainerManager {
 extension DisplayModeService: @unchecked Sendable {
     // DisplayModeService는 @MainActor로 격리되어 있어 thread-safe함
 }
-
-// MARK: - Test Support
-
-#if DEBUG
-/// 테스트용 Factory 설정
-public extension Container {
-    
-    /// 테스트용 Mock 서비스들 등록
-    static func setupTestContainer() {
-        // Mock 서비스들을 등록하는 로직은 실제 Mock 구현체가 있을 때 추가
-    }
-    
-    /// 테스트 후 정리
-    static func resetTestContainer() {
-        Container.shared.reset()
-    }
-}
-#endif
-
