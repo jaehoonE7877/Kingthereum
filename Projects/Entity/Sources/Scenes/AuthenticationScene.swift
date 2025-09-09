@@ -5,7 +5,7 @@ public enum AuthenticationScene {
     
     // MARK: - Use Cases
     public enum SetupPIN {
-        public struct Request {
+        public struct Request: Sendable {
             public let pin: String
             
             public init(pin: String) {
@@ -23,7 +23,7 @@ public enum AuthenticationScene {
             }
         }
         
-        public struct ViewModel {
+        public struct ViewModel: Sendable {
             public let success: Bool
             public let errorMessage: String?
             
@@ -35,7 +35,7 @@ public enum AuthenticationScene {
     }
     
     public enum AuthenticateWithBiometrics {
-        public struct Request {
+        public struct Request: Sendable {
             public let reason: String
             
             public init(reason: String) {
@@ -55,7 +55,7 @@ public enum AuthenticationScene {
             }
         }
         
-        public struct ViewModel {
+        public struct ViewModel: Sendable {
             public let success: Bool
             public let biometricTypeDescription: String
             public let errorMessage: String?
@@ -69,7 +69,7 @@ public enum AuthenticationScene {
     }
     
     public enum AuthenticateWithPIN {
-        public struct Request {
+        public struct Request: Sendable {
             public let pin: String
             
             public init(pin: String) {
@@ -87,7 +87,7 @@ public enum AuthenticationScene {
             }
         }
         
-        public struct ViewModel {
+        public struct ViewModel: Sendable {
             public let success: Bool
             public let errorMessage: String?
             
@@ -99,7 +99,7 @@ public enum AuthenticationScene {
     }
     
     public enum CheckBiometricAvailability {
-        public struct Request {
+        public struct Request: Sendable {
             public init() {}
         }
         
@@ -113,7 +113,7 @@ public enum AuthenticationScene {
             }
         }
         
-        public struct ViewModel {
+        public struct ViewModel: Sendable {
             public let isAvailable: Bool
             public let biometricTypeDescription: String
             public let biometricIcon: String
@@ -127,7 +127,7 @@ public enum AuthenticationScene {
     }
     
     public enum CreateWallet {
-        public struct Request {
+        public struct Request: Sendable {
             public let walletName: String
             
             public init(walletName: String) {
@@ -149,7 +149,7 @@ public enum AuthenticationScene {
             }
         }
         
-        public struct ViewModel {
+        public struct ViewModel: Sendable {
             public let success: Bool
             public let walletAddress: String?
             public let mnemonic: String?
@@ -165,7 +165,7 @@ public enum AuthenticationScene {
     }
     
     public enum ImportWallet {
-        public struct Request {
+        public struct Request: Sendable {
             public let walletName: String
             public let mnemonic: String
             public let pin: String
@@ -189,7 +189,7 @@ public enum AuthenticationScene {
             }
         }
         
-        public struct ViewModel {
+        public struct ViewModel: Sendable {
             public let success: Bool
             public let walletAddress: String?
             public let errorMessage: String?
@@ -202,6 +202,3 @@ public enum AuthenticationScene {
         }
     }
 }
-
-// MARK: - Import BiometricType from SecurityError.swift
-// BiometricType는 이미 Entity/Sources/Errors/SecurityError.swift에 정의되어 있음

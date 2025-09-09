@@ -21,7 +21,7 @@ public struct GlassButtonStyle: ButtonStyle {
             .fontWeight(styleConfig.fontWeight)
             .foregroundStyle(
                 styleConfig.id == "wallet" ? 
-                AnyShapeStyle(LinearGradient.primaryGradient) : 
+                AnyShapeStyle(KingGradients.primary) : 
                 AnyShapeStyle(styleConfig.foregroundColor)
             )
             .frame(maxWidth: .infinity)
@@ -141,14 +141,14 @@ public struct GlassButtonStyleConfig: Sendable {
     public init(
         id: String = "default",
         backgroundColor: Material = .ultraThickMaterial,
-        foregroundColor: Color = .primary,
-        borderColor: Color = Color.white.opacity(0.3),
+        foregroundColor: Color = KingColors.textPrimary,
+        borderColor: Color = KingColors.glassBorder,
         borderWidth: CGFloat = 1,
         cornerRadius: CGFloat = Constants.UI.cornerRadius,
-        shadowColor: Color = .black.opacity(0.2),
+        shadowColor: Color = KingColors.glassShadow,
         shadowRadius: CGFloat = 8,
         shadowOffset: CGFloat = 4,
-        font: Font = .headline,
+        font: Font = KingTypography.labelLarge,
         fontWeight: Font.Weight = .medium
     ) {
         self.id = id
@@ -168,9 +168,9 @@ public struct GlassButtonStyleConfig: Sendable {
     public static let primary = GlassButtonStyleConfig(
         id: "primary",
         backgroundColor: .ultraThickMaterial,
-        foregroundColor: .systemLabel,
-        borderColor: .glassBorderPrimary,
-        shadowColor: .glassShadowMedium,
+        foregroundColor: KingColors.textPrimary,
+        borderColor: KingColors.glassBorder,
+        shadowColor: KingColors.glassShadow,
         shadowRadius: 10,
         shadowOffset: 5
     )
@@ -179,9 +179,9 @@ public struct GlassButtonStyleConfig: Sendable {
     public static let secondary = GlassButtonStyleConfig(
         id: "secondary",
         backgroundColor: .thinMaterial,
-        foregroundColor: .systemLabel,
-        borderColor: .glassBorderSecondary,
-        shadowColor: .glassShadowLight,
+        foregroundColor: KingColors.textPrimary,
+        borderColor: KingColors.glassBorder,
+        shadowColor: KingColors.glassShadow,
         shadowRadius: 6,
         shadowOffset: 3
     )
@@ -190,12 +190,9 @@ public struct GlassButtonStyleConfig: Sendable {
     public static let destructive = GlassButtonStyleConfig(
         id: "destructive",
         backgroundColor: .thickMaterial,
-        foregroundColor: .systemRed,
-        borderColor: Color.adaptive(
-            light: Color.systemRed.opacity(0.3),
-            dark: Color.systemRed.opacity(0.5)
-        ),
-        shadowColor: .glassShadowMedium,
+        foregroundColor: KingColors.error,
+        borderColor: KingColors.error.opacity(0.3),
+        shadowColor: KingColors.glassShadow,
         shadowRadius: 8,
         shadowOffset: 4
     )
@@ -204,15 +201,12 @@ public struct GlassButtonStyleConfig: Sendable {
     public static let wallet = GlassButtonStyleConfig(
         id: "wallet",
         backgroundColor: .thickMaterial,
-        foregroundColor: .kingBlue, // 그라데이션은 View에서 직접 적용
-        borderColor: Color.adaptive(
-            light: Color.kingBlue.opacity(0.25),
-            dark: Color.kingPurple.opacity(0.3)
-        ),
-        shadowColor: .glassShadowMedium,
+        foregroundColor: KingColors.buttonTrust, // 그라데이션은 View에서 직접 적용
+        borderColor: KingColors.buttonTrust.opacity(0.25),
+        shadowColor: KingColors.glassShadow,
         shadowRadius: 12,
         shadowOffset: 6,
-        font: .headline,
+        font: KingTypography.labelLarge,
         fontWeight: .semibold
     )
     
@@ -220,15 +214,12 @@ public struct GlassButtonStyleConfig: Sendable {
     public static let crypto = GlassButtonStyleConfig(
         id: "crypto",
         backgroundColor: .regularMaterial,
-        foregroundColor: .kingGold,
-        borderColor: Color.adaptive(
-            light: Color.kingGold.opacity(0.25),
-            dark: Color.kingGold.opacity(0.4)
-        ),
-        shadowColor: .glassShadowMedium,
+        foregroundColor: KingColors.buttonPrimary,
+        borderColor: KingColors.buttonPrimary.opacity(0.3),
+        shadowColor: KingColors.glassShadow,
         shadowRadius: 10,
         shadowOffset: 5,
-        font: .subheadline,
+        font: KingTypography.bodyMedium,
         fontWeight: .medium
     )
     
@@ -236,9 +227,9 @@ public struct GlassButtonStyleConfig: Sendable {
     public static let icon = GlassButtonStyleConfig(
         id: "icon",
         backgroundColor: .thinMaterial,
-        foregroundColor: .systemLabel,
-        borderColor: .glassBorderSecondary,
-        shadowColor: .glassShadowLight,
+        foregroundColor: KingColors.textPrimary,
+        borderColor: KingColors.glassBorder.opacity(0.7),
+        shadowColor: KingColors.glassShadow,
         shadowRadius: 4,
         shadowOffset: 2,
         font: .title3,
@@ -249,12 +240,9 @@ public struct GlassButtonStyleConfig: Sendable {
     public static let floating = GlassButtonStyleConfig(
         id: "floating",
         backgroundColor: .ultraThickMaterial,
-        foregroundColor: Color.adaptive(
-            light: Color.systemLabel,
-            dark: Color.systemLabel
-        ),
-        borderColor: .glassBorderPrimary,
-        shadowColor: .glassShadowStrong,
+        foregroundColor: KingColors.textPrimary,
+        borderColor: KingColors.glassBorder,
+        shadowColor: KingColors.glassShadow,
         shadowRadius: 16,
         shadowOffset: 8,
         font: .headline,
@@ -265,12 +253,9 @@ public struct GlassButtonStyleConfig: Sendable {
     public static let success = GlassButtonStyleConfig(
         id: "success",
         backgroundColor: .thickMaterial,
-        foregroundColor: .systemGreen,
-        borderColor: Color.adaptive(
-            light: Color.systemGreen.opacity(0.3),
-            dark: Color.systemGreen.opacity(0.5)
-        ),
-        shadowColor: .glassShadowMedium,
+        foregroundColor: KingColors.success,
+        borderColor: KingColors.success.opacity(0.3),
+        shadowColor: KingColors.glassShadow,
         shadowRadius: 8,
         shadowOffset: 4
     )
@@ -279,12 +264,9 @@ public struct GlassButtonStyleConfig: Sendable {
     public static let warning = GlassButtonStyleConfig(
         id: "warning",
         backgroundColor: .thickMaterial,
-        foregroundColor: .systemOrange,
-        borderColor: Color.adaptive(
-            light: Color.systemOrange.opacity(0.3),
-            dark: Color.systemOrange.opacity(0.5)
-        ),
-        shadowColor: .glassShadowMedium,
+        foregroundColor: KingColors.warning,
+        borderColor: KingColors.warning.opacity(0.3),
+        shadowColor: KingColors.glassShadow,
         shadowRadius: 8,
         shadowOffset: 4
     )
@@ -293,12 +275,9 @@ public struct GlassButtonStyleConfig: Sendable {
     public static let error = GlassButtonStyleConfig(
         id: "error",
         backgroundColor: .thickMaterial,
-        foregroundColor: .systemRed,
-        borderColor: Color.adaptive(
-            light: Color.systemRed.opacity(0.3),
-            dark: Color.systemRed.opacity(0.5)
-        ),
-        shadowColor: .glassShadowMedium,
+        foregroundColor: KingColors.error,
+        borderColor: KingColors.error.opacity(0.3),
+        shadowColor: KingColors.glassShadow,
         shadowRadius: 8,
         shadowOffset: 4
     )
@@ -338,7 +317,7 @@ public struct GlassButtonStyleConfig: Sendable {
     }
     .background(
         LinearGradient(
-            colors: [.systemBlue, .systemPurple],
+            colors: [KingColors.trustPurple, KingColors.exclusiveGold],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )

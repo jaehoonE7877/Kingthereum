@@ -2,27 +2,32 @@ import SwiftUI
 import Core
 import DesignSystem
 import UIKit
-import Factory
 
 @main
 struct KingthereumApp: App {
     @StateObject private var appCoordinator = AppCoordinator()
-    @MainActor @Injected(\.displayModeService) private var displayModeService
+    @State private var displayModeService: DisplayModeService?
     
     init() {
-        // Factory는 lazy loading이므로 별도 초기화 불필요
         configureNavigationBar()
-        
-        // DisplayModeService는 Factory @Injected로 자동 주입
     }
     
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(appCoordinator)
-                .preferredColorScheme(displayModeService.effectiveColorScheme)
+                .task {
+                    // DisplayModeService 직접 생성으로 단순화
+                    if displayModeService == nil {
+                        displayModeService = DisplayModeService()
+                    }
+                }
+                .environmentObject(displayModeService ?? DisplayModeService())
+                .preferredColorScheme(displayModeService?.effectiveColorScheme ?? .light)
+                .animation(.easeInOut(duration: 0.3), value: displayModeService?.effectiveColorScheme)
         }
     }
+    
     
     private func configureNavigationBar() {
         // 네비게이션 바 투명 스타일 설정
@@ -48,19 +53,34 @@ struct KingthereumApp: App {
 
 struct ContentView: View {
     @EnvironmentObject var appCoordinator: AppCoordinator
+    @State private var showTransition = false
     
     var body: some View {
-        Group {
+        ZStack {
+            // 배경 그라데이션
+            KingGradients.minimalistBackground
+                .ignoresSafeArea()
+            
+            // 메인 콘텐츠
             switch appCoordinator.currentFlow {
             case .splash:
                 SplashView()
+                    .transition(.identity)
             case .authentication:
-                AuthenticationView()
+                SimpleViewFactory.shared.createAuthenticationView()
+                    .transition(.asymmetric(
+                        insertion: .opacity.combined(with: .scale(scale: 0.95)).combined(with: .move(edge: .bottom)),
+                        removal: .opacity.combined(with: .scale(scale: 1.05)).combined(with: .move(edge: .top))
+                    ))
             case .main:
                 MainTabView()
+                    .transition(.asymmetric(
+                        insertion: .opacity.combined(with: .scale(scale: 0.95)).combined(with: .move(edge: .bottom)),
+                        removal: .opacity.combined(with: .scale(scale: 1.05)).combined(with: .move(edge: .top))
+                    ))
             }
         }
-        .background(LinearGradient.enhancedBackgroundGradient.ignoresSafeArea())
+        .animation(.easeInOut(duration: 1.2), value: appCoordinator.currentFlow)
         .onAppear {
             appCoordinator.start()
         }

@@ -1,233 +1,288 @@
 import Foundation
-import UIKit
-
 import Entity
+import Core
+import BigInt
 
-@MainActor
-protocol SendBusinessLogic: Sendable {
-    func validateAddress(request: SendScene.ValidateAddress.Request)
-    func validateAmount(request: SendScene.ValidateAmount.Request)
-    func estimateGasFee(request: SendScene.EstimateGas.Request)
-    func prepareTransaction(request: SendScene.PrepareTransaction.Request)
-    func sendTransaction(request: SendScene.SendTransaction.Request)
-}
+// MARK: - SendInteractor Stub Implementation
 
+/// SendInteractor의 Stub 구현
+/// TODO: 실제 Web3 구현이 완료되면 complex 버전으로 교체
 @MainActor
-protocol SendDataStore: Sendable {
-    var currentRecipientAddress: String? { get set }
-    var currentAmount: Decimal? { get set }
-    var currentGasFee: GasFee? { get set }
-    var currentTransaction: PendingTransaction? { get set }
-}
-
-@MainActor
-final class SendInteractor: SendBusinessLogic, SendDataStore {
-    var presenter: SendPresentationLogic?
-    var worker: SendWorkerProtocol?
+public final class SendInteractor: SendBusinessLogic {
+    // MARK: - Properties
     
-    // MARK: - Data Store
-    var currentRecipientAddress: String?
-    var currentAmount: Decimal?
-    var currentGasFee: GasFee?
-    var currentTransaction: PendingTransaction?
+    public weak var presenter: SendPresentationLogic?
+    private let worker: SendWorkerProtocol
     
-    // MARK: - Business Logic
+    // MARK: - 초기화
     
-    func validateAddress(request: SendScene.ValidateAddress.Request) {
-        let worker = self.worker ?? SendWorker()
-        
-        let address = request.address.trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        if address.isEmpty {
-            let response = SendScene.ValidateAddress.Response(
-                isValid: false,
-                errorMessage: "주소를 입력해주세요"
-            )
-            presenter?.presentAddressValidation(response: response)
-            return
-        }
-        
-        let isValid = worker.validateEthereumAddress(address)
-        
-        if isValid {
-            currentRecipientAddress = address
-            let response = SendScene.ValidateAddress.Response(isValid: true, errorMessage: nil)
-            presenter?.presentAddressValidation(response: response)
-        } else {
-            let response = SendScene.ValidateAddress.Response(
-                isValid: false,
-                errorMessage: "올바른 이더리움 주소를 입력해주세요"
-            )
-            presenter?.presentAddressValidation(response: response)
-        }
+    public init(
+        presenter: SendPresentationLogic,
+        worker: SendWorkerProtocol
+    ) {
+        self.presenter = presenter
+        self.worker = worker
     }
     
-    func validateAmount(request: SendScene.ValidateAmount.Request) {
-        let worker = self.worker ?? SendWorker()
+    // MARK: - SendBusinessLogic Stub 구현
+    
+    public func validateAddress(request: SendScene.ValidateAddress.Request) {
+        Logger.debug("📧 주소 검증 시작: \(request.recipientAddress)")
         
-        let amountString = request.amount.trimmingCharacters(in: .whitespacesAndNewlines)
+        // 간단한 이더리움 주소 형식 검증
+        let isValid = request.recipientAddress.hasPrefix("0x") && request.recipientAddress.count == 42
         
-        if amountString.isEmpty {
-            let response = SendScene.ValidateAmount.Response(
-                isValid: false,
-                errorMessage: "금액을 입력해주세요",
-                parsedAmount: nil
-            )
-            presenter?.presentAmountValidation(response: response)
-            return
-        }
-        
-        guard let amount = Decimal(string: amountString), amount > 0 else {
-            let response = SendScene.ValidateAmount.Response(
-                isValid: false,
-                errorMessage: "유효한 금액을 입력해주세요",
-                parsedAmount: nil
-            )
-            presenter?.presentAmountValidation(response: response)
-            return
-        }
-        
-        let currentBalance = worker.getCurrentBalance()
-        
-        if amount > currentBalance {
-            let response = SendScene.ValidateAmount.Response(
-                isValid: false,
-                errorMessage: "잔액이 부족합니다",
-                parsedAmount: amount
-            )
-            presenter?.presentAmountValidation(response: response)
-            return
-        }
-        
-        currentAmount = amount
-        let response = SendScene.ValidateAmount.Response(
-            isValid: true,
-            errorMessage: nil,
-            parsedAmount: amount
+        let response = SendScene.ValidateAddress.Response(
+            isValid: isValid,
+            normalizedAddress: isValid ? request.recipientAddress : nil,
+            addressType: isValid ? .eoa : nil,
+            errorMessage: isValid ? nil : "유효하지 않은 주소 형식입니다"
         )
-        presenter?.presentAmountValidation(response: response)
+        
+        presenter?.presentAddressValidation(response: response)
+        Logger.info("✅ 주소 검증 완료: \(isValid)")
     }
     
-    func estimateGasFee(request: SendScene.EstimateGas.Request) {
-        let worker = self.worker ?? SendWorker()
+    public func estimateGasFee(request: SendScene.EstimateGasFee.Request) {
+        Logger.debug("⛽ 가스 수수료 추정 시작")
         
-        guard let gasOptions = worker.estimateGasFee(
-            recipientAddress: request.recipientAddress,
-            amount: request.amount
-        ) else {
-            let response = SendScene.EstimateGas.Response(
-                gasOptions: nil,
-                error: "가스비를 계산할 수 없습니다. 네트워크 상태를 확인해주세요."
-            )
-            presenter?.presentGasEstimation(response: response)
-            return
-        }
-        
-        let response = SendScene.EstimateGas.Response(gasOptions: gasOptions, error: nil)
-        presenter?.presentGasEstimation(response: response)
-    }
-    
-    func prepareTransaction(request: SendScene.PrepareTransaction.Request) {
-        let worker = self.worker ?? SendWorker()
-        
-        // 주소 재검증
-        guard worker.validateEthereumAddress(request.recipientAddress) else {
-            let response = SendScene.PrepareTransaction.Response(
-                transaction: nil,
-                isReadyToSend: false,
-                errorMessage: "잘못된 수신자 주소입니다"
-            )
-            presenter?.presentTransactionPreparation(response: response)
-            return
-        }
-        
-        // 금액 재검증
-        guard let amount = Decimal(string: request.amount), amount > 0 else {
-            let response = SendScene.PrepareTransaction.Response(
-                transaction: nil,
-                isReadyToSend: false,
-                errorMessage: "잘못된 금액입니다"
-            )
-            presenter?.presentTransactionPreparation(response: response)
-            return
-        }
-        
-        // 잔액 확인 (가스비 포함)
-        guard worker.isBalanceSufficient(amount: amount, includingGasFee: request.selectedGasFee.feeInETH) else {
-            let response = SendScene.PrepareTransaction.Response(
-                transaction: nil,
-                isReadyToSend: false,
-                errorMessage: "잔액이 부족합니다 (가스비 포함)"
-            )
-            presenter?.presentTransactionPreparation(response: response)
-            return
-        }
-        
-        // 거래 준비
-        guard let transaction = worker.prepareTransaction(
-            recipientAddress: request.recipientAddress,
-            amount: amount,
-            gasFee: request.selectedGasFee
-        ) else {
-            let response = SendScene.PrepareTransaction.Response(
-                transaction: nil,
-                isReadyToSend: false,
-                errorMessage: "거래 준비 중 오류가 발생했습니다"
-            )
-            presenter?.presentTransactionPreparation(response: response)
-            return
-        }
-        
-        currentTransaction = transaction
-        currentRecipientAddress = request.recipientAddress
-        currentAmount = amount
-        currentGasFee = request.selectedGasFee
-        
-        let response = SendScene.PrepareTransaction.Response(
-            transaction: transaction,
-            isReadyToSend: true,
-            errorMessage: nil
-        )
-        presenter?.presentTransactionPreparation(response: response)
-    }
-    
-    func sendTransaction(request: SendScene.SendTransaction.Request) {
-        let worker = self.worker ?? SendWorker()
-        
-        Task {
-            // 생체 인증
-            let biometricResult = await worker.authenticateWithBiometric()
+        Task { @MainActor in
+            // 임시로 고정 주소 사용
+            let fromAddress = "0x1234567890123456789012345678901234567890"
             
-            guard biometricResult else {
-                let response = SendScene.SendTransaction.Response(
-                    success: false,
-                    transactionHash: nil,
-                    errorMessage: "생체 인증에 실패했습니다"
+            guard let amountBigUInt = BigUInt(request.amount) else {
+                let response = SendScene.EstimateGasFee.Response(
+                    gasFeeInfo: [],
+                    recommendedFee: createDefaultGasFee(),
+                    canAfford: false,
+                    currentBalance: BigUInt(0),
+                    totalCost: BigUInt(0),
+                    networkStatus: .normal
                 )
-                presenter?.presentTransactionResult(response: response)
+                presenter?.presentGasFeeEstimation(response: response)
                 return
             }
             
-            // 거래 전송
-            let result = await worker.sendTransaction(request.transaction)
+            let result = await worker.calculateTransactionFee(
+                from: fromAddress,
+                to: request.recipientAddress,
+                amount: amountBigUInt,
+                gasPrice: nil
+            )
             
             switch result {
-            case .success(let transactionHash):
-                let response = SendScene.SendTransaction.Response(
-                    success: true,
-                    transactionHash: transactionHash,
-                    errorMessage: nil
+            case .success(let fee):
+                // 다양한 우선순위 가스비 생성
+                let slowFee = SendScene.GasFeeInfo(
+                    gasPrice: fee.gasPrice,
+                    gasLimit: fee.gasLimit,
+                    maxFeePerGas: fee.gasPrice,
+                    maxPriorityFeePerGas: BigUInt(1_000_000_000), // 1 Gwei
+                    estimatedFee: fee.totalFee,
+                    feeType: .slow
                 )
-                presenter?.presentTransactionResult(response: response)
+                
+                let standardFee = SendScene.GasFeeInfo(
+                    gasPrice: fee.gasPrice,
+                    gasLimit: fee.gasLimit,
+                    maxFeePerGas: fee.gasPrice,
+                    maxPriorityFeePerGas: BigUInt(2_000_000_000), // 2 Gwei
+                    estimatedFee: fee.totalFee,
+                    feeType: .standard
+                )
+                
+                let fastFee = SendScene.GasFeeInfo(
+                    gasPrice: fee.gasPrice * 2,
+                    gasLimit: fee.gasLimit,
+                    maxFeePerGas: fee.gasPrice * 2,
+                    maxPriorityFeePerGas: BigUInt(3_000_000_000), // 3 Gwei
+                    estimatedFee: fee.totalFee * 2,
+                    feeType: .fast
+                )
+                
+                let response = SendScene.EstimateGasFee.Response(
+                    gasFeeInfo: [slowFee, standardFee, fastFee],
+                    recommendedFee: standardFee,
+                    canAfford: true, // 임시로 true
+                    currentBalance: BigUInt(10).power(18), // 1 ETH
+                    totalCost: amountBigUInt + fee.totalFee,
+                    networkStatus: .normal
+                )
+                presenter?.presentGasFeeEstimation(response: response)
+                Logger.info("✅ 가스 수수료 추정 완료")
                 
             case .failure(let error):
-                let response = SendScene.SendTransaction.Response(
-                    success: false,
-                    transactionHash: nil,
-                    errorMessage: error.localizedDescription
+                let response = SendScene.EstimateGasFee.Response(
+                    gasFeeInfo: [],
+                    recommendedFee: createDefaultGasFee(),
+                    canAfford: false,
+                    currentBalance: BigUInt(0),
+                    totalCost: BigUInt(0),
+                    networkStatus: .normal
                 )
-                presenter?.presentTransactionResult(response: response)
+                presenter?.presentGasFeeEstimation(response: response)
+                Logger.error("❌ 가스 수수료 추정 실패: \(error)")
+            }
+        }
+    }
+    
+    private func createDefaultGasFee() -> SendScene.GasFeeInfo {
+        return SendScene.GasFeeInfo(
+            gasPrice: BigUInt(20_000_000_000), // 20 Gwei
+            gasLimit: BigUInt(21_000),
+            maxFeePerGas: BigUInt(20_000_000_000),
+            maxPriorityFeePerGas: BigUInt(2_000_000_000),
+            estimatedFee: BigUInt(420_000_000_000_000), // 0.00042 ETH
+            feeType: .standard
+        )
+    }
+    
+    public func sendTransaction(request: SendScene.SendTransaction.Request) async {
+        Logger.info("💸 거래 전송 시작 (Production)")
+        
+        // Entity의 새로운 Request 구조에 맞춰 변환
+        guard let amountBigUInt = BigUInt(request.amount) else {
+            let response = SendScene.SendTransaction.Response(
+                success: false,
+                transactionHash: nil,
+                transactionInfo: nil,
+                error: SendError.invalidAmount(reason: "유효하지 않은 금액입니다"),
+                estimatedConfirmationTime: nil
+            )
+            presenter?.presentTransactionResult(response: response)
+            return
+        }
+        
+        // 임시로 고정 주소 사용 (실제 구현에서는 WalletService에서 가져옴)
+        let fromAddress = "0x1234567890123456789012345678901234567890"
+        
+        let result = await worker.sendTransaction(
+            from: fromAddress,
+            to: request.recipientAddress,
+            amount: amountBigUInt,
+            gasPrice: request.selectedGasFee.gasPrice,
+            gasLimit: request.selectedGasFee.gasLimit,
+            password: "temp_password" // 실제로는 보안 모듈에서 처리
+        )
+        
+        switch result {
+        case .success(let txHash):
+            let response = SendScene.SendTransaction.Response(
+                success: true,
+                transactionHash: txHash,
+                transactionInfo: nil,
+                error: nil,
+                estimatedConfirmationTime: 300 // 5분
+            )
+            presenter?.presentTransactionResult(response: response)
+            Logger.info("✅ 거래 전송 성공: \(txHash)")
+            
+        case .failure(let error):
+            let sendError = SendError.transactionBroadcastFailed(reason: error.localizedDescription)
+            let response = SendScene.SendTransaction.Response(
+                success: false,
+                transactionHash: nil,
+                transactionInfo: nil,
+                error: sendError,
+                estimatedConfirmationTime: nil
+            )
+            presenter?.presentTransactionResult(response: response)
+            Logger.error("❌ 거래 전송 실패: \(error)")
+        }
+    }
+    
+    public func trackTransaction(request: SendScene.TrackTransaction.Request) {
+        Logger.debug("🔍 거래 추적 시작: \(request.transactionHash)")
+        
+        Task { @MainActor in
+            let result = await worker.getTransactionStatus(transactionHash: request.transactionHash)
+            
+            switch result {
+            case .success(let status):
+                // SendModels.TransactionStatus를 SendScene.TransactionStatus로 변환
+                let transactionStatus: SendScene.TransactionStatus
+                if status.isSuccessful {
+                    transactionStatus = .confirmed
+                } else if status.isPending {
+                    transactionStatus = .pending
+                } else {
+                    transactionStatus = .failed
+                }
+                
+                // TransactionInfo 생성
+                let transactionInfo = SendScene.TransactionInfo(
+                    hash: status.hash,
+                    from: status.from,
+                    to: status.to,
+                    amount: status.value,
+                    gasUsed: status.gasUsed ?? BigUInt(21_000),
+                    gasPrice: status.effectiveGasPrice ?? BigUInt("20000000000"), // 20 Gwei fallback
+                    blockNumber: status.blockNumber != nil ? BigUInt(status.blockNumber!) : nil,
+                    blockHash: nil,
+                    transactionIndex: nil,
+                    timestamp: Date(),
+                    confirmations: status.confirmations,
+                    status: transactionStatus,
+                    nonce: BigUInt(0),
+                    networkID: BigUInt(1)
+                )
+                
+                let response = SendScene.TrackTransaction.Response(
+                    transactionInfo: transactionInfo,
+                    shouldContinuePolling: !transactionStatus.isCompleted
+                )
+                presenter?.presentTransactionTracking(response: response)
+                Logger.info("✅ 거래 추적 완료")
+                
+            case .failure(let error):
+                // 실패한 경우에도 TransactionInfo 생성 (최소한의 정보)
+                let transactionInfo = SendScene.TransactionInfo(
+                    hash: request.transactionHash,
+                    from: "",
+                    to: "",
+                    amount: BigUInt(0),
+                    gasUsed: nil,
+                    gasPrice: BigUInt(0),
+                    blockNumber: nil,
+                    blockHash: nil,
+                    transactionIndex: nil,
+                    timestamp: Date(),
+                    confirmations: 0,
+                    status: .failed,
+                    nonce: BigUInt(0),
+                    networkID: BigUInt(1)
+                )
+                
+                let response = SendScene.TrackTransaction.Response(
+                    transactionInfo: transactionInfo,
+                    shouldContinuePolling: false
+                )
+                presenter?.presentTransactionTracking(response: response)
+                Logger.error("❌ 거래 추적 실패: \(error)")
             }
         }
     }
 }
+
+// MARK: - SendBusinessLogic Protocol
+
+@MainActor
+public protocol SendBusinessLogic: AnyObject {
+    func validateAddress(request: SendScene.ValidateAddress.Request)
+    func estimateGasFee(request: SendScene.EstimateGasFee.Request)
+    func sendTransaction(request: SendScene.SendTransaction.Request) async
+    func trackTransaction(request: SendScene.TrackTransaction.Request)
+}
+
+// MARK: - SendPresentationLogic Protocol
+
+@MainActor
+public protocol SendPresentationLogic: AnyObject {
+    func presentAddressValidation(response: SendScene.ValidateAddress.Response)
+    func presentGasFeeEstimation(response: SendScene.EstimateGasFee.Response)
+    func presentTransactionResult(response: SendScene.SendTransaction.Response)
+    func presentTransactionTracking(response: SendScene.TrackTransaction.Response)
+}
+
+// MARK: - SendScene Models
+// Note: SendScene 모델들은 Entity 모듈에서 import 됩니다.

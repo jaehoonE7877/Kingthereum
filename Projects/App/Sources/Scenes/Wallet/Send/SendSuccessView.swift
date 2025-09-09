@@ -10,7 +10,7 @@ struct SendSuccessView: View {
     var body: some View {
         ZStack {
             // Background
-            LinearGradient.enhancedBackgroundGradient
+            KingGradients.background
                 .ignoresSafeArea()
             
             VStack(spacing: 32) {
@@ -20,14 +20,14 @@ struct SendSuccessView: View {
                 ZStack {
                     // Outer ring
                     Circle()
-                        .stroke(LinearGradient.primaryGradient, lineWidth: 3)
+                        .stroke(KingGradients.primary, lineWidth: 3)
                         .frame(width: 120, height: 120)
                         .scaleEffect(showContent ? 1.0 : 0.8)
                         .opacity(showContent ? 1.0 : 0.0)
                     
                     // Inner circle
                     Circle()
-                        .fill(LinearGradient.primaryGradient)
+                        .fill(KingGradients.primary)
                         .frame(width: 100, height: 100)
                         .scaleEffect(showCheckmark ? 1.0 : 0.5)
                         .opacity(showCheckmark ? 1.0 : 0.0)
@@ -53,7 +53,7 @@ struct SendSuccessView: View {
                     Text("송금 완료!")
                         .font(.title)
                         .fontWeight(.bold)
-                        .foregroundStyle(LinearGradient.primaryGradient)
+                        .foregroundColor(KingColors.textPrimary)
                         .scaleEffect(showContent ? 1.0 : 0.8)
                         .opacity(showContent ? 1.0 : 0.0)
                     
@@ -104,7 +104,7 @@ struct SendSuccessView: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
                     .background(.ultraThinMaterial)
-                    .cornerRadius(8)
+                    .cornerRadius(DesignTokens.CornerRadius.sm)
                 
                 Button {
                     copyTransactionHash(hash)
@@ -120,7 +120,7 @@ struct SendSuccessView: View {
                 .buttonStyle(PlainButtonStyle())
             }
         }
-        .glassCard(style: .default)
+        .glassCard(level: .standard, context: .card)
     }
     
     private var actionButtons: some View {
@@ -136,11 +136,11 @@ struct SendSuccessView: View {
                         .font(.system(size: 16, weight: .medium))
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: 50)
+                .frame(height: DesignTokens.Size.Button.md)
                 .background(.ultraThinMaterial)
-                .foregroundStyle(LinearGradient.primaryGradient)
-                .cornerRadius(12)
-                .glassCard(style: .subtle)
+                .foregroundStyle(KingGradients.primary)
+                .cornerRadius(DesignTokens.CornerRadius.md)
+                .glassCard(level: .subtle, context: .button)
             }
             
             Button {
@@ -154,11 +154,11 @@ struct SendSuccessView: View {
                         .font(.system(size: 16, weight: .semibold))
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: 50)
-                .background(LinearGradient.primaryGradient)
+                .frame(height: DesignTokens.Size.Button.md)
+                .background(KingGradients.buttonPrimary)
                 .foregroundColor(.white)
-                .cornerRadius(12)
-                .shadow(color: .kingBlue.opacity(0.3), radius: 8, x: 0, y: 4)
+                .cornerRadius(DesignTokens.CornerRadius.md)
+                .shadow(color: KingColors.trustPurple.opacity(0.3), radius: 8, x: 0, y: 4)
             }
         }
     }

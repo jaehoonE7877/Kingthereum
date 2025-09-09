@@ -31,8 +31,16 @@ public extension Project {
             .merging(["GCC_OPTIMIZATION_LEVEL": "s"])
         
         // Configuration 설정
-        let debugConfiguration = Configuration.debug(name: "Debug", settings: debugSettings)
-        let releaseConfiguration = Configuration.release(name: "Release", settings: releaseSettings)
+        let debugConfiguration = Configuration.debug(
+            name: "Debug",
+            settings: debugSettings,
+            xcconfig: .relativeToRoot("Config/Development-Local.xcconfig")
+        )
+        let releaseConfiguration = Configuration.release(
+            name: "Release",
+            settings: releaseSettings,
+            xcconfig: .relativeToRoot("Config/Production-Local.xcconfig")
+        )
         
         let configurations: [Configuration] = [
             debugConfiguration,
@@ -42,6 +50,11 @@ public extension Project {
         var projectTargets: [Target] = []
         
         // MARK: - Framework Target
+        var buildableFolders: [BuildableFolder] = [.folder("Sources"), .folder("Derived")]
+        if hasResources {
+            buildableFolders.append(.folder("Resources"))
+        }
+        
         let frameworkTarget = Target.target(
             name: name,
             destinations: destination,
@@ -49,8 +62,7 @@ public extension Project {
             bundleId: "\(organizationName).\(name)",
             deploymentTargets: deploymentTarget,
             infoPlist: .default,
-            sources: ["Sources/**"],
-            resources: hasResources ? ["Resources/**"] : nil,
+            buildableFolders: buildableFolders,
             dependencies: dependencies,
             settings: .settings(
                 base: baseSettings
@@ -77,7 +89,7 @@ public extension Project {
                 bundleId: "\(organizationName).\(name)Tests",
                 deploymentTargets: deploymentTarget,
                 infoPlist: .default,
-                sources: ["Tests/**"],
+                buildableFolders: [.folder("Tests")],
                 dependencies: [.target(name: name)],
                 settings: .settings(base: testSettings, configurations: [debugConfiguration])
             )
@@ -147,8 +159,16 @@ public extension Project {
             .merging(["SWIFT_COMPILATION_MODE": "wholemodule"])
             .merging(["GCC_OPTIMIZATION_LEVEL": "s"])
         
-        let debugConfiguration = Configuration.debug(name: "Debug", settings: debugSettings)
-        let releaseConfiguration = Configuration.release(name: "Release", settings: releaseSettings)
+        let debugConfiguration = Configuration.debug(
+            name: "Debug",
+            settings: debugSettings,
+            xcconfig: .relativeToRoot("Config/Development-Local.xcconfig")
+        )
+        let releaseConfiguration = Configuration.release(
+            name: "Release",
+            settings: releaseSettings,
+            xcconfig: .relativeToRoot("Config/Production-Local.xcconfig")
+        )
         
         let appTarget = Target.target(
             name: name,
@@ -165,10 +185,12 @@ public extension Project {
                 "CFBundleDisplayName": "Kingthereum",
                 "UIUserInterfaceStyle": "Automatic",
                 "MARKETING_VERSION": .string(Environment.appVersion),
-                "CURRENT_PROJECT_VERSION": "1"
+                "CURRENT_PROJECT_VERSION": "1",
+                "INFURA_PROJECT_ID": "$(INFURA_PROJECT_ID)",
+                "INFURA_PROJECT_SECRET": "$(INFURA_PROJECT_SECRET)",
+                "ETHERSCAN_API_KEY": "$(ETHERSCAN_API_KEY)"
             ]),
-            sources: ["Sources/**"],
-            resources: ["Resources/**"],
+            buildableFolders: [.folder("Sources"), .folder("Resources"), .folder("Derived")],
             dependencies: dependencies,
             settings: .settings(
                 base: baseSettings
@@ -192,7 +214,7 @@ public extension Project {
                 bundleId: "\(organizationName).\(name)Tests",
                 deploymentTargets: deploymentTarget,
                 infoPlist: .default,
-                sources: ["Tests/**"],
+                buildableFolders: [.folder("Tests")],
                 dependencies: [.target(name: name)],
                 settings: .settings(
                     base: debugSettings

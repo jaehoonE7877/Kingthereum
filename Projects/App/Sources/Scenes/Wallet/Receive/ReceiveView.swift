@@ -1,6 +1,7 @@
 import SwiftUI
 import DesignSystem
 import Entity
+import WalletKit
 
 @MainActor
 protocol ReceiveDisplayLogic: AnyObject {
@@ -17,7 +18,7 @@ struct ReceiveView: View {
     var body: some View {
         ZStack {
             // Background
-            LinearGradient.enhancedBackgroundGradient
+            KingGradients.background
                 .ignoresSafeArea()
             
             ScrollView {
@@ -116,7 +117,7 @@ extension ReceiveView {
                 
                 Image(systemName: "arrow.down.circle.fill")
                     .font(.system(size: 32))
-                    .foregroundStyle(LinearGradient.primaryGradient)
+                    .foregroundStyle(KingGradients.primary)
             }
             
             Text("이더리움 받기")
@@ -160,7 +161,7 @@ extension ReceiveView {
                     VStack(spacing: 8) {
                         Image(systemName: "qrcode")
                             .font(.system(size: 48))
-                            .foregroundStyle(LinearGradient.primaryGradient)
+                            .foregroundStyle(KingGradients.primary)
                         
                         Text("QR 코드 생성 중...")
                             .font(.caption)
@@ -168,7 +169,7 @@ extension ReceiveView {
                     }
                 }
             }
-            .glassCard(style: .wallet)
+            .safeSwiftUIGlass(opacity: 0.8, tintColor: .blue.opacity(0.1), cornerRadius: 16)
         }
     }
 }
@@ -181,7 +182,7 @@ extension ReceiveView {
             HStack {
                 Image(systemName: "link")
                     .font(.title3)
-                    .foregroundStyle(LinearGradient.primaryGradient)
+                    .foregroundStyle(KingGradients.primary)
                 
                 Text("지갑 주소")
                     .font(.headline)
@@ -225,7 +226,7 @@ extension ReceiveView {
                     }
                 }
                 .padding(16)
-                .glassCard(style: .default)
+                .safeSwiftUIGlass()
             }
         }
     }
@@ -269,9 +270,9 @@ extension ReceiveView {
                 .frame(maxWidth: .infinity)
                 .frame(height: 50)
                 .background(.ultraThinMaterial)
-                .foregroundStyle(LinearGradient.primaryGradient)
+                .foregroundStyle(KingGradients.primary)
                 .cornerRadius(12)
-                .glassCard(style: .prominent)
+                .safeSwiftUIGlass(opacity: 0.8, tintColor: .blue.opacity(0.1), cornerRadius: 16)
             }
             .scaleEffect(coordinator.isRefreshing ? 0.95 : 1.0)
             .animation(.easeInOut(duration: 0.1), value: coordinator.isRefreshing)
@@ -288,7 +289,7 @@ extension ReceiveView {
             HStack {
                 Image(systemName: "shield.checkered")
                     .font(.title3)
-                    .foregroundStyle(LinearGradient.warningGradient)
+                    .foregroundStyle(KingGradients.accent)
                 
                 Text("보안 안내")
                     .font(.headline)
@@ -314,7 +315,7 @@ extension ReceiveView {
                 )
             }
             .padding(16)
-            .glassCard(style: .default)
+            .safeSwiftUIGlass()
         }
         .padding(.bottom, 40)
     }
@@ -330,7 +331,7 @@ struct SecurityNoticeItem: View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 14))
-                .foregroundStyle(LinearGradient.warningGradient)
+                .foregroundStyle(KingGradients.accent)
                 .frame(width: 16)
             
             Text(text)
@@ -384,7 +385,7 @@ final class ReceiveCoordinator: ObservableObject {
     }
     
     private func setupVIP() {
-        let interactor = ReceiveInteractor()
+        let interactor = ReceiveInteractor(walletService: WalletService.shared)
         let presenter = ReceivePresenter()
         
         interactor.presenter = presenter
@@ -516,7 +517,7 @@ struct ToastView: View {
         HStack(spacing: 12) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 20))
-                .foregroundStyle(LinearGradient.primaryGradient)
+                .foregroundStyle(KingGradients.primary)
             
             Text(message)
                 .font(.system(size: 15, weight: .medium))
@@ -526,7 +527,7 @@ struct ToastView: View {
         .padding(.vertical, 14)
         .background(.ultraThinMaterial)
         .cornerRadius(12)
-        .glassCard(style: .default)
+        .safeSwiftUIGlass()
         .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
     }
 }
@@ -537,7 +538,7 @@ struct ToastView: View {
 
 #Preview("Toast") {
     ZStack {
-        LinearGradient.enhancedBackgroundGradient
+        KingGradients.minimalistBackground
             .ignoresSafeArea()
         
         ToastView(message: "QR 코드가 새로고침되었습니다")

@@ -6,7 +6,9 @@ let project = Project.makeModule(
     hasResources: false,
     dependencies: [
         .core,
-        .keychainAccess
+        .entity,
+        .keychainAccess,
+        .cryptoSwift
     ],
     hasTests: true
 )

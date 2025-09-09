@@ -107,22 +107,3 @@ public extension SecurityService {
     }
 }
 
-public enum SecurityError: LocalizedError {
-    case biometricFailedPINRequired
-    case pinRequired
-    case noSecuritySetup
-    case authenticationRequired
-    
-    public var errorDescription: String? {
-        switch self {
-        case .biometricFailedPINRequired:
-            return "Biometric authentication failed. Please enter your PIN."
-        case .pinRequired:
-            return "Please enter your PIN to continue."
-        case .noSecuritySetup:
-            return "No security method has been set up."
-        case .authenticationRequired:
-            return "Authentication is required to access this feature."
-        }
-    }
-}

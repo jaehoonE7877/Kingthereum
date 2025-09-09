@@ -57,7 +57,7 @@ public struct SettingsRow: View {
             .padding()
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.secondary.opacity(isPressed ? 0.1 : 0))
+                    .fill(KingColors.textSecondary.opacity(isPressed ? 0.1 : 0))
             )
             .scaleEffect(isPressed ? 0.98 : 1.0)
         }

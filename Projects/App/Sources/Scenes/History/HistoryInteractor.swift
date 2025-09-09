@@ -3,6 +3,7 @@ import Entity
 import WalletKit
 import Core
 import Factory
+import SecurityKit
 
 // Use ExportFormat from HistoryRouter (same module)
 // ExportFormat is defined in HistoryRouter.swift
@@ -29,8 +30,9 @@ protocol HistoryDataStore {
 final class HistoryInteractor: HistoryBusinessLogic, HistoryDataStore {
     var presenter: HistoryPresentationLogic?
     private var _worker: HistoryWorkerProtocol?
+    private let walletAddressManager = WalletAddressManager() // 안전한 지갑 주소 관리자
     
-    @Injected(\.configurationService) private var configurationService
+    private var configurationService: ConfigurationService = ConfigurationService.shared
     
     // MARK: - Data Store
     var currentTransactions: [Transaction] = []
@@ -42,7 +44,9 @@ final class HistoryInteractor: HistoryBusinessLogic, HistoryDataStore {
     
     init(worker: HistoryWorkerProtocol? = nil) {
         self._worker = worker
-        loadWalletAddress()
+        Task {
+            await loadWalletAddress()
+        }
     }
     
     // MARK: - Lazy Worker Initialization
@@ -248,8 +252,14 @@ final class HistoryInteractor: HistoryBusinessLogic, HistoryDataStore {
     
     // MARK: - Private Methods
     
-    private func loadWalletAddress() {
-        walletAddress = UserDefaults.standard.string(forKey: Constants.UserDefaults.selectedWalletAddress)
+    private func loadWalletAddress() async {
+        // 안전한 방식으로 지갑 주소 가져오기
+        do {
+            walletAddress = try await walletAddressManager.getSelectedWalletAddress()
+        } catch {
+            Logger.error("지갑 주소 로드 실패: \(error)")
+            walletAddress = nil
+        }
     }
     
     private func applyCurrentFilter(to transactions: [Transaction]) -> [Transaction] {

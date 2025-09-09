@@ -55,7 +55,7 @@ public struct LoadingView: View {
         Circle()
             .trim(from: 0, to: 0.7)
             .stroke(
-                LinearGradient.primaryGradient,
+                KingGradients.primary,
                 style: StrokeStyle(lineWidth: size.lineWidth, lineCap: .round)
             )
             .frame(width: size.dimension, height: size.dimension)
@@ -70,7 +70,7 @@ public struct LoadingView: View {
         HStack(spacing: 8) {
             ForEach(0..<3) { index in
                 Circle()
-                    .fill(LinearGradient.primaryGradient)
+                    .fill(KingGradients.primary)
                     .frame(width: size.dotSize, height: size.dotSize)
                     .scaleEffect(isAnimating ? 1.0 : 0.5)
                     .animation(
@@ -101,7 +101,7 @@ public struct LoadingView: View {
     
     private var pulseView: some View {
         Circle()
-            .fill(LinearGradient.primaryGradient.opacity(0.3))
+            .fill(KingGradients.primary.opacity(0.3))
             .frame(width: size.dimension, height: size.dimension)
             .scaleEffect(isAnimating ? 1.2 : 0.8)
             .opacity(isAnimating ? 0.3 : 0.8)

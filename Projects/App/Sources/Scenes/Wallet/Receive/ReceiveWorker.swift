@@ -5,6 +5,7 @@ import UIKit
 import Core
 import DesignSystem
 import WalletKit
+import SecurityKit
 
 // MARK: - SOLID 원칙 적용: Interface Segregation Principle (ISP)
 // 기능별로 인터페이스를 분리하여 의존성을 최소화
@@ -25,9 +26,11 @@ protocol WalletAddressProviderProtocol {
 protocol ReceiveWorkerProtocol: QRCodeGeneratorProtocol, WalletAddressProviderProtocol {}
 
 // MARK: - SOLID 원칙 적용된 ReceiveWorker 구현
-final class ReceiveWorker: ReceiveWorkerProtocol {
+/// Sendable 프로토콜 준수로 안전한 cross-actor 사용 보장
+final class ReceiveWorker: ReceiveWorkerProtocol, Sendable {
     
     private let walletService: WalletServiceProtocol
+    private let walletAddressManager = WalletAddressManager() // 안전한 지갑 주소 관리자
     
     init(walletService: WalletServiceProtocol) {
         self.walletService = walletService
@@ -65,14 +68,24 @@ final class ReceiveWorker: ReceiveWorkerProtocol {
     // MARK: - WalletAddressProviderProtocol 구현
     
     func getWalletAddress() -> String {
-        // UserDefaults에서 현재 선택된 지갑 주소를 가져옴
-        if let address = UserDefaults.standard.string(forKey: Constants.UserDefaults.selectedWalletAddress),
-           walletService.isValidEthereumAddress(address) {
+        // 안전한 방식으로 지갑 주소 가져오기 (비동기 작업을 동기적으로 처리)
+        var walletAddress: String?
+        
+        let semaphore = DispatchSemaphore(value: 0)
+        Task {
+            do {
+                walletAddress = try await walletAddressManager.getSelectedWalletAddress()
+            } catch {
+                Logger.error("❌ 지갑 주소 로드 실패: \(error)")
+                walletAddress = nil
+            }
+            semaphore.signal()
+        }
+        semaphore.wait()
+        
+        if let address = walletAddress, walletService.isValidEthereumAddress(address) {
             return address
         }
-        
-        // 백업 옵션: 키체인에서 가져오기 (향후 구현 가능)
-        // 또는 WalletManager를 통한 현재 활성 지갑 조회
         
         // 기본값 반환 (개발/테스트용)
         return "0x742B15EcB8E3F6F7e7D58C4f9Ad2dBcEF8A5E9C3"

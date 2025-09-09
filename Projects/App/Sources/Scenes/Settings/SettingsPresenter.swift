@@ -1,6 +1,7 @@
 import Foundation
 import Entity
 import Core
+import SecurityKit
 
 @MainActor
 protocol SettingsPresentationLogic {
@@ -15,6 +16,7 @@ protocol SettingsPresentationLogic {
 @MainActor
 final class SettingsPresenter: SettingsPresentationLogic {
     weak var viewController: SettingsDisplayLogic?
+    private let walletAddressManager = WalletAddressManager() // 안전한 지갑 주소 관리자
     
     func presentSettings(response: SettingsScene.LoadSettings.Response) {
         if let error = response.error {
@@ -217,23 +219,14 @@ final class SettingsPresenter: SettingsPresentationLogic {
     }
     
     private func getCurrentWalletAddress() -> String {
-        return UserDefaults.standard.string(forKey: Constants.UserDefaults.selectedWalletAddress) ?? ""
+        // 비동기 작업을 동기적으로 처리할 수 없으므로 임시로 빈 문자열 반환
+        // 실제 주소는 loadProfile에서 비동기적으로 처리됨
+        return ""
     }
     
     private func formatErrorMessage(_ error: Error) -> String {
-        if let networkError = error as? Core.NetworkError {
-            switch networkError {
-            case .invalidResponse:
-                return "유효하지 않은 응답입니다"
-            case .clientError(let code):
-                return "클라이언트 오류 (HTTP \(code))"
-            case .serverError(let code):
-                return "서버 오류 (HTTP \(code))"
-            case .unexpectedStatusCode(let code):
-                return "예상하지 못한 상태 코드 (HTTP \(code))"
-            case .unsupportedHTTPMethod(let method):
-                return "지원하지 않는 HTTP 메서드: \(method)"
-            }
+        if let networkError = error as? NetworkError {
+            return networkError.errorDescription ?? error.localizedDescription
         }
         
         return error.localizedDescription
