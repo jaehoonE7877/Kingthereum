@@ -31,8 +31,9 @@ final class AuthenticationInteractor: AuthenticationBusinessLogic, Authenticatio
     var isSetupMode = false
     var hasExistingWallet = false
     
-    init() {
-        self.worker = AuthenticationWorker()
+    init(presenter: AuthenticationPresentationLogic? = nil, worker: AuthenticationWorker? = nil) {
+        self.presenter = presenter
+        self.worker = worker ?? AuthenticationWorker()
         checkExistingWallet()
     }
     
@@ -200,22 +201,12 @@ final class AuthenticationInteractor: AuthenticationBusinessLogic, Authenticatio
         Task { [weak self] in
             guard let self = self else { return }
             
-            // 안전한 방식으로 지갑 주소 확인
-            do {
-                let hasWalletAddress = try await self.walletAddressManager.hasSelectedWallet()
-                let hasCompletedOnboarding = UserDefaults.standard.bool(forKey: Constants.UserDefaults.hasCompletedOnboarding)
-                
-                await MainActor.run {
-                    self.hasExistingWallet = hasWalletAddress
-                    self.isSetupMode = !hasCompletedOnboarding
-                }
-            } catch {
-                Logger.error("❌ 기존 지갑 확인 중 오류: \(error)")
-                // 오류 발생 시 보수적으로 설정
-                await MainActor.run {
-                    self.hasExistingWallet = false
-                    self.isSetupMode = true
-                }
+            let hasWalletAddress =  await self.walletAddressManager.hasSelectedWallet()
+            let hasCompletedOnboarding = UserDefaults.standard.bool(forKey: Constants.UserDefaults.hasCompletedOnboarding)
+            
+            await MainActor.run {
+                self.hasExistingWallet = hasWalletAddress
+                self.isSetupMode = !hasCompletedOnboarding
             }
         }
     }

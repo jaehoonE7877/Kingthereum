@@ -2,7 +2,6 @@ import SwiftUI
 import Core
 import DesignSystem
 import Entity
-import Factory
 import SecurityKit
 
 /// 극한 미니멀리즘 AuthenticationView 2024
@@ -116,14 +115,18 @@ struct AuthenticationView: View {
     // MARK: - VIP Architecture Components
     private let interactor: AuthenticationBusinessLogic
     private let presenter: AuthenticationPresenter
+    private let router: AuthenticationRouter
     
-    init() {
-        let interactor = AuthenticationInteractor()
-        let presenter = AuthenticationPresenter()
-        
-        interactor.presenter = presenter
+    init(interactor: AuthenticationBusinessLogic, router: AuthenticationRouter) {
         self.interactor = interactor
-        self.presenter = presenter
+        self.router = router
+        
+        // presenter는 interactor에서 가져옴 (VIP 패턴)
+        if let authInteractor = interactor as? AuthenticationInteractor {
+            self.presenter = authInteractor.presenter as? AuthenticationPresenter ?? AuthenticationPresenter()
+        } else {
+            self.presenter = AuthenticationPresenter()
+        }
     }
     
     var body: some View {
@@ -363,12 +366,12 @@ struct AuthenticationView: View {
 // MARK: - Preview
 
 #Preview("AuthenticationView") {
-    AuthenticationView()
+    SimpleViewFactory.shared.createAuthenticationView()
         .environmentObject(AppCoordinator())
 }
 
 #Preview("AuthenticationView - Dark Mode") {
-    AuthenticationView()
+    SimpleViewFactory.shared.createAuthenticationView()
         .environmentObject(AppCoordinator())
         .preferredColorScheme(.dark)
 }
