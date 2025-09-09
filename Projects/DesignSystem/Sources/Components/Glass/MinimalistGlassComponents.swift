@@ -1,5 +1,7 @@
 import SwiftUI
 
+import SwiftUI
+
 /// Kingthereum 프리미엄 미니멀리즘 글래스 컴포넌트 시스템 2024
 /// 극도로 서브틀한 글래스모피즘 효과 + 네이비+퍼플+골드 액센트
 

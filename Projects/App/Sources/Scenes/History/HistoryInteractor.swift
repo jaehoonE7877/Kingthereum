@@ -32,7 +32,7 @@ final class HistoryInteractor: HistoryBusinessLogic, HistoryDataStore {
     private var _worker: HistoryWorkerProtocol?
     private let walletAddressManager = WalletAddressManager() // 안전한 지갑 주소 관리자
     
-    @Injected(\.configurationService) private var configurationService
+    private var configurationService: ConfigurationService = ConfigurationService.shared
     
     // MARK: - Data Store
     var currentTransactions: [Transaction] = []
@@ -44,7 +44,9 @@ final class HistoryInteractor: HistoryBusinessLogic, HistoryDataStore {
     
     init(worker: HistoryWorkerProtocol? = nil) {
         self._worker = worker
-        loadWalletAddress()
+        Task {
+            await loadWalletAddress()
+        }
     }
     
     // MARK: - Lazy Worker Initialization
@@ -250,7 +252,7 @@ final class HistoryInteractor: HistoryBusinessLogic, HistoryDataStore {
     
     // MARK: - Private Methods
     
-    private func loadWalletAddress() {
+    private func loadWalletAddress() async {
         // 안전한 방식으로 지갑 주소 가져오기
         do {
             walletAddress = try await walletAddressManager.getSelectedWalletAddress()

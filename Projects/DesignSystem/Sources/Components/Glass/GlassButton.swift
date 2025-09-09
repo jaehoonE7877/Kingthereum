@@ -21,7 +21,7 @@ public struct GlassButtonStyle: ButtonStyle {
             .fontWeight(styleConfig.fontWeight)
             .foregroundStyle(
                 styleConfig.id == "wallet" ? 
-                AnyShapeStyle(LinearGradient.primaryGradient) : 
+                AnyShapeStyle(KingGradients.primary) : 
                 AnyShapeStyle(styleConfig.foregroundColor)
             )
             .frame(maxWidth: .infinity)
@@ -228,7 +228,7 @@ public struct GlassButtonStyleConfig: Sendable {
         id: "icon",
         backgroundColor: .thinMaterial,
         foregroundColor: KingColors.textPrimary,
-        borderColor: .glassBorderSecondary,
+        borderColor: KingColors.glassBorder.opacity(0.7),
         shadowColor: KingColors.glassShadow,
         shadowRadius: 4,
         shadowOffset: 2,
@@ -254,10 +254,7 @@ public struct GlassButtonStyleConfig: Sendable {
         id: "success",
         backgroundColor: .thickMaterial,
         foregroundColor: KingColors.success,
-        borderColor: Color.adaptive(
-            light: ColorKingColors.success.opacity(0.3),
-            dark: ColorKingColors.success.opacity(0.5)
-        ),
+        borderColor: KingColors.success.opacity(0.3),
         shadowColor: KingColors.glassShadow,
         shadowRadius: 8,
         shadowOffset: 4
@@ -268,10 +265,7 @@ public struct GlassButtonStyleConfig: Sendable {
         id: "warning",
         backgroundColor: .thickMaterial,
         foregroundColor: KingColors.warning,
-        borderColor: Color.adaptive(
-            light: ColorKingColors.warning.opacity(0.3),
-            dark: ColorKingColors.warning.opacity(0.5)
-        ),
+        borderColor: KingColors.warning.opacity(0.3),
         shadowColor: KingColors.glassShadow,
         shadowRadius: 8,
         shadowOffset: 4
@@ -282,10 +276,7 @@ public struct GlassButtonStyleConfig: Sendable {
         id: "error",
         backgroundColor: .thickMaterial,
         foregroundColor: KingColors.error,
-        borderColor: Color.adaptive(
-            light: ColorKingColors.error.opacity(0.3),
-            dark: ColorKingColors.error.opacity(0.5)
-        ),
+        borderColor: KingColors.error.opacity(0.3),
         shadowColor: KingColors.glassShadow,
         shadowRadius: 8,
         shadowOffset: 4
@@ -326,7 +317,7 @@ public struct GlassButtonStyleConfig: Sendable {
     }
     .background(
         LinearGradient(
-            colors: [.systemBlue, .systemPurple],
+            colors: [KingColors.trustPurple, KingColors.exclusiveGold],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )

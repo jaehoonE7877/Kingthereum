@@ -2,7 +2,6 @@ import Foundation
 import Entity
 import UIKit
 import WalletKit
-import Factory
 
 @MainActor
 protocol ReceiveBusinessLogic {
@@ -22,10 +21,21 @@ final class ReceiveInteractor: ReceiveBusinessLogic, ReceiveDataStore {
     var presenter: ReceivePresentationLogic?
     var worker: ReceiveWorker?
     
-    @Injected(\.walletService) private var walletService
+    private let walletService: WalletService
     
     // MARK: - Data Store
     var walletAddress: String?
+    
+    // MARK: - Initialization
+    init(
+        presenter: ReceivePresentationLogic? = nil,
+        worker: ReceiveWorker? = nil,
+        walletService: WalletService
+    ) {
+        self.presenter = presenter
+        self.worker = worker
+        self.walletService = walletService
+    }
     
     // MARK: - Business Logic
     

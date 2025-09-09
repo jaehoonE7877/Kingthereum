@@ -1,7 +1,6 @@
 import SwiftUI
-import Core
 
-// GlassTokens는 같은 모듈 내에 있으므로 별도 import 불필요
+import Core
 
 /// 4단계 GlassMorphism 효과를 지원하는 Glass Card 컴포넌트
 /// 효과 레벨과 테마에 따라 동적으로 스타일이 적용됨
@@ -193,7 +192,7 @@ public struct BalanceCard: View {
             HStack {
                 Image(systemName: "wallet.pass.fill")
                     .font(.title2)
-                    .foregroundStyle(LinearGradient.primaryGradient)
+                    .foregroundStyle(KingGradients.primary)
                 Spacer()
             }
             
@@ -242,8 +241,8 @@ public struct TransactionCard: View {
         
         var color: Color {
             switch self {
-            case .send: return .systemRed
-            case .receive: return .systemGreen
+            case .send: return KingColors.error
+            case .receive: return KingColors.success
             }
         }
     }
@@ -261,9 +260,9 @@ public struct TransactionCard: View {
         
         var color: Color {
             switch self {
-            case .pending: return .systemOrange
-            case .confirmed: return .systemGreen
-            case .failed: return .systemRed
+            case .pending: return KingColors.warning
+            case .confirmed: return KingColors.success
+            case .failed: return KingColors.error
             }
         }
     }
@@ -342,7 +341,7 @@ public struct ActionCard: View {
                         VStack(spacing: 8) {
                             Image(systemName: action.icon)
                                 .font(.title2)
-                                .foregroundStyle(LinearGradient.primaryGradient)
+                                .foregroundStyle(KingGradients.primary)
                             Text(action.title)
                                 .font(.caption)
                                 .foregroundColor(.primary)
@@ -373,10 +372,10 @@ public struct InfoCard: View {
         
         var iconColor: Color {
             switch self {
-            case .default: return .kingBlue
-            case .success: return .systemGreen
-            case .warning: return .systemOrange
-            case .error: return .systemRed
+            case .default: return KingColors.trustPurple
+            case .success: return KingColors.success
+            case .warning: return KingColors.warning
+            case .error: return KingColors.error
             }
         }
     }
@@ -523,7 +522,7 @@ public extension View {
     }
     .background(
         LinearGradient(
-            colors: [.systemBlue, .systemPurple],
+            colors: [KingColors.trustPurple, KingColors.exclusiveGold],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
@@ -556,7 +555,7 @@ public extension View {
     }
     .background(
         LinearGradient(
-            colors: [.systemPink, .systemOrange],
+            colors: [KingColors.exclusiveGold, KingColors.trustPurple],
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )

@@ -125,7 +125,16 @@ actor SettingsWorker: SettingsWorkerProtocol {
     
     func loadWalletProfile(address: String? = nil) async throws -> WalletProfile {
         // 안전한 방식으로 지갑 주소 가져오기
-        let walletAddress = address ?? (try await walletAddressManager.getSelectedWalletAddress()) ?? ""
+        let walletAddress: String
+        if let address = address {
+            walletAddress = address
+        } else {
+            do {
+                walletAddress = try await walletAddressManager.getSelectedWalletAddress() ?? ""
+            } catch {
+                walletAddress = ""
+            }
+        }
         
         guard !walletAddress.isEmpty else {
             throw SettingsError.walletAddressNotFound

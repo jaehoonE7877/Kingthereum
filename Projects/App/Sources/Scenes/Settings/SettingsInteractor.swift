@@ -1,7 +1,6 @@
 import Foundation
 import Entity
 import Core
-import Factory
 import SecurityKit
 
 @MainActor
@@ -26,16 +25,28 @@ final class SettingsInteractor: SettingsBusinessLogic, SettingsDataStore {
     var presenter: SettingsPresentationLogic?
     private let worker: SettingsWorkerProtocol
     private let walletAddressManager = WalletAddressManager() // 안전한 지갑 주소 관리자
-    
-    @Injected(\.displayModeService) private var displayModeService
+    private let displayModeService: DisplayModeService
     
     // MARK: - Data Store
     var currentSettings: UserSettings?
     var currentProfile: WalletProfile?
     var isLoading = false
     
+    // MARK: - Initialization
+    init(
+        presenter: SettingsPresentationLogic? = nil,
+        worker: SettingsWorkerProtocol,
+        displayModeService: DisplayModeService = DisplayModeService()
+    ) {
+        self.presenter = presenter
+        self.worker = worker
+        self.displayModeService = displayModeService
+    }
+    
     init(worker: SettingsWorkerProtocol? = nil) {
         self.worker = worker ?? SettingsWorker()
+        self.presenter = nil
+        self.displayModeService = DisplayModeService()
         loadDefaultSettings()
     }
     
@@ -51,7 +62,7 @@ final class SettingsInteractor: SettingsBusinessLogic, SettingsDataStore {
                 let settings = try await self?.worker.loadUserSettings(userId: request.userId)
                 let profile = try await self?.worker.loadWalletProfile(address: nil)
                 
-                guard let settings = settings, let profile = profile else { return }
+                guard let settings = settings else { return }
                 
                 await MainActor.run { [weak self] in
                     guard let self = self else { return }
@@ -265,9 +276,7 @@ final class SettingsInteractor: SettingsBusinessLogic, SettingsDataStore {
                     request.walletAddress
                 
                 let profile = try await self.worker.loadWalletProfile(address: walletAddress)
-                
-                guard let profile = profile else { return }
-                
+                                
                 await MainActor.run { [weak self] in
                     guard let self = self else { return }
                     

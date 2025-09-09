@@ -1,4 +1,5 @@
 import SwiftUI
+
 import Core
 
 /// 검증 상태를 나타내는 열거형
@@ -163,7 +164,7 @@ public struct GlassTextFieldStyle: Sendable {
         shadowColor: Color = KingColors.glassShadow,
         shadowRadius: CGFloat = 5,
         shadowOffset: CGFloat = 2,
-        font: Font = .body,
+        font: Font = KingTypography.bodyMedium,
         horizontalPadding: CGFloat = Constants.UI.padding,
         verticalPadding: CGFloat = Constants.UI.smallPadding,
         iconColor: Color = KingColors.textSecondary
@@ -188,7 +189,7 @@ public struct GlassTextFieldStyle: Sendable {
     public static let prominent = GlassTextFieldStyle(
         backgroundColor: .thickMaterial,
         borderColor: KingColors.glassBorder,
-        focusedBorderColor: KingColors.accent,
+        focusedBorderColor: KingColors.trustPurple,
         shadowColor: KingColors.glassShadow,
         shadowRadius: 8,
         shadowOffset: 4

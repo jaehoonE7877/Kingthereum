@@ -1,7 +1,6 @@
 import Foundation
 import Entity
 import WalletKit
-import Factory
 
 @MainActor
 protocol ReceivePresentationLogic {
@@ -14,8 +13,6 @@ protocol ReceivePresentationLogic {
 @MainActor
 final class ReceivePresenter: ReceivePresentationLogic {
     weak var viewController: ReceiveDisplayLogic?
-    
-    @Injected(\.walletService) private var walletService
     
     // MARK: - Presentation Logic
     
@@ -71,14 +68,14 @@ final class ReceivePresenter: ReceivePresentationLogic {
     }
     
     private func getCurrentWalletAddress() -> String {
-        let worker = ReceiveWorker(walletService: walletService)
+        let worker = ReceiveWorker(walletService: WalletService.shared)
         return worker.getWalletAddress()
     }
     
     // MARK: - Private Helpers
     
     private func generateQRCodeData(from address: String) -> Data? {
-        let worker = ReceiveWorker(walletService: walletService)
+        let worker = ReceiveWorker(walletService: WalletService.shared)
         return worker.generateQRCode(from: address)
     }
 }

@@ -74,7 +74,7 @@ struct WalletHomeView: View {
             }
         }
         .sheet(isPresented: $showSendView) {
-            SendView()
+            SimpleViewFactory.shared.createSendView()
         }
     }
     
