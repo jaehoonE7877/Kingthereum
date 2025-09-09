@@ -2,20 +2,69 @@ import SwiftUI
 import Core
 import DesignSystem
 
+// MARK: - SplashViewStore (성능 최적화된 상태 관리)
+@Observable
+class SplashViewStore {
+    // 시각적 애니메이션 상태 그룹
+    struct VisualState {
+        var logoScale: CGFloat = 0.95
+        var logoOpacity: Double = 0.0
+        var brandOpacity: Double = 0.0
+        var taglineOpacity: Double = 0.0
+        var subtleGlow: Double = 0.0
+        var overallOpacity: Double = 1.0
+    }
+    
+    // 프로그레스 상태 그룹
+    struct ProgressState {
+        var progressOpacity: Double = 0.0
+        var loadingProgress: Double = 0.0
+        var isCompleting: Bool = false
+    }
+    
+    // 애니메이션 제어 상태
+    struct AnimationState {
+        var breathingEffect: Bool = false
+    }
+    
+    var visualState = VisualState()
+    var progressState = ProgressState()
+    var animationState = AnimationState()
+    
+    // 🚀 성능 최적화: 상태 업데이트 액션들
+    func startFullAnimations() {
+        visualState.logoScale = 1.0
+        visualState.logoOpacity = 1.0
+        visualState.brandOpacity = 1.0
+        visualState.taglineOpacity = 1.0
+        visualState.subtleGlow = 1.0
+        progressState.progressOpacity = 1.0
+        progressState.loadingProgress = 1.0
+        animationState.breathingEffect = true
+    }
+    
+    func startReducedAnimations() {
+        visualState.logoScale = 1.0
+        visualState.logoOpacity = 1.0
+        visualState.brandOpacity = 1.0
+        visualState.taglineOpacity = 1.0
+        progressState.progressOpacity = 1.0
+        progressState.loadingProgress = 1.0
+        visualState.subtleGlow = 1.0
+    }
+    
+    func completeAnimation() {
+        progressState.isCompleting = true
+        visualState.overallOpacity = 0.0
+    }
+}
+
 /// Phase 2.3: 럭셔리 미니멀 브랜딩 SplashView
 /// Modern Minimalism + Premium Fintech + Luxury Branding
 /// Revolut, N26 수준의 프리미엄 피나테크 브랜딩
 struct SplashView: View {
-    @State private var logoScale: CGFloat = 0.95
-    @State private var logoOpacity: Double = 0.0
-    @State private var brandOpacity: Double = 0.0
-    @State private var taglineOpacity: Double = 0.0
-    @State private var progressOpacity: Double = 0.0
-    @State private var subtleGlow: Double = 0.0
-    @State private var breathingEffect: Bool = false
-    @State private var loadingProgress: Double = 0.0
-    @State private var isCompleting: Bool = false
-    @State private var overallOpacity: Double = 1.0
+    // 🚀 성능 최적화: @State 10개 → ViewStore 1개로 통합 (90% 감소)
+    @State private var viewStore = SplashViewStore()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     
     var body: some View {
@@ -37,7 +86,7 @@ struct SplashView: View {
                     .padding(.bottom, 80)
             }
         }
-        .opacity(overallOpacity)
+        .opacity(viewStore.visualState.overallOpacity)
         .onAppear {
             startPremiumAnimations()
         }
@@ -62,10 +111,10 @@ struct SplashView: View {
             .ignoresSafeArea()
             
             // 서브틀한 앰비언트 글로우 (호흡 효과)
-            if breathingEffect {
+            if viewStore.animationState.breathingEffect {
                 RadialGradient(
                     colors: [
-                        KingColors.exclusiveGold.opacity(subtleGlow * 0.02),
+                        KingColors.exclusiveGold.opacity(viewStore.visualState.subtleGlow * 0.02),
                         Color.clear
                     ],
                     center: .center,
@@ -76,7 +125,7 @@ struct SplashView: View {
                 .animation(
                     .easeInOut(duration: 4.0)
                     .repeatForever(autoreverses: true),
-                    value: subtleGlow
+                    value: viewStore.visualState.subtleGlow
                 )
             }
         }
@@ -88,18 +137,18 @@ struct SplashView: View {
             // 프리미엄 로고 아이콘 - 미묘한 호흡 효과
             PremiumAppIcon()
                 .frame(width: 120, height: 120)
-                .scaleEffect(logoScale + (breathingEffect ? 0.02 : 0.0))
-                .opacity(logoOpacity)
+                .scaleEffect(viewStore.visualState.logoScale + (viewStore.animationState.breathingEffect ? 0.02 : 0.0))
+                .opacity(viewStore.visualState.logoOpacity)
                 .shadow(
-                    color: KingColors.exclusiveGold.opacity(subtleGlow * 0.3),
-                    radius: subtleGlow * 15,
+                    color: KingColors.exclusiveGold.opacity(viewStore.visualState.subtleGlow * 0.3),
+                    radius: viewStore.visualState.subtleGlow * 15,
                     x: 0,
-                    y: subtleGlow * 8
+                    y: viewStore.visualState.subtleGlow * 8
                 )
                 .animation(
                     .easeInOut(duration: 3.0)
                     .repeatForever(autoreverses: true),
-                    value: breathingEffect
+                    value: viewStore.animationState.breathingEffect
                 )
             
             // 프리미엄 브랜드명
@@ -118,7 +167,7 @@ struct SplashView: View {
                             endPoint: .trailing
                         )
                     )
-                    .opacity(brandOpacity)
+                    .opacity(viewStore.visualState.brandOpacity)
                     .shadow(color: Color.black.opacity(0.2), radius: 1, x: 0, y: 0.5)
                 
                 // 프리미엄 태그라인
@@ -126,7 +175,7 @@ struct SplashView: View {
                     .font(KingTypography.bodyMedium)
                     .fontWeight(.medium)
                     .foregroundColor(KingColors.textSecondary)
-                    .opacity(taglineOpacity)
+                    .opacity(viewStore.visualState.taglineOpacity)
                     .shadow(color: Color.black.opacity(0.15), radius: 0.5, x: 0, y: 0.5)
             }
         }
@@ -147,7 +196,7 @@ struct SplashView: View {
                 
                 // 프로그레스 서클 - 부드러운 채움 효과
                 Circle()
-                    .trim(from: 0, to: loadingProgress)
+                    .trim(from: 0, to: viewStore.progressState.loadingProgress)
                     .stroke(
                         LinearGradient(
                             colors: [
@@ -161,18 +210,18 @@ struct SplashView: View {
                     )
                     .frame(width: 28, height: 28)
                     .rotationEffect(.degrees(-90))
-                    .animation(.easeInOut(duration: 2.5), value: loadingProgress)
+                    .animation(.easeInOut(duration: 2.5), value: viewStore.progressState.loadingProgress)
             }
-            .opacity(progressOpacity)
+            .opacity(viewStore.progressState.progressOpacity)
             
             // 프리미엄 로딩 텍스트 - 동적 텍스트 변경
-            Text(isCompleting ? "Premium Experience Ready" : "Initializing Premium Experience...")
+            Text(viewStore.progressState.isCompleting ? "Premium Experience Ready" : "Initializing Premium Experience...")
                 .font(KingTypography.caption)
                 .fontWeight(.regular)
-                .foregroundColor(isCompleting ? KingColors.exclusiveGold : KingColors.textTertiary)
-                .opacity(progressOpacity)
+                .foregroundColor(viewStore.progressState.isCompleting ? KingColors.exclusiveGold : KingColors.textTertiary)
+                .opacity(viewStore.progressState.progressOpacity)
                 .shadow(color: Color.black.opacity(0.1), radius: 0.5, x: 0, y: 0.25)
-                .animation(.easeInOut(duration: 0.8), value: isCompleting)
+                .animation(.easeInOut(duration: 0.8), value: viewStore.progressState.isCompleting)
         }
     }
     
@@ -190,62 +239,55 @@ struct SplashView: View {
     private func startFullAnimations() {
         // 1. 미묘한 배경 글로우 시작
         withAnimation(.easeIn(duration: 0.6)) {
-            breathingEffect = true
-            subtleGlow = 1.0
+            viewStore.animationState.breathingEffect = true
+            viewStore.visualState.subtleGlow = 1.0
         }
         
         // 2. 로고 우아한 등장 - 부드러운 페이드인과 스케일
         withAnimation(.spring(response: 1.2, dampingFraction: 0.8).delay(0.3)) {
-            logoScale = 1.0
-            logoOpacity = 1.0
+            viewStore.visualState.logoScale = 1.0
+            viewStore.visualState.logoOpacity = 1.0
         }
         
         // 3. 브랜드명 세련된 등장
         withAnimation(.easeOut(duration: 0.8).delay(0.7)) {
-            brandOpacity = 1.0
+            viewStore.visualState.brandOpacity = 1.0
         }
         
         // 4. 태그라인 미니멀 등장
         withAnimation(.easeOut(duration: 0.6).delay(1.0)) {
-            taglineOpacity = 1.0
+            viewStore.visualState.taglineOpacity = 1.0
         }
         
         // 5. 프로그레스 인디케이터 등장
         withAnimation(.easeOut(duration: 0.5).delay(1.2)) {
-            progressOpacity = 1.0
+            viewStore.progressState.progressOpacity = 1.0
         }
         
         // 6. 프로그레스 채움 애니메이션 - 자연스러운 진행
         withAnimation(.easeInOut(duration: 2.0).delay(1.5)) {
-            loadingProgress = 1.0
+            viewStore.progressState.loadingProgress = 1.0
         }
         
         // 7. 완료 상태로 전환 - 텍스트 변경
         withAnimation(.easeInOut(duration: 0.4).delay(2.4)) {
-            isCompleting = true
+            viewStore.progressState.isCompleting = true
         }
         
         // 8. 전체 페이드아웃 - 부드러운 전환을 위한 준비
         withAnimation(.easeInOut(duration: 0.6).delay(3.0)) {
-            overallOpacity = 0.0
+            viewStore.visualState.overallOpacity = 0.0
         }
     }
     
     private func startReducedAnimations() {
-        // 모션 감소 - 즉시 표시
-        logoScale = 1.0
-        logoOpacity = 1.0
-        brandOpacity = 1.0
-        taglineOpacity = 1.0
-        progressOpacity = 1.0
-        loadingProgress = 1.0
-        subtleGlow = 1.0
+        // ViewStore의 액션 사용
+        viewStore.startReducedAnimations()
         
         // 짧은 지연 후 완료
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             withAnimation(.easeOut(duration: 0.3)) {
-                isCompleting = true
-                overallOpacity = 0.0
+                viewStore.completeAnimation()
             }
         }
     }

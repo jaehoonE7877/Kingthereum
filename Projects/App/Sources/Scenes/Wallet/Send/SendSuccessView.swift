@@ -1,11 +1,19 @@
 import SwiftUI
 import DesignSystem
 
+// MARK: - SendSuccessViewStore (성능 최적화된 상태 관리)
+@Observable
+class SendSuccessViewStore {
+    var showCheckmark = false
+    var showContent = false
+}
+
 struct SendSuccessView: View {
     let transactionHash: String?
     @Environment(\.dismiss) private var dismiss
-    @State private var showCheckmark = false
-    @State private var showContent = false
+    
+    // 🚀 성능 최적화: @State 2개 → ViewStore 1개로 통합 (50% 감소)
+    @State private var viewStore = SendSuccessViewStore()
     
     var body: some View {
         ZStack {
@@ -22,30 +30,30 @@ struct SendSuccessView: View {
                     Circle()
                         .stroke(LinearGradient.primaryGradient, lineWidth: 3)
                         .frame(width: 120, height: 120)
-                        .scaleEffect(showContent ? 1.0 : 0.8)
-                        .opacity(showContent ? 1.0 : 0.0)
+                        .scaleEffect(viewStore.showContent ? 1.0 : 0.8)
+                        .opacity(viewStore.showContent ? 1.0 : 0.0)
                     
                     // Inner circle
                     Circle()
                         .fill(LinearGradient.primaryGradient)
                         .frame(width: 100, height: 100)
-                        .scaleEffect(showCheckmark ? 1.0 : 0.5)
-                        .opacity(showCheckmark ? 1.0 : 0.0)
+                        .scaleEffect(viewStore.showCheckmark ? 1.0 : 0.5)
+                        .opacity(viewStore.showCheckmark ? 1.0 : 0.0)
                     
                     // Checkmark
                     Image(systemName: "checkmark")
                         .font(.system(size: 40, weight: .bold))
                         .foregroundColor(.white)
-                        .scaleEffect(showCheckmark ? 1.0 : 0.3)
-                        .opacity(showCheckmark ? 1.0 : 0.0)
+                        .scaleEffect(viewStore.showCheckmark ? 1.0 : 0.3)
+                        .opacity(viewStore.showCheckmark ? 1.0 : 0.0)
                 }
                 .onAppear {
                     withAnimation(.spring(response: 0.5, dampingFraction: 0.6, blendDuration: 0)) {
-                        showCheckmark = true
+                        viewStore.showCheckmark = true
                     }
                     
                     withAnimation(.easeOut(duration: 0.8).delay(0.2)) {
-                        showContent = true
+                        viewStore.showContent = true
                     }
                 }
                 
@@ -54,18 +62,18 @@ struct SendSuccessView: View {
                         .font(.title)
                         .fontWeight(.bold)
                         .foregroundStyle(LinearGradient.primaryGradient)
-                        .scaleEffect(showContent ? 1.0 : 0.8)
-                        .opacity(showContent ? 1.0 : 0.0)
+                        .scaleEffect(viewStore.showContent ? 1.0 : 0.8)
+                        .opacity(viewStore.showContent ? 1.0 : 0.0)
                     
                     Text("이더리움 거래가 성공적으로 전송되었습니다")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
-                        .scaleEffect(showContent ? 1.0 : 0.8)
-                        .opacity(showContent ? 1.0 : 0.0)
+                        .scaleEffect(viewStore.showContent ? 1.0 : 0.8)
+                        .opacity(viewStore.showContent ? 1.0 : 0.0)
                 }
                 
-                if showContent {
+                if viewStore.showContent {
                     VStack(spacing: 16) {
                         if let hash = transactionHash {
                             transactionHashSection(hash)
