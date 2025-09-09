@@ -6,7 +6,11 @@ let project = Project.makeModule(
     hasResources: false,
     dependencies: [
         .core,
-        .web3swift
+        .entity,
+        .securityKit,
+        .web3swift,
+        .bigInt,
+        .cryptoSwift
     ],
     hasTests: true
 )

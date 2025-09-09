@@ -11,6 +11,8 @@ extension TargetDependency {
     
     // MARK: - External Dependencies - Ethereum & Web3
     public static let web3swift = TargetDependency.external(name: "web3swift")
+    public static let bigInt = TargetDependency.external(name: "BigInt")
+    public static let cryptoSwift = TargetDependency.external(name: "CryptoSwift")
     
     // MARK: - External Dependencies - Security
     public static let keychainAccess = TargetDependency.external(name: "KeychainAccess")

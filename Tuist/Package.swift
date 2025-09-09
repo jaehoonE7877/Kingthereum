@@ -27,8 +27,11 @@ let packageSettings = PackageSettings(
     productTypes: [
         "KeychainAccess": .framework,
         "Factory": .framework,
+        "web3swift": .framework,
         "BigInt": .framework,
-        "CryptoSwift": .framework
+        "CryptoSwift": .framework,
+        "secp256k1": .framework,
+        "secp256k1_bindings": .staticLibrary
     ]
 )
 #endif
