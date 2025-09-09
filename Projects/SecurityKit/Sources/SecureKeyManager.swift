@@ -2,6 +2,7 @@ import Foundation
 import Security
 import CryptoKit
 import Core
+import Entity
 
 /// 안전한 개인키 관리자
 /// Secure Enclave 및 Keychain을 사용하여 개인키를 안전하게 보호
@@ -13,7 +14,7 @@ public actor SecureKeyManager {
     public struct SecureKeyReference: Sendable {
         let tag: String
         let isSecureEnclaveKey: Bool
-        let publicKeyData: Data
+        public let publicKeyData: Data
         
         init(tag: String, isSecureEnclaveKey: Bool, publicKeyData: Data) {
             self.tag = tag
@@ -122,13 +123,7 @@ public actor SecureKeyManager {
             kSecAttrTokenID: kSecAttrTokenIDSecureEnclave,
             kSecPrivateKeyAttrs: [
                 kSecAttrIsPermanent: true,
-                kSecAttrApplicationTag: {
-                    guard let data = tag.data(using: .utf8) else {
-                        Logger.error("❌ 키 태그를 UTF-8 데이터로 변환 실패")
-                        return Data() // 빈 데이터 fallback
-                    }
-                    return data
-                }(),
+                kSecAttrApplicationTag: tag.data(using: .utf8) ?? Data(),
                 kSecAttrAccessControl: accessControl
             ]
         ]
@@ -181,9 +176,10 @@ public actor SecureKeyManager {
         // 공개키 생성 (secp256k1)
         let publicKeyData = try derivePublicKey(from: privateKeyData)
         
-        // 메모리에서 개인키 데이터 즉시 제거
-        privateKeyData.withUnsafeMutableBytes { bytes in
-            bytes.bindMemory(to: UInt8.self).initialize(repeating: 0)
+        // 메모리에서 개인키 데이터 즉시 제거 (Swift 6.0 안전한 방식)
+        var mutablePrivateKeyData = privateKeyData
+        _ = withUnsafeMutableBytes(of: &mutablePrivateKeyData) { bytes in
+            bytes.initializeMemory(as: UInt8.self, repeating: 0)
         }
         
         Logger.debug("✅ 안전한 Keychain 키 생성 완료")
@@ -220,13 +216,7 @@ public actor SecureKeyManager {
         // Keychain에서 개인키 참조 가져오기
         let query: [CFString: Any] = [
             kSecClass: kSecClassKey,
-            kSecAttrApplicationTag: {
-                guard let data = tag.data(using: .utf8) else {
-                    Logger.error("❌ 서명용 키 태그를 UTF-8 데이터로 변환 실패")
-                    return Data() // 빈 데이터 fallback
-                }
-                return data
-            }(),
+            kSecAttrApplicationTag: tag.data(using: .utf8) ?? Data(),
             kSecAttrKeyType: kSecAttrKeyTypeECSECPrimeRandom,
             kSecReturnRef: true
         ]
@@ -239,11 +229,8 @@ public actor SecureKeyManager {
             throw SecurityError.keyNotFound(tag)
         }
         
-        // 안전한 타입 캐스팅
-        guard let privateKey = item as? SecKey else {
-            Logger.error("❌ 잘못된 키 타입")
-            throw SecurityError.authenticationRequired // 기존 에러 케이스 사용
-        }
+        // 안전한 타입 캐스팅 - SecKey는 Core Foundation 타입이므로 항상 성공
+        let privateKey = item as! SecKey
         
         // 메시지 해시 (SHA-256)
         let messageHash = SHA256.hash(data: message)
@@ -275,9 +262,10 @@ public actor SecureKeyManager {
         // 개인키 복호화
         let privateKeyData = try decryptData(encryptedKey, with: encryptionKey)
         defer {
-            // 메모리에서 개인키 즉시 제거
-            privateKeyData.withUnsafeMutableBytes { bytes in
-                bytes.bindMemory(to: UInt8.self).initialize(repeating: 0)
+            // 메모리에서 개인키 즉시 제거 (Swift 6.0 안전한 방식)
+            var mutableData = privateKeyData
+            _ = withUnsafeMutableBytes(of: &mutableData) { bytes in
+                bytes.initializeMemory(as: UInt8.self, repeating: 0)
             }
         }
         
@@ -299,13 +287,7 @@ public actor SecureKeyManager {
         
         let query: [CFString: Any] = [
             kSecClass: kSecClassKey,
-            kSecAttrApplicationTag: {
-                guard let data = keyReference.tag.data(using: .utf8) else {
-                    Logger.error("❌ 삭제용 키 태그를 UTF-8 데이터로 변환 실패")
-                    return Data() // 빈 데이터 fallback
-                }
-                return data
-            }()
+            kSecAttrApplicationTag: keyReference.tag.data(using: .utf8) ?? Data()
         ]
         
         let status = SecItemDelete(query as CFDictionary)
@@ -349,7 +331,10 @@ public actor SecureKeyManager {
     private func encryptData(_ data: Data, with key: Data) throws -> Data {
         let symmetricKey = SymmetricKey(data: key)
         let sealedBox = try AES.GCM.seal(data, using: symmetricKey)
-        return sealedBox.combined!
+        guard let combined = sealedBox.combined else {
+            throw SecurityError.encryptionFailed
+        }
+        return combined
     }
     
     /// 데이터 AES-GCM 복호화
@@ -454,21 +439,38 @@ public actor SecureKeyManager {
 private enum SecureEnclave {
     /// Secure Enclave 사용 가능 여부
     static var isAvailable: Bool {
+        // 시뮬레이터에서는 Secure Enclave 사용 불가
+        #if targetEnvironment(simulator)
+        return false
+        #else
         // 실제 디바이스에서 Secure Enclave 지원 여부 확인
-        return TARGET_OS_SIMULATOR == 0 && 
-               SecKeyIsAlgorithmSupported(kSecAttrKeyTypeECSECPrimeRandom as! SecKey, .encrypt, .eciesEncryptionCofactorX963SHA256AESGCM)
+        // iOS 9.0 이상에서만 지원되며, 하드웨어적으로 지원되는 기기인지 확인
+        if #available(iOS 9.0, *) {
+            // Secure Enclave 키 생성이 가능한지 테스트
+            let attributes: [CFString: Any] = [
+                kSecAttrKeyType: kSecAttrKeyTypeECSECPrimeRandom,
+                kSecAttrKeySizeInBits: 256,
+                kSecAttrTokenID: kSecAttrTokenIDSecureEnclave
+            ]
+            
+            var error: Unmanaged<CFError>?
+            let testKey = SecKeyCreateRandomKey(attributes as CFDictionary, &error)
+            
+            if let testKey = testKey {
+                // 테스트 키 삭제
+                let deleteQuery: [CFString: Any] = [
+                    kSecClass: kSecClassKey,
+                    kSecValueRef: testKey
+                ]
+                SecItemDelete(deleteQuery as CFDictionary)
+                return true
+            }
+            
+            return false
+        } else {
+            return false
+        }
+        #endif
     }
 }
 
-// MARK: - 보안 에러 확장
-
-extension SecurityError {
-    static let secureEnclaveUnavailable = SecurityError.custom("Secure Enclave를 사용할 수 없습니다")
-    static let keyGenerationFailed = { (reason: String) in SecurityError.custom("키 생성 실패: \(reason)") }
-    static let publicKeyExtractionFailed = SecurityError.custom("공개키 추출에 실패했습니다")
-    static let keyNotFound = { (tag: String) in SecurityError.custom("키를 찾을 수 없습니다: \(tag)") }
-    static let signingFailed = { (reason: String) in SecurityError.custom("서명 실패: \(reason)") }
-    static let keyDeletionFailed = { (reason: String) in SecurityError.custom("키 삭제 실패: \(reason)") }
-    static let randomGenerationFailed = SecurityError.custom("안전한 랜덤 데이터 생성 실패")
-    static let keychainStoreFailed = { (reason: String) in SecurityError.custom("Keychain 저장 실패: \(reason)") }
-}

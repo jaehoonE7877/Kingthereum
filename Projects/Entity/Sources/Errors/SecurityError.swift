@@ -1,7 +1,7 @@
 import Foundation
 
 /// 보안 관련 오류를 나타내는 열거형
-public enum SecurityError: LocalizedError {
+public enum SecurityError: LocalizedError, Sendable {
     case keychainAccessFailed
     case biometricAuthenticationFailed
     case pinVerificationFailed
@@ -12,7 +12,21 @@ public enum SecurityError: LocalizedError {
     case biometricNotAvailable
     case biometricNotEnrolled
     case biometricLockout
-    case unknownError(Error)
+    case setupFailed
+    case unknownError(String)
+    
+    // SecurityKit에서 사용하는 추가 케이스들
+    case secureEnclaveUnavailable
+    case keyGenerationFailed(String)
+    case publicKeyExtractionFailed
+    case keyNotFound(String)
+    case signingFailed(String)
+    case keyDeletionFailed(String)
+    case randomGenerationFailed
+    case keychainStoreFailed(String)
+    case biometricFailedPINRequired
+    case pinRequired
+    case noSecuritySetup
     
     public var errorDescription: String? {
         switch self {
@@ -36,8 +50,32 @@ public enum SecurityError: LocalizedError {
             return "생체 인증이 등록되지 않았습니다"
         case .biometricLockout:
             return "생체 인증이 잠금되었습니다"
-        case .unknownError(let error):
-            return "알 수 없는 보안 오류: \(error.localizedDescription)"
+        case .setupFailed:
+            return "설정에 실패했습니다"
+        case .unknownError(let errorMessage):
+            return "알 수 없는 보안 오류: \(errorMessage)"
+        case .secureEnclaveUnavailable:
+            return "Secure Enclave를 사용할 수 없습니다"
+        case .keyGenerationFailed(let reason):
+            return "키 생성 실패: \(reason)"
+        case .publicKeyExtractionFailed:
+            return "공개키 추출에 실패했습니다"
+        case .keyNotFound(let identifier):
+            return "키를 찾을 수 없습니다: \(identifier)"
+        case .signingFailed(let reason):
+            return "서명 실패: \(reason)"
+        case .keyDeletionFailed(let reason):
+            return "키 삭제 실패: \(reason)"
+        case .randomGenerationFailed:
+            return "안전한 랜덤 데이터 생성 실패"
+        case .keychainStoreFailed(let reason):
+            return "Keychain 저장 실패: \(reason)"
+        case .biometricFailedPINRequired:
+            return "생체 인증에 실패했습니다. PIN을 입력해 주세요"
+        case .pinRequired:
+            return "계속하려면 PIN을 입력해 주세요"
+        case .noSecuritySetup:
+            return "보안 설정이 되어 있지 않습니다"
         }
     }
 }
@@ -91,7 +129,7 @@ public enum BiometricType: Sendable {
 }
 
 /// 생체 인증 관련 오류를 나타내는 열거형
-public enum BiometricError: LocalizedError, Equatable {
+public enum BiometricError: LocalizedError, Equatable, Sendable {
     case notAvailable
     case notEnrolled
     case authenticationFailed
@@ -100,7 +138,7 @@ public enum BiometricError: LocalizedError, Equatable {
     case biometryLockout
     case biometryNotAvailable
     case invalidContext
-    case unknown(Error)
+    case unknown(String)
     
     public var errorDescription: String? {
         switch self {
@@ -120,8 +158,8 @@ public enum BiometricError: LocalizedError, Equatable {
             return "생체 인증이 비활성화되었습니다"
         case .invalidContext:
             return "유효하지 않은 인증 컨텍스트입니다"
-        case .unknown(let error):
-            return "알 수 없는 오류: \(error.localizedDescription)"
+        case .unknown(let errorMessage):
+            return "알 수 없는 오류: \(errorMessage)"
         }
     }
     
@@ -136,8 +174,8 @@ public enum BiometricError: LocalizedError, Equatable {
              (.biometryNotAvailable, .biometryNotAvailable),
              (.invalidContext, .invalidContext):
             return true
-        case (.unknown(let lhsError), .unknown(let rhsError)):
-            return lhsError.localizedDescription == rhsError.localizedDescription
+        case (.unknown(let lhsMessage), .unknown(let rhsMessage)):
+            return lhsMessage == rhsMessage
         default:
             return false
         }
@@ -145,7 +183,7 @@ public enum BiometricError: LocalizedError, Equatable {
 }
 
 /// PIN 관련 오류를 나타내는 열거형
-public enum PINError: LocalizedError {
+public enum PINError: LocalizedError, Sendable {
     case invalidPIN
     case pinMismatch
     case tooManyAttempts
@@ -153,7 +191,7 @@ public enum PINError: LocalizedError {
     case pinTooShort
     case pinTooLong
     case keychainError
-    case unknown(Error)
+    case unknown(String)
     
     public var errorDescription: String? {
         switch self {
@@ -171,8 +209,8 @@ public enum PINError: LocalizedError {
             return "PIN이 너무 깁니다"
         case .keychainError:
             return "키체인 오류가 발생했습니다"
-        case .unknown(let error):
-            return "알 수 없는 오류: \(error.localizedDescription)"
+        case .unknown(let errorMessage):
+            return "알 수 없는 오류: \(errorMessage)"
         }
     }
 }

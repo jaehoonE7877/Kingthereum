@@ -1,6 +1,7 @@
 import Foundation
 import Security
 import Core
+import Entity
 
 /// 지갑 주소 안전 관리자
 /// UserDefaults 대신 Keychain을 사용하여 지갑 주소를 안전하게 저장
@@ -87,7 +88,7 @@ public actor WalletAddressManager {
         // JSON으로 인코딩
         let jsonData = try JSONEncoder().encode(addresses)
         guard let jsonString = String(data: jsonData, encoding: .utf8) else {
-            throw SecurityError.custom("지갑 주소 목록 인코딩 실패")
+            throw Entity.SecurityError.encryptionFailed
         }
         
         try await storeStringInKeychain(
@@ -114,7 +115,7 @@ public actor WalletAddressManager {
         }
         
         guard let jsonData = jsonString.data(using: .utf8) else {
-            throw SecurityError.custom("지갑 주소 목록 디코딩 실패")
+            throw Entity.SecurityError.decryptionFailed
         }
         
         let addresses = try JSONDecoder().decode([String].self, from: jsonData)
@@ -239,7 +240,7 @@ public actor WalletAddressManager {
         
         guard status == errSecSuccess else {
             Logger.error("❌ 키체인 저장 실패: \(status)")
-            throw SecurityError.custom("키체인 저장 실패: \(status)")
+            throw Entity.SecurityError.keychainAccessFailed
         }
     }
     
@@ -263,12 +264,12 @@ public actor WalletAddressManager {
                 return nil // 항목이 없는 것은 정상
             }
             Logger.error("❌ 키체인 조회 실패: \(status)")
-            throw SecurityError.custom("키체인 조회 실패: \(status)")
+            throw Entity.SecurityError.keychainAccessFailed
         }
         
         guard let data = item as? Data,
               let string = String(data: data, encoding: .utf8) else {
-            throw SecurityError.custom("키체인 데이터 변환 실패")
+            throw Entity.SecurityError.decryptionFailed
         }
         
         return string
@@ -289,7 +290,7 @@ public actor WalletAddressManager {
         
         guard status == errSecSuccess || status == errSecItemNotFound else {
             Logger.error("❌ 키체인 삭제 실패: \(status)")
-            throw SecurityError.custom("키체인 삭제 실패: \(status)")
+            throw Entity.SecurityError.keychainAccessFailed
         }
     }
 }
