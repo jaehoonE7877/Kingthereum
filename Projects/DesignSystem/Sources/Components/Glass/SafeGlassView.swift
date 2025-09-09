@@ -13,6 +13,7 @@ public struct SafeGlassView<Content: View>: View {
     
     @State private var animationOffset: CGSize = .zero
     @State private var isAnimating: Bool = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     
     // MARK: - Initialization
     
@@ -80,8 +81,9 @@ public struct SafeGlassView<Content: View>: View {
                 .offset(animationOffset)
                 .opacity(isAnimating ? 0.7 : 0.0)
                 .animation(
-                    .easeInOut(duration: 2.0)
-                    .repeatForever(autoreverses: true),
+                    reduceMotion ? 
+                        .easeInOut(duration: 0) : 
+                        .easeInOut(duration: 2.0).repeatForever(autoreverses: true),
                     value: isAnimating
                 )
             
@@ -111,10 +113,16 @@ public struct SafeGlassView<Content: View>: View {
     
     // MARK: - Animation
     
+    // 🚀 성능 최적화: 접근성을 고려한 애니메이션
     private func startContinuousAnimation() {
-        withAnimation {
-            isAnimating = true
-            animationOffset = CGSize(width: 200, height: 200)
+        if !reduceMotion {
+            withAnimation {
+                isAnimating = true
+                animationOffset = CGSize(width: 200, height: 200)
+            }
+        } else {
+            // 모션 감소 설정 시 애니메이션 비활성화
+            isAnimating = false
         }
     }
 }

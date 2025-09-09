@@ -16,6 +16,7 @@ struct SplashView: View {
     @State private var loadingProgress: Double = 0.0
     @State private var isCompleting: Bool = false
     @State private var overallOpacity: Double = 1.0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     
     var body: some View {
         ZStack {
@@ -175,7 +176,18 @@ struct SplashView: View {
         }
     }
     
+    // 🚀 성능 최적화: 접근성을 고려한 스플래시 애니메이션
     private func startPremiumAnimations() {
+        if !reduceMotion {
+            // 일반 사용자 - 프리미엄 애니메이션
+            startFullAnimations()
+        } else {
+            // 모션 감소 사용자 - 최소 애니메이션
+            startReducedAnimations()
+        }
+    }
+    
+    private func startFullAnimations() {
         // 1. 미묘한 배경 글로우 시작
         withAnimation(.easeIn(duration: 0.6)) {
             breathingEffect = true
@@ -216,6 +228,25 @@ struct SplashView: View {
         // 8. 전체 페이드아웃 - 부드러운 전환을 위한 준비
         withAnimation(.easeInOut(duration: 0.6).delay(3.0)) {
             overallOpacity = 0.0
+        }
+    }
+    
+    private func startReducedAnimations() {
+        // 모션 감소 - 즉시 표시
+        logoScale = 1.0
+        logoOpacity = 1.0
+        brandOpacity = 1.0
+        taglineOpacity = 1.0
+        progressOpacity = 1.0
+        loadingProgress = 1.0
+        subtleGlow = 1.0
+        
+        // 짧은 지연 후 완료
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            withAnimation(.easeOut(duration: 0.3)) {
+                isCompleting = true
+                overallOpacity = 0.0
+            }
         }
     }
 }

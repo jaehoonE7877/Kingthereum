@@ -9,6 +9,7 @@ public struct LoadingView: View {
     let message: String?
     
     @State private var isAnimating = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     
     public init(
         style: LoadingStyle = .spinner,
@@ -34,6 +35,9 @@ public struct LoadingView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
             startAnimation()
+        }
+        .onDisappear {
+            stopAnimation()
         }
     }
     
@@ -61,7 +65,9 @@ public struct LoadingView: View {
             .frame(width: size.dimension, height: size.dimension)
             .rotationEffect(.degrees(isAnimating ? 360 : 0))
             .animation(
-                .linear(duration: 1.0).repeatForever(autoreverses: false),
+                reduceMotion ? 
+                    .linear(duration: 0) : 
+                    .linear(duration: 1.0).repeatForever(autoreverses: false),
                 value: isAnimating
             )
     }
@@ -70,13 +76,15 @@ public struct LoadingView: View {
         HStack(spacing: 8) {
             ForEach(0..<3) { index in
                 Circle()
-                    .fill(LinearGradient.primaryGradient)
+                    .fill(KingGradients.primary)
                     .frame(width: size.dotSize, height: size.dotSize)
                     .scaleEffect(isAnimating ? 1.0 : 0.5)
                     .animation(
-                        .easeInOut(duration: 0.6)
-                        .repeatForever(autoreverses: true)
-                        .delay(Double(index) * 0.2),
+                        reduceMotion ? 
+                            .easeInOut(duration: 0) : 
+                            .easeInOut(duration: 0.6)
+                            .repeatForever(autoreverses: true)
+                            .delay(Double(index) * 0.2),
                         value: isAnimating
                     )
             }
@@ -91,7 +99,9 @@ public struct LoadingView: View {
                     .frame(height: size.skeletonHeight)
                     .opacity(isAnimating ? 0.3 : 0.6)
                     .animation(
-                        .easeInOut(duration: 1.0).repeatForever(autoreverses: true),
+                        reduceMotion ? 
+                            .easeInOut(duration: 0) : 
+                            .easeInOut(duration: 1.0).repeatForever(autoreverses: true),
                         value: isAnimating
                     )
             }
@@ -101,19 +111,34 @@ public struct LoadingView: View {
     
     private var pulseView: some View {
         Circle()
-            .fill(LinearGradient.primaryGradient.opacity(0.3))
+            .fill(KingGradients.primary.opacity(0.3))
             .frame(width: size.dimension, height: size.dimension)
             .scaleEffect(isAnimating ? 1.2 : 0.8)
             .opacity(isAnimating ? 0.3 : 0.8)
             .animation(
-                .easeInOut(duration: 1.0).repeatForever(autoreverses: true),
+                reduceMotion ? 
+                    .easeInOut(duration: 0) : 
+                    .easeInOut(duration: 1.0).repeatForever(autoreverses: true),
                 value: isAnimating
             )
     }
     
+    // 🚀 성능 최적화: 접근성을 고려한 애니메이션 시작
     private func startAnimation() {
-        withAnimation {
+        if !reduceMotion {
+            withAnimation {
+                isAnimating = true
+            }
+        } else {
+            // 모션 감소 설정 시 애니메이션 없이 상태만 변경
             isAnimating = true
+        }
+    }
+    
+    // 🚀 성능 최적화: 애니메이션 정리로 메모리 누수 방지
+    private func stopAnimation() {
+        withAnimation(.easeOut(duration: 0.3)) {
+            isAnimating = false
         }
     }
 }
