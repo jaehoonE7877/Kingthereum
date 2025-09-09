@@ -80,9 +80,16 @@ struct WalletHomeView: View {
     
     // MARK: - Actions
     
+    // 🚀 성능 최적화: 스크롤 추적 스로틀링으로 CPU 부하 감소
     private func handleScrollOffset(_ offset: CGFloat) {
         let currentOffset = -offset
         let threshold: CGFloat = 100
+        let scrollThreshold: CGFloat = 10 // 스로틀링 임계값
+        
+        // 스로틀링: 최소 10pt 이상 변화가 있을 때만 처리
+        guard abs(currentOffset - lastScrollOffset) > scrollThreshold else {
+            return
+        }
         
         withAnimation(.easeInOut(duration: 0.2)) {
             isScrollingDown = currentOffset > lastScrollOffset && currentOffset > threshold
@@ -108,8 +115,17 @@ struct PremiumBalanceCard: View {
     let isLoading: Bool
     let isScrollingDown: Bool
     
-    @State private var pulseAnimation = false
-    @State private var glowIntensity: Double = 0.3
+    // 🚀 성능 최적화: 단일 애니메이션 페이즈로 통합
+    @State private var animationPhase: CGFloat = 0.0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    
+    // 계산 프로퍼티로 성능 최적화
+    private var glowIntensity: Double { 
+        0.3 + (animationPhase * 0.5) 
+    }
+    private var pulseScale: CGFloat { 
+        1.0 + (animationPhase * 0.08) 
+    }
     
     var body: some View {
         VStack(spacing: 28) {
@@ -148,7 +164,7 @@ struct PremiumBalanceCard: View {
                             x: 0,
                             y: 0
                         )
-                        .scaleEffect(pulseAnimation ? 1.08 : 1.0)
+                        .scaleEffect(pulseScale)
                     
                     Text("Ξ")
                         .font(.title)
@@ -232,11 +248,11 @@ struct PremiumBalanceCard: View {
         .scaleEffect(isScrollingDown ? 0.96 : 1.0)
         .animation(.spring(response: 0.5, dampingFraction: 0.8), value: isScrollingDown)
         .onAppear {
-            withAnimation(.easeInOut(duration: 2.5).repeatForever(autoreverses: true)) {
-                glowIntensity = 0.8
-            }
-            withAnimation(.easeInOut(duration: 4.0).repeatForever(autoreverses: true)) {
-                pulseAnimation = true
+            // 🚀 성능 최적화: 단일 통합 애니메이션 + 접근성 지원
+            if !reduceMotion {
+                withAnimation(.easeInOut(duration: 3.0).repeatForever(autoreverses: true)) {
+                    animationPhase = 1.0
+                }
             }
         }
     }
@@ -283,7 +299,14 @@ struct GoldenActionButton: View {
     }
     
     @State private var isPressed = false
-    @State private var buttonGlow = false
+    // 🚀 성능 최적화: 버튼 애니메이션도 통합
+    @State private var buttonAnimationPhase: CGFloat = 0.0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    
+    // 버튼 글로우 계산 프로퍼티
+    private var buttonGlow: Bool {
+        buttonAnimationPhase > 0.5
+    }
     
     var body: some View {
         Button(action: action) {
@@ -341,8 +364,11 @@ struct GoldenActionButton: View {
             // Long press action if needed
         }
         .onAppear {
-            withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
-                buttonGlow = true
+            // 🚀 성능 최적화: 접근성을 고려한 단일 애니메이션
+            if !reduceMotion {
+                withAnimation(.easeInOut(duration: 2.5).repeatForever(autoreverses: true)) {
+                    buttonAnimationPhase = 1.0
+                }
             }
         }
     }
