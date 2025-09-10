@@ -3,100 +3,138 @@ import DesignSystem
 
 /// iOS 18 스타일의 커스텀 Tab Bar 구현
 /// Liquid Glass 효과를 SwiftUI의 Material과 blur로 재현
+/// Premium Glassmorphism TabBar - iOS 18 Style with Crypto Wallet Aesthetics
+/// Features: Ultra-smooth transitions, haptic feedback, premium glass effects
 struct CustomTabBar: View {
     @Binding var selectedTab: AppTab
     @Namespace private var animation
     @State private var hoveredTab: AppTab?
     
-    // 탭바 높이 및 패딩
-    private let tabBarHeight: CGFloat = 72
-    private let horizontalPadding: CGFloat = DesignTokens.Spacing.lg
-    private let iconSize: CGFloat = DesignTokens.Size.Icon.md
+    // MARK: - Design Tokens (Premium 2024 Standards)
+    private let tabBarHeight: CGFloat = 80
+    private let horizontalPadding: CGFloat = KingDesignTokens.Spacing.lg
+    private let iconSize: CGFloat = 22
+    private let itemSpacing: CGFloat = KingDesignTokens.Spacing.xs
     
     var body: some View {
         HStack(spacing: 0) {
             ForEach(AppTab.allCases, id: \.self) { tab in
-                TabBarItem(
+                PremiumTabBarItem(
                     tab: tab,
                     isSelected: selectedTab == tab,
                     isHovered: hoveredTab == tab,
                     namespace: animation
                 ) {
-                    // 이미 선택된 탭을 다시 누르면 무시
-                    guard selectedTab != tab else { return }
-                    
-                    withAnimation(.spring(response: 0.2, dampingFraction: 0.8)) {
-                        selectedTab = tab
-                    }
-                    
-                    // 햅틱 피드백 (가벼운 햅틱만)
-                    let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-                    impactFeedback.impactOccurred()
+                    selectTab(tab)
                 }
                 .onHover { isHovered in
-                    withAnimation(.easeInOut(duration: 0.2)) {
+                    withAnimation(KingDesignTokens.Animation.fast) {
                         hoveredTab = isHovered ? tab : nil
                     }
                 }
             }
         }
         .padding(.horizontal, horizontalPadding)
-        .padding(.vertical, DesignTokens.Spacing.md)
+        .padding(.vertical, KingDesignTokens.Spacing.md)
         .frame(height: tabBarHeight)
-        .background(
-            ZStack {
-                // Metal Liquid Glass 반투명 배경
-                RoundedRectangle(cornerRadius: 24)
-                    .fill(.ultraThinMaterial)
-                    .background(
-                        RoundedRectangle(cornerRadius: 24)
-                            .fill(
-                                KingGradients.glassMorphism
-                                    .opacity(0.3)
-                            )
+        .background(premiumGlassBackground)
+        .overlay(premiumBorderOverlay)
+        .shadow(color: KingDesignTokens.Colors.primaryText.opacity(0.08), radius: 24, x: 0, y: 12)
+        .shadow(color: KingDesignTokens.Colors.accent.opacity(0.1), radius: 8, x: 0, y: 4)
+        .padding(.horizontal, horizontalPadding)
+        .padding(.bottom, KingDesignTokens.Spacing.sm)
+    }
+    
+    // MARK: - Premium Glass Background
+    private var premiumGlassBackground: some View {
+        ZStack {
+            // Base glass morphism layer
+            RoundedRectangle(cornerRadius: 28)
+                .fill(KingDesignTokens.Glass.ultraThin)
+                .background(
+                    RoundedRectangle(cornerRadius: 28)
+                        .fill(KingDesignTokens.Gradients.glassMorphism)
+                )
+            
+            // Premium ambient gradient overlay
+            RoundedRectangle(cornerRadius: 28)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            KingDesignTokens.Colors.accent.opacity(0.05),
+                            KingDesignTokens.Colors.primaryText.opacity(0.02),
+                            Color.clear
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
                     )
-                
-                // 고급스러운 테두리 효과
-                RoundedRectangle(cornerRadius: 24)
+                )
+        }
+    }
+    
+    // MARK: - Premium Border Overlay
+    private var premiumBorderOverlay: some View {
+        RoundedRectangle(cornerRadius: 28)
+            .stroke(
+                LinearGradient(
+                    colors: [
+                        KingDesignTokens.Colors.accent.opacity(0.3),
+                        Color.white.opacity(0.2),
+                        KingDesignTokens.Colors.accent.opacity(0.1),
+                        Color.clear
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ),
+                lineWidth: 1.5
+            )
+            .overlay(
+                // Inner highlight for premium effect
+                RoundedRectangle(cornerRadius: 28)
                     .stroke(
                         LinearGradient(
                             colors: [
-                                KingColors.accent.opacity(0.2),
-                                KingColors.accentSecondary.opacity(0.1),
-                                Color.clear
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1
-                    )
-                
-                // 내부 하이라이트 효과
-                RoundedRectangle(cornerRadius: 24)
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.3),
-                                Color.clear,
+                                Color.white.opacity(0.4),
                                 Color.clear
                             ],
                             startPoint: .top,
-                            endPoint: .bottom
+                            endPoint: .center
                         ),
                         lineWidth: 0.5
                     )
                     .blendMode(.overlay)
-            }
-        )
-        .shadow(color: KingColors.cardShadow, radius: 12, x: 0, y: 8)
-        .shadow(color: KingColors.accent.opacity(0.1), radius: 6, x: 0, y: 4)
-        .padding(.horizontal, horizontalPadding)
-        .padding(.bottom, DesignTokens.Spacing.sm)
+            )
+    }
+    
+    // MARK: - Tab Selection with Premium Haptics
+    private func selectTab(_ tab: AppTab) {
+        guard selectedTab != tab else { 
+            // Enhanced haptic feedback for already selected tab
+            let notificationFeedback = UINotificationFeedbackGenerator()
+            notificationFeedback.notificationOccurred(.warning)
+            return 
+        }
+        
+        // Premium haptic sequence for tab change
+        let impactLight = UIImpactFeedbackGenerator(style: .light)
+        let impactMedium = UIImpactFeedbackGenerator(style: .medium)
+        
+        impactLight.impactOccurred()
+        
+        withAnimation(KingDesignTokens.Animation.spring) {
+            selectedTab = tab
+        }
+        
+        // Delayed medium impact for premium feel
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            impactMedium.impactOccurred(intensity: 0.7)
+        }
     }
 }
 
 /// 개별 Tab Bar 아이템
-struct TabBarItem: View {
+/// Premium Tab Bar Item with Glassmorphism and Smooth Transitions
+struct PremiumTabBarItem: View {
     let tab: AppTab
     let isSelected: Bool
     let isHovered: Bool
@@ -104,95 +142,181 @@ struct TabBarItem: View {
     let action: () -> Void
     
     @State private var isPressed = false
+    @State private var animationPhase: Double = 0
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: DesignTokens.Spacing.xs) {
-                // 아이콘
-                Image(systemName: isSelected ? tab.icon : tab.icon.replacingOccurrences(of: ".fill", with: ""))
-                    .font(.system(size: 20, weight: isSelected ? .semibold : .regular))
-                    .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(
-                        isSelected ? 
-                        KingGradients.accent : 
-                        LinearGradient(
-                            colors: [KingColors.textSecondary],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .scaleEffect(isPressed ? 0.9 : (isSelected ? 1.05 : 1.0))
-                    .animation(.easeInOut(duration: 0.15), value: isPressed)
-                    .animation(.easeInOut(duration: 0.15), value: isSelected)
+            VStack(spacing: KingDesignTokens.Spacing.xs) {
+                // Premium Icon with Dynamic Symbol Effects
+                premiumIcon
                 
-                // 라벨
-                Text(tab.title)
-                    .kingStyle(isSelected ? 
-                        KingTextStyle(
-                            font: KingTypography.tabBar,
-                            color: KingColors.textPrimary
-                        ) : 
-                        KingTextStyle(
-                            font: KingTypography.tabBar,
-                            color: KingColors.textSecondary
-                        )
-                    )
-                    .scaleEffect(isSelected ? 1.02 : 1.0)
-                    .animation(.easeInOut(duration: 0.15), value: isSelected)
+                // Premium Label with Typography
+                premiumLabel
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, DesignTokens.Spacing.sm)
-            .background(
-                ZStack {
-                    if isSelected {
-                        // 선택된 탭 배경
-                        Capsule()
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        KingColors.accent.opacity(0.15),
-                                        KingColors.accentSecondary.opacity(0.1)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .matchedGeometryEffect(id: "selectedTab", in: namespace)
-                        
-                        // 선택된 탭 테두리 효과
-                        Capsule()
-                            .stroke(
-                                LinearGradient(
-                                    colors: [
-                                        KingColors.accent.opacity(0.3),
-                                        KingColors.accentSecondary.opacity(0.2)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 1
-                            )
-                            .matchedGeometryEffect(id: "selectedTabBorder", in: namespace)
-                    }
-                    
-                    if isHovered && !isSelected {
-                        // 호버 효과
-                        Capsule()
-                            .fill(KingColors.textSecondary.opacity(0.08))
-                            .animation(.easeInOut(duration: 0.2), value: isHovered)
-                    }
-                }
-            )
+            .padding(.vertical, KingDesignTokens.Spacing.sm)
+            .background(premiumItemBackground)
+            .scaleEffect(pressedScale)
+            .rotationEffect(.degrees(animationPhase * 2))
             .accessibilityLabel(tab.title)
             .accessibilityHint("탭 \(tab.title)로 이동")
         }
         .buttonStyle(PlainButtonStyle())
-        .scaleEffect(isPressed ? 0.95 : 1.0)
-        .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
-            withAnimation(.easeInOut(duration: 0.1)) {
-                isPressed = pressing
+        .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: handlePress) {}
+        .onAppear {
+            startContinuousAnimation()
+        }
+    }
+    
+    // MARK: - Premium Icon
+    private var premiumIcon: some View {
+        Image(systemName: iconName)
+            .font(.system(size: 22, weight: iconWeight, design: .rounded))
+            .symbolRenderingMode(.palette)
+            .foregroundStyle(iconForegroundStyle)
+            .symbolEffect(.bounce, options: .speed(0.5), value: isSelected)
+            .symbolEffect(.pulse.wholeSymbol, options: .repeat(.continuous), value: isSelected)
+            .scaleEffect(iconScale)
+            .animation(KingDesignTokens.Animation.spring, value: isSelected)
+            .animation(KingDesignTokens.Animation.fast, value: isPressed)
+    }
+    
+    // MARK: - Premium Label  
+    private var premiumLabel: some View {
+        Text(tab.title)
+            .font(KingDesignTokens.Typography.micro)
+            .fontWeight(isSelected ? .semibold : .medium)
+            .foregroundStyle(labelForegroundStyle)
+            .scaleEffect(labelScale)
+            .animation(KingDesignTokens.Animation.spring, value: isSelected)
+    }
+    
+    // MARK: - Premium Item Background
+    private var premiumItemBackground: some View {
+        ZStack {
+            if isSelected {
+                // Selected state with premium glass effect
+                Capsule()
+                    .fill(selectedBackgroundGradient)
+                    .matchedGeometryEffect(id: "selectedTabBackground", in: namespace)
+                    .overlay(
+                        Capsule()
+                            .stroke(selectedBorderGradient, lineWidth: 1.5)
+                            .matchedGeometryEffect(id: "selectedTabBorder", in: namespace)
+                    )
+                    .shadow(color: KingDesignTokens.Colors.accent.opacity(0.3), radius: 8, x: 0, y: 2)
+                    .shadow(color: KingDesignTokens.Colors.accent.opacity(0.1), radius: 16, x: 0, y: 4)
             }
-        }, perform: {})
+            
+            if isHovered && !isSelected {
+                // Hover state with subtle glass effect
+                Capsule()
+                    .fill(hoveredBackgroundGradient)
+                    .animation(KingDesignTokens.Animation.normal, value: isHovered)
+            }
+        }
+    }
+    
+    // MARK: - Computed Properties
+    
+    private var iconName: String {
+        isSelected ? tab.icon : tab.icon.replacingOccurrences(of: ".fill", with: "")
+    }
+    
+    private var iconWeight: Font.Weight {
+        isSelected ? .semibold : .medium
+    }
+    
+    private var iconForegroundStyle: some ShapeStyle {
+        if isSelected {
+            return AnyShapeStyle(
+                LinearGradient(
+                    colors: [
+                        KingDesignTokens.Colors.accent,
+                        KingDesignTokens.Colors.accent.opacity(0.8)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+        } else {
+            return AnyShapeStyle(KingDesignTokens.Colors.secondary)
+        }
+    }
+    
+    private var labelForegroundStyle: some ShapeStyle {
+        isSelected ? 
+        AnyShapeStyle(KingDesignTokens.Colors.primaryText) : 
+        AnyShapeStyle(KingDesignTokens.Colors.secondary)
+    }
+    
+    private var selectedBackgroundGradient: some ShapeStyle {
+        LinearGradient(
+            colors: [
+                KingDesignTokens.Colors.accent.opacity(0.15),
+                KingDesignTokens.Colors.accent.opacity(0.08),
+                Color.white.opacity(0.1)
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+    
+    private var selectedBorderGradient: some ShapeStyle {
+        LinearGradient(
+            colors: [
+                KingDesignTokens.Colors.accent.opacity(0.6),
+                KingDesignTokens.Colors.accent.opacity(0.3),
+                Color.white.opacity(0.2)
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+    
+    private var hoveredBackgroundGradient: some ShapeStyle {
+        LinearGradient(
+            colors: [
+                Color.white.opacity(0.08),
+                Color.clear
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+    }
+    
+    private var pressedScale: Double {
+        isPressed ? 0.92 : 1.0
+    }
+    
+    private var iconScale: Double {
+        if isPressed { return 0.85 }
+        return isSelected ? 1.1 : 1.0
+    }
+    
+    private var labelScale: Double {
+        isSelected ? 1.05 : 1.0
+    }
+    
+    // MARK: - Interaction Handlers
+    
+    private func handlePress(_ pressing: Bool) {
+        withAnimation(KingDesignTokens.Animation.fast) {
+            isPressed = pressing
+        }
+        
+        if pressing {
+            let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+            impactFeedback.impactOccurred(intensity: 0.5)
+        }
+    }
+    
+    private func startContinuousAnimation() {
+        guard isSelected else { return }
+        
+        withAnimation(.linear(duration: 8).repeatForever(autoreverses: false)) {
+            animationPhase = 360
+        }
     }
 }
 

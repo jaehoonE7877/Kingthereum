@@ -2,544 +2,583 @@ import SwiftUI
 import DesignSystem
 import Entity
 
-@MainActor
-protocol ReceiveDisplayLogic: AnyObject {
-    func displayWalletAddress(viewModel: ReceiveScene.LoadWalletAddress.ViewModel)
-    func displayCopyResult(viewModel: ReceiveScene.CopyAddress.ViewModel)
-    func displayShareSheet(viewModel: ReceiveScene.ShareAddress.ViewModel)
-    func displayQRCode(viewModel: ReceiveScene.GenerateQRCode.ViewModel)
-}
-
+/// 🔐 Premium Receive View - Revolut/N26 Level
+/// Minimalist design with glassmorphism and premium fintech patterns
 struct ReceiveView: View {
-    @StateObject private var coordinator = ReceiveCoordinator()
+    @StateObject private var viewStore = ReceiveViewStore()
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         ZStack {
-            // Background
-            LinearGradient.enhancedBackgroundGradient
-                .ignoresSafeArea()
+            // 🎨 프리미엄 배경
+            premiumBackground
             
             ScrollView {
-                VStack(spacing: 24) {
-                    headerSection
-                    qrCodeSection
-                    addressSection
-                    actionButtons
-                    securityNotice
+                VStack(spacing: KingDesignTokens.Spacing.xl) {
+                    // 헤더 섹션
+                    premiumHeaderSection
+                    
+                    // QR 코드 섹션
+                    premiumQRCodeSection
+                    
+                    // 주소 섹션
+                    premiumAddressSection
+                    
+                    // 액션 버튼들
+                    premiumActionButtons
+                    
+                    // 보안 안내
+                    premiumSecurityNotice
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 8) // 네비게이션 바 제거로 상단 여백 줄임
+                .padding(.horizontal, KingDesignTokens.Spacing.lg)
+                .padding(.vertical, KingDesignTokens.Spacing.md)
             }
             
             // 토스트 알림
-            if coordinator.showSuccessToast {
-                VStack {
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        ToastView(message: coordinator.toastMessage)
-                        Spacer()
-                    }
-                    .padding(.bottom, 100)
-                }
-                .transition(.move(edge: .bottom).combined(with: .opacity))
+            if viewStore.showToast {
+                premiumToast
             }
         }
-        .gesture(
-            DragGesture()
-                .onEnded { gesture in
-                    // 아래로 스와이프하여 닫기
-                    if gesture.translation.height > 100 && abs(gesture.translation.width) < 100 {
-                        dismiss()
-                    }
-                }
-        )
+        .gesture(swipeDownGesture)
         .onAppear {
-            coordinator.loadWalletAddress()
+            viewStore.loadWalletAddress()
         }
-        .onDisappear {
-            coordinator.stopSecurityMonitoring()
-        }
-        .alert("주소 복사", isPresented: $coordinator.showCopyAlert) {
-            Button("확인") { }
-        } message: {
-            Text("지갑 주소가 클립보드에 복사되었습니다.")
-        }
-        .sheet(isPresented: $coordinator.showShareSheet) {
-            ShareSheet(items: coordinator.shareItems)
-        }
-        .alert("보안 경고", isPresented: $coordinator.showSecurityWarning) {
-            Button("확인") {
-                // QR 코드 재생성
-                coordinator.generateQRCode()
-            }
-        } message: {
-            Text(coordinator.securityWarningMessage)
-        }
-        .alert(coordinator.errorTitle, isPresented: $coordinator.showErrorAlert) {
-            Button("확인") { }
-            if coordinator.errorSuggestion != nil {
-                Button("재시도") {
-                    coordinator.generateQRCode()
-                }
-            }
-        } message: {
-            VStack(alignment: .leading, spacing: 8) {
-                Text(coordinator.errorMessage)
-                if let suggestion = coordinator.errorSuggestion {
-                    Text(suggestion)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-            }
+        .sheet(isPresented: $viewStore.showShareSheet) {
+            PremiumShareSheet(
+                address: viewStore.walletAddress,
+                qrCodeData: viewStore.qrCodeData
+            )
         }
     }
-}
-
-// MARK: - Header Section
-
-extension ReceiveView {
-    private var headerSection: some View {
-        VStack(spacing: 12) {
-            // 닫기 제스처 힌트 - 상단에 더 가깝게
-            RoundedRectangle(cornerRadius: 3)
-                .fill(.secondary.opacity(0.3))
-                .frame(width: 40, height: 6)
-                .padding(.top, 4)
-                .padding(.bottom, 16)
+    
+    // MARK: - 프리미엄 컴포넌트들
+    
+    @ViewBuilder
+    private var premiumBackground: some View {
+        LinearGradient(
+            colors: [
+                KingDesignTokens.Colors.background,
+                KingDesignTokens.Colors.surface,
+                KingDesignTokens.Colors.surfaceSecondary
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+        .ignoresSafeArea()
+        
+        // 앰비언트 글로우
+        RadialGradient(
+            colors: [
+                KingDesignTokens.Colors.accent.opacity(0.02),
+                Color.clear
+            ],
+            center: .topTrailing,
+            startRadius: 0,
+            endRadius: 300
+        )
+        .ignoresSafeArea()
+    }
+    
+    @ViewBuilder
+    private var premiumHeaderSection: some View {
+        VStack(spacing: KingDesignTokens.Spacing.lg) {
+            // 드래그 인디케이터
+            Capsule()
+                .fill(KingDesignTokens.Colors.border)
+                .frame(width: 36, height: 5)
+                .padding(.top, KingDesignTokens.Spacing.xs)
             
+            // 프리미엄 아이콘
             ZStack {
                 Circle()
-                    .fill(.ultraThinMaterial)
-                    .frame(width: 64, height: 64)
+                    .fill(KingDesignTokens.Colors.accent.opacity(0.1))
+                    .frame(width: 80, height: 80)
+                    .overlay(
+                        Circle()
+                            .stroke(KingDesignTokens.Colors.accent.opacity(0.3), lineWidth: 2)
+                    )
                 
                 Image(systemName: "arrow.down.circle.fill")
-                    .font(.system(size: 32))
-                    .foregroundStyle(LinearGradient.primaryGradient)
+                    .font(.system(size: 32, weight: .medium))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [
+                                KingDesignTokens.Colors.accent,
+                                KingDesignTokens.Colors.accent.opacity(0.8)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
             }
+            .shadow(
+                color: KingDesignTokens.Colors.accent.opacity(0.2),
+                radius: 12,
+                x: 0,
+                y: 6
+            )
             
-            Text("이더리움 받기")
-                .font(.title2)
-                .fontWeight(.semibold)
-                .foregroundColor(.primary)
-            
-            VStack(spacing: 4) {
-                Text("아래 QR 코드를 스캔하거나 주소를 복사하여 사용하세요")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
+            // 제목과 설명
+            VStack(spacing: KingDesignTokens.Spacing.sm) {
+                Text("이더리움 받기")
+                    .font(KingDesignTokens.Typography.displayM)
+                    .fontWeight(.bold)
+                    .foregroundColor(KingDesignTokens.Colors.primaryText)
                 
-                Text("아래로 스와이프하여 닫기")
-                    .font(.caption2)
-                    .foregroundColor(.secondary.opacity(0.7))
+                Text("QR 코드를 스캔하거나 주소를 복사하여 ETH를 받으세요")
+                    .font(KingDesignTokens.Typography.body)
+                    .foregroundColor(KingDesignTokens.Colors.secondaryText)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(2)
             }
         }
-        .padding(.top, 12)
     }
-}
-
-// MARK: - QR Code Section
-
-extension ReceiveView {
-    private var qrCodeSection: some View {
-        VStack(spacing: 16) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(.ultraThinMaterial)
-                    .frame(width: 240, height: 240)
+    
+    @ViewBuilder
+    private var premiumQRCodeSection: some View {
+        VStack(spacing: KingDesignTokens.Spacing.lg) {
+            // 섹션 헤더
+            HStack {
+                Image(systemName: "qrcode.viewfinder")
+                    .font(KingDesignTokens.Typography.heading)
+                    .foregroundColor(KingDesignTokens.Colors.accent)
                 
-                if let qrCodeData = coordinator.qrCodeData,
-                   let uiImage = UIImage(data: qrCodeData) {
-                    Image(uiImage: uiImage)
-                        .interpolation(.none)
-                        .resizable()
+                Text("지갑 QR 코드")
+                    .font(KingDesignTokens.Typography.heading)
+                    .fontWeight(.semibold)
+                    .foregroundColor(KingDesignTokens.Colors.primaryText)
+                
+                Spacer()
+            }
+            
+            // QR 코드 컨테이너
+            GlassCard(level: .standard, cornerRadius: KingDesignTokens.Radius.xl) {
+                VStack(spacing: KingDesignTokens.Spacing.lg) {
+                    if let qrCodeData = viewStore.qrCodeData,
+                       let uiImage = UIImage(data: qrCodeData) {
+                        Image(uiImage: uiImage)
+                            .interpolation(.none)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 200, height: 200)
+                            .background(Color.white)
+                            .clipShape(RoundedRectangle(cornerRadius: KingDesignTokens.Radius.md))
+                            .shadow(
+                                color: KingDesignTokens.Colors.primaryText.opacity(0.1),
+                                radius: 4,
+                                x: 0,
+                                y: 2
+                            )
+                    } else if viewStore.isLoading {
+                        VStack(spacing: KingDesignTokens.Spacing.md) {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: KingDesignTokens.Colors.accent))
+                                .scaleEffect(1.2)
+                            
+                            Text("QR 코드 생성 중...")
+                                .font(KingDesignTokens.Typography.caption)
+                                .foregroundColor(KingDesignTokens.Colors.secondaryText)
+                        }
                         .frame(width: 200, height: 200)
-                        .cornerRadius(12)
-                } else {
-                    VStack(spacing: 8) {
-                        Image(systemName: "qrcode")
-                            .font(.system(size: 48))
-                            .foregroundStyle(LinearGradient.primaryGradient)
-                        
-                        Text("QR 코드 생성 중...")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                    } else {
+                        VStack(spacing: KingDesignTokens.Spacing.md) {
+                            Image(systemName: "qrcode")
+                                .font(.system(size: 48))
+                                .foregroundColor(KingDesignTokens.Colors.accent.opacity(0.6))
+                            
+                            Text("QR 코드를 생성할 수 없습니다")
+                                .font(KingDesignTokens.Typography.caption)
+                                .foregroundColor(KingDesignTokens.Colors.secondaryText)
+                        }
+                        .frame(width: 200, height: 200)
                     }
                 }
             }
-            .safeSwiftUIGlass(opacity: 0.8, tintColor: .blue.opacity(0.1), cornerRadius: 16)
         }
     }
-}
-
-// MARK: - Address Section
-
-extension ReceiveView {
-    private var addressSection: some View {
-        VStack(spacing: 16) {
+    
+    @ViewBuilder
+    private var premiumAddressSection: some View {
+        VStack(spacing: KingDesignTokens.Spacing.lg) {
+            // 섹션 헤더
             HStack {
-                Image(systemName: "link")
-                    .font(.title3)
-                    .foregroundStyle(LinearGradient.primaryGradient)
+                Image(systemName: "link.circle.fill")
+                    .font(KingDesignTokens.Typography.heading)
+                    .foregroundColor(KingDesignTokens.Colors.accent)
                 
                 Text("지갑 주소")
-                    .font(.headline)
+                    .font(KingDesignTokens.Typography.heading)
                     .fontWeight(.semibold)
+                    .foregroundColor(KingDesignTokens.Colors.primaryText)
                 
                 Spacer()
             }
             
-            VStack(spacing: 12) {
-                // 전체 주소 표시
-                HStack {
-                    Text(coordinator.walletAddress)
-                        .font(.system(.body, design: .monospaced))
-                        .foregroundColor(.primary)
-                        .lineLimit(nil)
-                        .multilineTextAlignment(.leading)
-                    
-                    Spacer()
-                }
-                .padding(16)
-                .background(.ultraThinMaterial)
-                .cornerRadius(12)
-                
-                // 축약된 주소와 복사 버튼
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("축약 주소")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        Text(coordinator.formattedAddress)
-                            .font(.system(.subheadline, design: .monospaced))
+            // 주소 카드
+            GlassCard(level: .standard) {
+                VStack(spacing: KingDesignTokens.Spacing.md) {
+                    // 전체 주소
+                    HStack {
+                        Text(viewStore.walletAddress.isEmpty ? "주소 로딩 중..." : viewStore.walletAddress)
+                            .font(.system(.body, design: .monospaced))
                             .fontWeight(.medium)
-                            .foregroundColor(.primary)
+                            .foregroundColor(KingDesignTokens.Colors.primaryText)
+                            .textSelection(.enabled)
+                            .lineLimit(nil)
+                        
+                        Spacer(minLength: 0)
                     }
                     
-                    Spacer()
+                    Divider()
+                        .background(KingDesignTokens.Colors.border)
                     
-                    GlassButton(icon: "doc.on.doc.fill", style: .icon) {
-                        coordinator.copyAddress()
+                    // 축약 주소 & 복사 버튼
+                    HStack {
+                        VStack(alignment: .leading, spacing: KingDesignTokens.Spacing.xs) {
+                            Text("축약 주소")
+                                .font(KingDesignTokens.Typography.caption)
+                                .foregroundColor(KingDesignTokens.Colors.tertiaryText)
+                            
+                            Text(viewStore.formattedAddress)
+                                .font(.system(.subheadline, design: .monospaced))
+                                .fontWeight(.semibold)
+                                .foregroundColor(KingDesignTokens.Colors.primaryText)
+                        }
+                        
+                        Spacer()
+                        
+                        Button {
+                            viewStore.copyAddress()
+                        } label: {
+                            Image(systemName: viewStore.justCopied ? "checkmark.circle.fill" : "doc.on.doc.fill")
+                                .font(.title2)
+                                .foregroundColor(viewStore.justCopied ? KingDesignTokens.Colors.success : KingDesignTokens.Colors.accent)
+                                .scaleEffect(viewStore.justCopied ? 1.1 : 1.0)
+                                .animation(KingDesignTokens.Animation.spring, value: viewStore.justCopied)
+                        }
                     }
                 }
-                .padding(16)
-                .safeSwiftUIGlass()
             }
         }
     }
-}
-
-// MARK: - Action Buttons
-
-extension ReceiveView {
-    private var actionButtons: some View {
-        VStack(spacing: 12) {
-            HStack(spacing: 12) {
+    
+    @ViewBuilder
+    private var premiumActionButtons: some View {
+        VStack(spacing: KingDesignTokens.Spacing.md) {
+            // 주요 액션들
+            HStack(spacing: KingDesignTokens.Spacing.md) {
                 GlassButton(
+                    "주소 복사",
                     icon: "doc.on.doc.fill",
-                    title: "주소 복사",
                     style: .secondary
                 ) {
-                    coordinator.copyAddress()
+                    viewStore.copyAddress()
                 }
                 
                 GlassButton(
+                    "공유하기",
                     icon: "square.and.arrow.up",
-                    title: "공유하기",
                     style: .secondary
                 ) {
-                    coordinator.shareAddress()
+                    viewStore.shareAddress()
                 }
             }
             
-            Button {
-                coordinator.generateQRCode()
-            } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: coordinator.isRefreshing ? "arrow.clockwise" : "qrcode.viewfinder")
-                        .font(.system(size: 16, weight: .medium))
-                        .rotationEffect(.degrees(coordinator.isRefreshing ? 360 : 0))
-                        .animation(coordinator.isRefreshing ? .linear(duration: 1.0).repeatForever(autoreverses: false) : .default, value: coordinator.isRefreshing)
-                    
-                    Text(coordinator.isRefreshing ? "새로고침 중..." : "QR 코드 새로고침")
-                        .font(.system(size: 16, weight: .medium))
-                }
-                .frame(maxWidth: .infinity)
-                .frame(height: 50)
-                .background(.ultraThinMaterial)
-                .foregroundStyle(LinearGradient.primaryGradient)
-                .cornerRadius(12)
-                .safeSwiftUIGlass(opacity: 0.8, tintColor: .blue.opacity(0.1), cornerRadius: 16)
+            // QR 새로고침
+            GlassButton(
+                viewStore.isRefreshing ? "새로고침 중..." : "QR 코드 새로고침",
+                icon: "arrow.clockwise",
+                style: .primary
+            ) {
+                viewStore.refreshQRCode()
             }
-            .scaleEffect(coordinator.isRefreshing ? 0.95 : 1.0)
-            .animation(.easeInOut(duration: 0.1), value: coordinator.isRefreshing)
-            .disabled(coordinator.isRefreshing)
+            .disabled(viewStore.isRefreshing)
         }
     }
-}
-
-// MARK: - Security Notice
-
-extension ReceiveView {
-    private var securityNotice: some View {
-        VStack(spacing: 12) {
-            HStack {
-                Image(systemName: "shield.checkered")
-                    .font(.title3)
-                    .foregroundStyle(LinearGradient.warningGradient)
+    
+    @ViewBuilder
+    private var premiumSecurityNotice: some View {
+        GlassCard(level: .subtle) {
+            VStack(alignment: .leading, spacing: KingDesignTokens.Spacing.md) {
+                // 헤더
+                HStack(spacing: KingDesignTokens.Spacing.sm) {
+                    Image(systemName: "shield.checkered.fill")
+                        .font(KingDesignTokens.Typography.body)
+                        .foregroundColor(KingDesignTokens.Colors.success)
+                    
+                    Text("보안 안내")
+                        .font(KingDesignTokens.Typography.body)
+                        .fontWeight(.semibold)
+                        .foregroundColor(KingDesignTokens.Colors.primaryText)
+                }
                 
-                Text("보안 안내")
-                    .font(.headline)
-                    .fontWeight(.semibold)
+                // 안내사항들
+                VStack(alignment: .leading, spacing: KingDesignTokens.Spacing.sm) {
+                    SecurityNoticeItem(
+                        icon: "checkmark.shield.fill",
+                        text: "이더리움 메인넷 전용 주소입니다",
+                        color: KingDesignTokens.Colors.success
+                    )
+                    
+                    SecurityNoticeItem(
+                        icon: "exclamationmark.triangle.fill",
+                        text: "다른 네트워크 사용 시 자산 손실 위험",
+                        color: KingDesignTokens.Colors.warning
+                    )
+                    
+                    SecurityNoticeItem(
+                        icon: "eye.slash.fill",
+                        text: "공개 장소에서 QR 코드 노출 주의",
+                        color: KingDesignTokens.Colors.warning
+                    )
+                }
+            }
+        }
+        .padding(.bottom, KingDesignTokens.Spacing.xxxl)
+    }
+    
+    @ViewBuilder
+    private var premiumToast: some View {
+        VStack {
+            Spacer()
+            
+            HStack(spacing: KingDesignTokens.Spacing.sm) {
+                Image(systemName: viewStore.toastType.icon)
+                    .font(KingDesignTokens.Typography.body)
+                    .foregroundColor(viewStore.toastType.color)
+                
+                Text(viewStore.toastMessage)
+                    .font(KingDesignTokens.Typography.body)
+                    .foregroundColor(KingDesignTokens.Colors.primaryText)
                 
                 Spacer()
             }
-            
-            VStack(alignment: .leading, spacing: 8) {
-                SecurityNoticeItem(
-                    icon: "checkmark.circle.fill",
-                    text: "이더리움 네트워크에서만 ETH와 ERC-20 토큰을 받을 수 있습니다"
-                )
-                
-                SecurityNoticeItem(
-                    icon: "exclamationmark.triangle.fill",
-                    text: "다른 네트워크에서 전송하면 자산을 잃을 수 있습니다"
-                )
-                
-                SecurityNoticeItem(
-                    icon: "eye.slash.fill",
-                    text: "공개된 장소에서 QR 코드를 스캔할 때 주의하세요"
-                )
-            }
-            .padding(16)
-            .safeSwiftUIGlass()
+            .padding(KingDesignTokens.Spacing.lg)
+            .background(KingDesignTokens.Colors.surface)
+            .overlay(
+                RoundedRectangle(cornerRadius: KingDesignTokens.Radius.md)
+                    .stroke(viewStore.toastType.color.opacity(0.3), lineWidth: 1)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: KingDesignTokens.Radius.md))
+            .shadow(
+                color: KingDesignTokens.Colors.primaryText.opacity(0.1),
+                radius: 12,
+                x: 0,
+                y: 6
+            )
+            .padding(.horizontal, KingDesignTokens.Spacing.lg)
+            .padding(.bottom, KingDesignTokens.Spacing.xxxl)
+            .transition(.move(edge: .bottom).combined(with: .opacity))
         }
-        .padding(.bottom, 40)
+    }
+    
+    private var swipeDownGesture: some Gesture {
+        DragGesture()
+            .onEnded { gesture in
+                if gesture.translation.height > 100 && 
+                   abs(gesture.translation.width) < 100 {
+                    dismiss()
+                }
+            }
     }
 }
 
-// MARK: - Security Notice Item
+// MARK: - Supporting Components
 
+/// 보안 안내 아이템
 struct SecurityNoticeItem: View {
     let icon: String
     let text: String
+    let color: Color
     
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top, spacing: KingDesignTokens.Spacing.sm) {
             Image(systemName: icon)
-                .font(.system(size: 14))
-                .foregroundStyle(LinearGradient.warningGradient)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(color)
                 .frame(width: 16)
             
             Text(text)
-                .font(.caption)
-                .foregroundColor(.secondary)
+                .font(KingDesignTokens.Typography.caption)
+                .foregroundColor(KingDesignTokens.Colors.secondaryText)
                 .multilineTextAlignment(.leading)
         }
     }
 }
 
-// MARK: - Share Sheet
-
-struct ShareSheet: UIViewControllerRepresentable {
-    let items: [Any]
-    
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        let controller = UIActivityViewController(activityItems: items, applicationActivities: nil)
-        return controller
-    }
-    
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
-}
-
-// MARK: - Coordinator
-
+/// ViewStore for ReceiveView
 @MainActor
-final class ReceiveCoordinator: ObservableObject {
-    @Published var walletAddress: String = ""
-    @Published var formattedAddress: String = ""
-    @Published var qrCodeData: Data?
-    @Published var showCopyAlert = false
-    @Published var showShareSheet = false
-    @Published var shareItems: [Any] = []
-    @Published var showSecurityWarning = false
-    @Published var securityWarningMessage = ""
-    @Published var showErrorAlert = false
-    @Published var errorTitle = ""
-    @Published var errorMessage = ""
-    @Published var errorSuggestion: String?
-    @Published var isRefreshing = false
-    @Published var showSuccessToast = false
-    @Published var toastMessage = ""
+@Observable
+final class ReceiveViewStore {
+    var walletAddress: String = ""
+    var formattedAddress: String = ""
+    var qrCodeData: Data?
+    var isLoading: Bool = false
+    var isRefreshing: Bool = false
+    var justCopied: Bool = false
+    var showToast: Bool = false
+    var toastMessage: String = ""
+    var toastType: ToastType = .success
+    var showShareSheet: Bool = false
     
-    private var interactor: ReceiveBusinessLogic?
-    private let securityManager = ReceiveSecurityManager()
-    private let errorHandler = ReceiveErrorHandler()
-    
-    init() {
-        setupVIP()
-        setupSecurity()
-    }
-    
-    private func setupVIP() {
-        let interactor = ReceiveInteractor()
-        let presenter = ReceivePresenter()
+    enum ToastType {
+        case success, warning, error
         
-        interactor.presenter = presenter
-        presenter.viewController = self
+        var icon: String {
+            switch self {
+            case .success: return "checkmark.circle.fill"
+            case .warning: return "exclamationmark.triangle.fill"
+            case .error: return "xmark.circle.fill"
+            }
+        }
         
-        self.interactor = interactor
-    }
-    
-    private func setupSecurity() {
-        securityManager.delegate = self
-        securityManager.startSecurityMonitoring()
-    }
-    
-    func stopSecurityMonitoring() {
-        securityManager.stopSecurityMonitoring()
+        var color: Color {
+            switch self {
+            case .success: return KingDesignTokens.Colors.success
+            case .warning: return KingDesignTokens.Colors.warning
+            case .error: return KingDesignTokens.Colors.error
+            }
+        }
     }
     
     func loadWalletAddress() {
-        interactor?.loadWalletAddress(request: ReceiveScene.LoadWalletAddress.Request())
-    }
-    
-    func copyAddress() {
-        interactor?.copyAddress(request: ReceiveScene.CopyAddress.Request(address: walletAddress))
-    }
-    
-    func shareAddress() {
-        interactor?.shareAddress(request: ReceiveScene.ShareAddress.Request(address: walletAddress))
+        isLoading = true
+        
+        // 시뮬레이션된 지갑 주소 로드
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 1_000_000_000) // 1초 대기
+            
+            walletAddress = "0x742d35Cc6644C0532925a3b8F0aB4e7E"
+            formattedAddress = formatAddress(walletAddress)
+            generateQRCode()
+            isLoading = false
+        }
     }
     
     func generateQRCode() {
-        guard !walletAddress.isEmpty else {
-            handleError(ReceiveError.invalidWalletAddress("주소가 비어있습니다"))
-            return
-        }
+        guard !walletAddress.isEmpty else { return }
         
-        isRefreshing = true
-        interactor?.generateQRCode(request: ReceiveScene.GenerateQRCode.Request(address: walletAddress))
+        let data = walletAddress.data(using: .ascii)
+        let filter = CIFilter.qrCodeGenerator()
+        filter.setValue(data, forKey: "inputMessage")
+        
+        if let outputImage = filter.outputImage {
+            let context = CIContext()
+            let transform = CGAffineTransform(scaleX: 10, y: 10)
+            let scaledImage = outputImage.transformed(by: transform)
+            
+            if let cgImage = context.createCGImage(scaledImage, from: scaledImage.extent) {
+                let uiImage = UIImage(cgImage: cgImage)
+                qrCodeData = uiImage.pngData()
+            }
+        }
     }
     
-    // MARK: - Error Handling
-    
-    private func handleError(_ error: Error) {
-        let errorInfo = errorHandler.handleError(error)
+    func copyAddress() {
+        UIPasteboard.general.string = walletAddress
+        justCopied = true
+        showToast(message: "주소가 클립보드에 복사되었습니다", type: .success)
         
-        errorTitle = errorInfo.title
-        errorMessage = errorInfo.message
-        errorSuggestion = errorInfo.suggestion
-        showErrorAlert = true
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            justCopied = false
+        }
+    }
+    
+    func shareAddress() {
+        showShareSheet = true
+    }
+    
+    func refreshQRCode() {
+        isRefreshing = true
+        
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 1_500_000_000) // 1.5초 대기
+            generateQRCode()
+            isRefreshing = false
+            showToast(message: "QR 코드가 새로고침되었습니다", type: .success)
+        }
+    }
+    
+    private func formatAddress(_ address: String) -> String {
+        guard address.count > 10 else { return address }
+        let prefix = String(address.prefix(6))
+        let suffix = String(address.suffix(4))
+        return "\(prefix)...\(suffix)"
+    }
+    
+    private func showToast(message: String, type: ToastType) {
+        toastMessage = message
+        toastType = type
+        showToast = true
+        
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            showToast = false
+        }
     }
 }
 
-// MARK: - Display Logic
-
-extension ReceiveCoordinator: ReceiveDisplayLogic {
-    func displayWalletAddress(viewModel: ReceiveScene.LoadWalletAddress.ViewModel) {
-        self.walletAddress = viewModel.walletAddress
-        self.formattedAddress = viewModel.formattedAddress
-        self.qrCodeData = viewModel.qrCodeData
-    }
+/// 프리미엄 공유 시트
+struct PremiumShareSheet: View {
+    let address: String
+    let qrCodeData: Data?
+    @Environment(\.dismiss) private var dismiss
     
-    func displayCopyResult(viewModel: ReceiveScene.CopyAddress.ViewModel) {
-        self.showCopyAlert = viewModel.showCopyAlert
-    }
-    
-    func displayShareSheet(viewModel: ReceiveScene.ShareAddress.ViewModel) {
-        self.shareItems = viewModel.shareItems
-        self.showShareSheet = viewModel.showShareSheet
-    }
-    
-    func displayQRCode(viewModel: ReceiveScene.GenerateQRCode.ViewModel) {
-        self.qrCodeData = viewModel.qrCodeData
-        self.isRefreshing = false
-        
-        // QR 새로고침 완료 피드백
-        if viewModel.showSuccessAnimation {
-            showRefreshSuccessFeedback()
-        }
-    }
-    
-    private func showRefreshSuccessFeedback() {
-        // 햅틱 피드백
-        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-        impactFeedback.impactOccurred()
-        
-        // 토스트 메시지 설정
-        toastMessage = "QR 코드가 새로고침되었습니다"
-        
-        // 토스트 표시
-        withAnimation(.easeInOut(duration: 0.3)) {
-            showSuccessToast = true
-        }
-        
-        // 2초 후 토스트 자동 숨김
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            withAnimation(.easeInOut(duration: 0.3)) {
-                self.showSuccessToast = false
+    var body: some View {
+        NavigationView {
+            VStack(spacing: KingDesignTokens.Spacing.xl) {
+                // QR 코드
+                if let qrCodeData = qrCodeData,
+                   let uiImage = UIImage(data: qrCodeData) {
+                    Image(uiImage: uiImage)
+                        .interpolation(.none)
+                        .resizable()
+                        .frame(width: 200, height: 200)
+                        .background(Color.white)
+                        .clipShape(RoundedRectangle(cornerRadius: KingDesignTokens.Radius.lg))
+                        .shadow(
+                            color: KingDesignTokens.Colors.primaryText.opacity(0.1),
+                            radius: 8,
+                            x: 0,
+                            y: 4
+                        )
+                }
+                
+                // 주소 정보
+                VStack(spacing: KingDesignTokens.Spacing.md) {
+                    Text("내 이더리움 지갑")
+                        .font(KingDesignTokens.Typography.displayM)
+                        .fontWeight(.bold)
+                        .foregroundColor(KingDesignTokens.Colors.primaryText)
+                    
+                    Text(address)
+                        .font(.system(.caption, design: .monospaced))
+                        .foregroundColor(KingDesignTokens.Colors.secondaryText)
+                        .padding(KingDesignTokens.Spacing.md)
+                        .background(KingDesignTokens.Colors.surfaceSecondary)
+                        .clipShape(RoundedRectangle(cornerRadius: KingDesignTokens.Radius.sm))
+                        .textSelection(.enabled)
+                }
+                
+                Spacer()
+            }
+            .padding(KingDesignTokens.Spacing.xl)
+            .background(KingDesignTokens.Colors.background)
+            .navigationTitle("지갑 공유")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("완료") {
+                        dismiss()
+                    }
+                    .foregroundColor(KingDesignTokens.Colors.accent)
+                }
             }
         }
     }
 }
 
-// MARK: - Security Delegate
-
-extension ReceiveCoordinator: ReceiveSecurityDelegate {
-    func didDetectScreenshot() {
-        self.securityWarningMessage = "보안 경고: 스크린샷이 감지되었습니다. QR 코드를 타인과 공유하지 마세요."
-        self.showSecurityWarning = true
-    }
-    
-    func didDetectScreenRecording() {
-        self.securityWarningMessage = "보안 경고: 화면 녹화가 감지되었습니다. 보안을 위해 QR 코드가 숨겨집니다."
-        self.showSecurityWarning = true
-        // QR 코드 데이터를 임시로 제거하여 녹화에서 보호
-        self.qrCodeData = nil
-    }
-    
-    func didDetectAppBackgrounded() {
-        // 앱이 백그라운드로 갈 때 민감한 정보 숨기기
-        self.qrCodeData = nil
-    }
-}
-
-// MARK: - Toast View
-
-struct ToastView: View {
-    let message: String
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 20))
-                .foregroundStyle(LinearGradient.primaryGradient)
-            
-            Text(message)
-                .font(.system(size: 15, weight: .medium))
-                .foregroundColor(.primary)
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 14)
-        .background(.ultraThinMaterial)
-        .cornerRadius(12)
-        .safeSwiftUIGlass()
-        .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
-    }
-}
-
 #Preview {
     ReceiveView()
-}
-
-#Preview("Toast") {
-    ZStack {
-        LinearGradient.enhancedBackgroundGradient
-            .ignoresSafeArea()
-        
-        ToastView(message: "QR 코드가 새로고침되었습니다")
-    }
 }

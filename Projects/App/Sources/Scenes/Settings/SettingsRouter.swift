@@ -27,7 +27,6 @@ public final class SettingsRouter: SettingsRoutingLogic {
     
     /// 디스플레이 모드 설정 화면으로 이동
     public func routeToDisplayModeSelector() {
-        print("⚙️ Navigating to display mode settings")
         appRouter.navigate(to: .settings(.displayMode))
     }
     

@@ -13,8 +13,6 @@ protocol ReceivePresentationLogic {
 
 @MainActor
 final class ReceivePresenter: ReceivePresentationLogic {
-    weak var viewController: ReceiveDisplayLogic?
-    
     @Injected(\.walletService) private var walletService
     
     // MARK: - Presentation Logic
@@ -52,9 +50,7 @@ final class ReceivePresenter: ReceivePresentationLogic {
         viewController?.displayShareSheet(viewModel: displayModel)
     }
     
-    func presentQRCode(response: ReceiveScene.GenerateQRCode.Response) {
-        print("📨 ReceivePresenter: Received QR response (isRefresh: \(response.isRefresh))")
-        
+    func presentQRCode(response: ReceiveScene.GenerateQRCode.Response) {        
         // 실제 QR 코드 생성 (새로고침 시마다 새로 생성됨)
         let qrCodeData = response.qrCodeData ?? generateQRCodeData(from: getCurrentWalletAddress())
         
@@ -63,9 +59,6 @@ final class ReceivePresenter: ReceivePresentationLogic {
             isRefresh: response.isRefresh,
             showSuccessAnimation: response.isRefresh && qrCodeData != nil
         )
-        
-        print("🎬 ReceivePresenter: Creating view model (showSuccessAnimation: \(displayModel.showSuccessAnimation))")
-        print("📊 ReceivePresenter: QR data size: \(qrCodeData?.count ?? 0) bytes")
         
         viewController?.displayQRCode(viewModel: displayModel)
     }

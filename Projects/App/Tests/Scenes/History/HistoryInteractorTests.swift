@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import App
+@testable import Kingthereum
 @testable import Entity
 @testable import Core
 

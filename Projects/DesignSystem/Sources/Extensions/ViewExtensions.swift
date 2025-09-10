@@ -29,14 +29,17 @@ public extension View {
     }
     
     /// 로딩 오버레이 추가
-    func loadingOverlay(isLoading: Bool, style: LoadingStyle = .spinner) -> some View {
+    func loadingOverlay(isLoading: Bool) -> some View {
         overlay {
             if isLoading {
                 ZStack {
                     Color.black.opacity(0.3)
                         .ignoresSafeArea()
                     
-                    LoadingView(style: style, size: .medium)
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle())
+                        .tint(KingDesignTokens.Colors.accent)
+                        .scaleEffect(1.5)
                         .background(
                             RoundedRectangle(cornerRadius: 12)
                                 .fill(.ultraThinMaterial)
@@ -199,18 +202,3 @@ public extension View {
             }
     }
 }
-
-// MARK: - Navigation Extensions
-
-//public extension View {
-//    /// 네비게이션 타이틀 스타일 설정
-//    func navigationTitle(_ title: String, displayMode: NavigationBarItem.TitleDisplayMode = .automatic) -> some View {
-//        navigationTitle(title)
-//            .navigationBarTitleDisplayMode(displayMode)
-//    }
-//    
-//    /// 네비게이션 바 숨기기/보이기
-//    func navigationBarHidden(_ hidden: Bool = true) -> some View {
-//        navigationBarHidden(hidden)
-//    }
-//}

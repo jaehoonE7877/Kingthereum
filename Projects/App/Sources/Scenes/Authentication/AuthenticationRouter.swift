@@ -23,49 +23,41 @@ public final class AuthenticationRouter {
     
     /// 메인 앱으로 이동 (인증 완료)
     public func routeToMain() {
-        print("🔐 Authentication completed, navigating to main app")
         appRouter.enterMainApp()
     }
     
     /// 지갑 생성 화면으로 이동
     public func routeToWalletCreation() {
-        print("🔐 Navigating to wallet creation")
         appRouter.navigate(to: .authentication(.walletCreation))
     }
     
     /// 지갑 가져오기 화면으로 이동
     public func routeToWalletImport(method: WalletImportMethod) {
-        print("🔐 Navigating to wallet import with method: \(method.displayName)")
         appRouter.navigate(to: .authentication(.walletImport(method: method)))
     }
     
     /// 생체인증 설정 화면으로 이동
     public func routeToBiometricSetup() {
-        print("🔐 Navigating to biometric setup")
         appRouter.navigate(to: .authentication(.biometricSetup))
     }
     
     /// PIN 설정 화면으로 이동
     public func routeToPINSetup(isFirstTime: Bool = true) {
-        print("🔐 Navigating to PIN setup (first time: \(isFirstTime))")
         appRouter.navigate(to: .authentication(.pinSetup(isFirstTime: isFirstTime)))
     }
     
     /// 보안 옵션 화면으로 이동
     public func routeToSecurityOptions() {
-        print("🔐 Navigating to security options")
         appRouter.navigate(to: .authentication(.securityOptions))
     }
     
     /// 지갑 백업 화면으로 이동
     public func routeToBackup() {
-        print("🔐 Navigating to wallet backup")
         appRouter.navigate(to: .authentication(.backup))
     }
     
     /// 설정 화면으로 이동 (인증 관련 설정)
     public func routeToSettings() {
-        print("🔐 Navigating to authentication settings")
         appRouter.navigate(to: .settings(.security))
     }
     

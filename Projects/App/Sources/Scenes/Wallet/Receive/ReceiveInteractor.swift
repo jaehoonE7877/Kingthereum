@@ -68,8 +68,6 @@ final class ReceiveInteractor: ReceiveBusinessLogic, ReceiveDataStore {
     }
     
     func generateQRCode(request: ReceiveScene.GenerateQRCode.Request) {
-        print("🔄 ReceiveInteractor: QR code refresh requested for address: \(request.address)")
-        
         let worker: ReceiveWorker
         if let existingWorker = self.worker {
             worker = existingWorker
@@ -84,7 +82,6 @@ final class ReceiveInteractor: ReceiveBusinessLogic, ReceiveDataStore {
             isRefresh: true // 수동 새로고침
         )
         
-        print("📤 ReceiveInteractor: Sending QR response to presenter (isRefresh: \(response.isRefresh))")
         presenter?.presentQRCode(response: response)
     }
 }

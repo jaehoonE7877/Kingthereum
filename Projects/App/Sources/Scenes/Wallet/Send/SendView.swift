@@ -72,9 +72,9 @@ enum GasFeeLevel: String, CaseIterable {
     
     var color: Color {
         switch self {
-        case .slow: return KingColors.success
-        case .standard: return KingColors.info
-        case .fast: return KingColors.warning
+        case .slow: return KingDesignTokens.Colors.success
+        case .standard: return KingDesignTokens.Colors.primary
+        case .fast: return KingDesignTokens.Colors.warning
         }
     }
 }
@@ -200,7 +200,7 @@ struct SendView: View {
     var body: some View {
         ZStack {
             // 프리미엄 배경 그라데이션
-            KingGradients.minimalistBackground
+            KingDesignTokens.Gradients.background
                 .ignoresSafeArea()
             
             ScrollView {
@@ -252,8 +252,8 @@ struct SendView: View {
         } message: {
             if let errorMessage = viewStore.errorMessage {
                 Text(errorMessage)
-                    .font(KingTypography.bodyMedium)
-                    .foregroundColor(KingColors.textSecondary)
+                    .font(KingDesignTokens.Typography.bodyMedium)
+                    .foregroundColor(KingDesignTokens.Colors.secondary)
             }
         }
         .sheet(isPresented: $viewStore.showSuccessView) {
@@ -273,7 +273,7 @@ struct SendView: View {
         VStack(spacing: 20) {
             // 닫기 제스처 힌트
             RoundedRectangle(cornerRadius: 2.5)
-                .fill(KingColors.textTertiary.opacity(0.4))
+                .fill(KingDesignTokens.Colors.onSurfaceVariant.opacity(0.4))
                 .frame(width: 36, height: 5)
                 .padding(.top, 8)
             
@@ -283,8 +283,8 @@ struct SendView: View {
                     .fill(
                         RadialGradient(
                             colors: [
-                                KingColors.trustPurple.opacity(0.3),
-                                KingColors.trustPurple.opacity(0.1),
+                                KingDesignTokens.Colors.primary.opacity(0.3),
+                                KingDesignTokens.Colors.primary.opacity(0.1),
                                 Color.clear
                             ],
                             center: .center,
@@ -299,7 +299,7 @@ struct SendView: View {
                         .fill(.ultraThinMaterial)
                         .background(
                             Circle()
-                                .fill(KingColors.trustPurple.opacity(0.15))
+                                .fill(KingDesignTokens.Colors.primary.opacity(0.15))
                         )
                         .frame(width: 64, height: 64)
                     
@@ -308,28 +308,28 @@ struct SendView: View {
                         .foregroundStyle(
                             LinearGradient(
                                 colors: [
-                                    KingColors.trustPurple,
-                                    KingColors.exclusiveGold.opacity(0.8)
+                                    KingDesignTokens.Colors.primary,
+                                    KingDesignTokens.Colors.accent.opacity(0.8)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
                 }
-                .shadow(color: KingColors.trustPurple.opacity(0.3), radius: 12, x: 0, y: 6)
+                .shadow(color: KingDesignTokens.Colors.primary.opacity(0.3), radius: 12, x: 0, y: 6)
             }
             
             VStack(spacing: 8) {
                 Text("이더리움 송금")
-                    .font(KingTypography.displaySmall)
+                    .font(KingDesignTokens.Typography.displaySmall)
                     .fontWeight(.bold)
-                    .foregroundColor(KingColors.textPrimary)
+                    .foregroundColor(KingDesignTokens.Colors.onSurface)
                     .shadow(color: Color.black.opacity(0.2), radius: 1, x: 0, y: 0.5)
                 
                 Text("안전하게 ETH를 전송하세요")
-                    .font(KingTypography.bodyMedium)
+                    .font(KingDesignTokens.Typography.bodyMedium)
                     .fontWeight(.medium)
-                    .foregroundColor(KingColors.textSecondary)
+                    .foregroundColor(KingDesignTokens.Colors.secondary)
                     .multilineTextAlignment(.center)
                     .shadow(color: Color.black.opacity(0.15), radius: 0.5, x: 0, y: 0.25)
             }
@@ -349,23 +349,23 @@ struct SendView: View {
                         Circle()
                             .fill(
                                 step.rawValue <= viewStore.currentStep.rawValue 
-                                ? KingColors.trustPurple.opacity(0.2)
-                                : KingColors.textTertiary.opacity(0.1)
+                                ? KingDesignTokens.Colors.primary.opacity(0.2)
+                                : KingDesignTokens.Colors.onSurfaceVariant.opacity(0.1)
                             )
                             .frame(width: 24, height: 24)
                         
                         if step.rawValue < viewStore.currentStep.rawValue {
                             Image(systemName: "checkmark")
                                 .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(KingColors.trustPurple)
+                                .foregroundColor(KingDesignTokens.Colors.primary)
                         } else {
                             Text("\(index + 1)")
-                                .font(KingTypography.caption)
+                                .font(KingDesignTokens.Typography.caption)
                                 .fontWeight(.semibold)
                                 .foregroundColor(
                                     step == viewStore.currentStep 
-                                    ? KingColors.trustPurple
-                                    : KingColors.textTertiary
+                                    ? KingDesignTokens.Colors.primary
+                                    : KingDesignTokens.Colors.onSurfaceVariant
                                 )
                         }
                     }
@@ -374,8 +374,8 @@ struct SendView: View {
                         RoundedRectangle(cornerRadius: 1)
                             .fill(
                                 step.rawValue < viewStore.currentStep.rawValue
-                                ? KingColors.trustPurple.opacity(0.3)
-                                : KingColors.textTertiary.opacity(0.2)
+                                ? KingDesignTokens.Colors.primary.opacity(0.3)
+                                : KingDesignTokens.Colors.onSurfaceVariant.opacity(0.2)
                             )
                             .frame(width: 20, height: 2)
                     }
@@ -500,8 +500,8 @@ struct SendView: View {
             LinearGradient(
                 colors: [
                     Color.clear,
-                    KingColors.backgroundPrimary.opacity(0.8),
-                    KingColors.backgroundPrimary
+                    KingDesignTokens.Colors.background.opacity(0.8),
+                    KingDesignTokens.Colors.background
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -590,15 +590,15 @@ struct PremiumSectionHeader: View {
     var body: some View {
         VStack(spacing: 8) {
             Text(title)
-                .font(KingTypography.headlineSmall)
+                .font(KingDesignTokens.Typography.headlineSmall)
                 .fontWeight(.bold)
-                .foregroundColor(KingColors.textPrimary)
+                .foregroundColor(KingDesignTokens.Colors.onSurface)
                 .shadow(color: Color.black.opacity(0.2), radius: 1, x: 0, y: 0.5)
             
             Text(subtitle)
-                .font(KingTypography.bodySmall)
+                .font(KingDesignTokens.Typography.bodySmall)
                 .fontWeight(.medium)
-                .foregroundColor(KingColors.textSecondary)
+                .foregroundColor(KingDesignTokens.Colors.secondary)
                 .multilineTextAlignment(.center)
                 .shadow(color: Color.black.opacity(0.15), radius: 0.5, x: 0, y: 0.25)
         }
@@ -619,8 +619,8 @@ struct PremiumAddressField: View {
             // 메인 입력 필드
             VStack(spacing: 12) {
                 TextField("0x1234...abcd", text: $address)
-                    .font(KingTypography.bodyMedium)
-                    .foregroundColor(KingColors.textPrimary)
+                    .font(KingDesignTokens.Typography.bodyMedium)
+                    .foregroundColor(KingDesignTokens.Colors.onSurface)
                     .padding(.horizontal, 20)
                     .padding(.vertical, 16)
                     .background(
@@ -628,15 +628,15 @@ struct PremiumAddressField: View {
                             .fill(.ultraThinMaterial)
                             .background(
                                 RoundedRectangle(cornerRadius: 16)
-                                    .fill(KingColors.glassMinimalBase)
+                                    .fill(KingDesignTokens.Colors.surface)
                             )
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 16)
                             .stroke(
-                                isValid && !address.isEmpty ? KingColors.success.opacity(0.5) : 
-                                !validationMessage.isEmpty ? KingColors.error.opacity(0.5) :
-                                KingColors.glassBorder,
+                                isValid && !address.isEmpty ? KingDesignTokens.Colors.success.opacity(0.5) : 
+                                !validationMessage.isEmpty ? KingDesignTokens.Colors.error.opacity(0.5) :
+                                KingDesignTokens.Colors.outline,
                                 lineWidth: 1
                             )
                     )
@@ -647,8 +647,8 @@ struct PremiumAddressField: View {
                 // 유효성 검증 메시지
                 if !validationMessage.isEmpty {
                     Text(validationMessage)
-                        .font(KingTypography.caption)
-                        .foregroundColor(isValid ? KingColors.success : KingColors.error)
+                        .font(KingDesignTokens.Typography.caption)
+                        .foregroundColor(isValid ? KingDesignTokens.Colors.success : KingDesignTokens.Colors.error)
                         .shadow(color: Color.black.opacity(0.1), radius: 0.5, x: 0, y: 0.25)
                 }
             }
@@ -658,14 +658,14 @@ struct PremiumAddressField: View {
                 PremiumIconButton(
                     icon: "qrcode.viewfinder",
                     title: "QR 스캔",
-                    color: KingColors.info,
+                    color: KingDesignTokens.Colors.primary,
                     action: onQRScan
                 )
                 
                 PremiumIconButton(
                     icon: "person.2.fill",
                     title: "주소록",
-                    color: KingColors.trustPurple,
+                    color: KingDesignTokens.Colors.primary,
                     action: onAddressBook
                 )
             }
@@ -687,24 +687,24 @@ struct PremiumAmountField: View {
             VStack(spacing: 12) {
                 HStack {
                     TextField("0.0", text: $amount)
-                        .font(KingTypography.cryptoBalanceLarge)
+                        .font(KingDesignTokens.Typography.displayLarge)
                         .fontWeight(.semibold)
-                        .foregroundColor(KingColors.textPrimary)
+                        .foregroundColor(KingDesignTokens.Colors.onSurface)
                         .keyboardType(.decimalPad)
                         .multilineTextAlignment(.center)
                     
                     Text("ETH")
-                        .font(KingTypography.labelLarge)
+                        .font(KingDesignTokens.Typography.labelLarge)
                         .fontWeight(.bold)
-                        .foregroundColor(KingColors.exclusiveGold)
+                        .foregroundColor(KingDesignTokens.Colors.accent)
                 }
                 .padding(.horizontal, 24)
                 .padding(.vertical, 20)
                 
                 if !validationMessage.isEmpty {
                     Text(validationMessage)
-                        .font(KingTypography.caption)
-                        .foregroundColor(isValid ? KingColors.success : KingColors.error)
+                        .font(KingDesignTokens.Typography.caption)
+                        .foregroundColor(isValid ? KingDesignTokens.Colors.success : KingDesignTokens.Colors.error)
                         .shadow(color: Color.black.opacity(0.1), radius: 0.5, x: 0, y: 0.25)
                 }
             }
@@ -716,8 +716,8 @@ struct PremiumAmountField: View {
         .overlay(
             RoundedRectangle(cornerRadius: 16)
                 .stroke(
-                    isValid && !amount.isEmpty ? KingColors.success.opacity(0.3) :
-                    !validationMessage.isEmpty ? KingColors.error.opacity(0.3) :
+                    isValid && !amount.isEmpty ? KingDesignTokens.Colors.success.opacity(0.3) :
+                    !validationMessage.isEmpty ? KingDesignTokens.Colors.error.opacity(0.3) :
                     Color.clear,
                     lineWidth: 1
                 )
@@ -735,17 +735,17 @@ struct PremiumGasFeeSelector: View {
         VStack(spacing: 16) {
             HStack {
                 Text("네트워크 수수료")
-                    .font(KingTypography.labelLarge)
+                    .font(KingDesignTokens.Typography.labelLarge)
                     .fontWeight(.semibold)
-                    .foregroundColor(KingColors.textPrimary)
+                    .foregroundColor(KingDesignTokens.Colors.onSurface)
                 
                 Spacer()
                 
                 if !estimatedGas.isEmpty {
                     Text(estimatedGas)
-                        .font(KingTypography.bodySmall)
+                        .font(KingDesignTokens.Typography.bodySmall)
                         .fontWeight(.medium)
-                        .foregroundColor(KingColors.textSecondary)
+                        .foregroundColor(KingDesignTokens.Colors.secondary)
                 }
             }
             
@@ -761,10 +761,10 @@ struct PremiumGasFeeSelector: View {
                                 .foregroundColor(fee.color)
                             
                             Text(fee.rawValue)
-                                .font(KingTypography.caption)
+                                .font(KingDesignTokens.Typography.caption)
                                 .fontWeight(.semibold)
                                 .foregroundColor(
-                                    selectedFee == fee ? KingColors.textPrimary : KingColors.textSecondary
+                                    selectedFee == fee ? KingDesignTokens.Colors.onSurface : KingDesignTokens.Colors.secondary
                                 )
                         }
                         .padding(.horizontal, 16)
@@ -784,7 +784,7 @@ struct PremiumGasFeeSelector: View {
                             .stroke(
                                 selectedFee == fee ? 
                                 fee.color.opacity(0.4) : 
-                                KingColors.glassBorder,
+                                KingDesignTokens.Colors.outline,
                                 lineWidth: selectedFee == fee ? 1.5 : 0.5
                             )
                     )
@@ -811,7 +811,7 @@ struct PremiumTransactionSummary: View {
                 title: "받는 사람",
                 value: recipientAddress,
                 icon: "person.circle.fill",
-                iconColor: KingColors.info
+                iconColor: KingDesignTokens.Colors.primary
             )
             
             // 송금 금액
@@ -819,7 +819,7 @@ struct PremiumTransactionSummary: View {
                 title: "송금 금액",
                 value: "\(amount) ETH",
                 icon: "bitcoinsign.circle.fill",
-                iconColor: KingColors.exclusiveGold
+                iconColor: KingDesignTokens.Colors.accent
             )
             
             // 네트워크 수수료
@@ -831,14 +831,14 @@ struct PremiumTransactionSummary: View {
             )
             
             Divider()
-                .background(KingColors.glassBorder)
+                .background(KingDesignTokens.Colors.outline)
             
             // 총 금액
             PremiumInfoRow(
                 title: "총 금액",
                 value: "계산 중...",
                 icon: "sum",
-                iconColor: KingColors.trustPurple,
+                iconColor: KingDesignTokens.Colors.primary,
                 isHighlighted: true
             )
         }
@@ -871,14 +871,14 @@ struct PremiumInfoRow: View {
             // 텍스트
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(KingTypography.bodySmall)
+                    .font(KingDesignTokens.Typography.bodySmall)
                     .fontWeight(.medium)
-                    .foregroundColor(KingColors.textSecondary)
+                    .foregroundColor(KingDesignTokens.Colors.secondary)
                 
                 Text(value)
-                    .font(isHighlighted ? KingTypography.labelLarge : KingTypography.bodyMedium)
+                    .font(isHighlighted ? KingDesignTokens.Typography.labelLarge : KingDesignTokens.Typography.bodyMedium)
                     .fontWeight(isHighlighted ? .bold : .medium)
-                    .foregroundColor(isHighlighted ? KingColors.trustPurple : KingColors.textPrimary)
+                    .foregroundColor(isHighlighted ? KingDesignTokens.Colors.primary : KingDesignTokens.Colors.onSurface)
                     .lineLimit(1)
             }
             
@@ -908,9 +908,9 @@ struct PremiumIconButton: View {
                 }
                 
                 Text(title)
-                    .font(KingTypography.caption)
+                    .font(KingDesignTokens.Typography.caption)
                     .fontWeight(.medium)
-                    .foregroundColor(KingColors.textSecondary)
+                    .foregroundColor(KingDesignTokens.Colors.secondary)
             }
         }
         .buttonStyle(PlainButtonStyle())
@@ -930,26 +930,26 @@ struct PremiumActionButton: View {
             HStack(spacing: 12) {
                 if isLoading {
                     ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: KingColors.textInverse))
+                        .progressViewStyle(CircularProgressViewStyle(tint: KingDesignTokens.Colors.onPrimary))
                         .scaleEffect(0.8)
                 } else {
                     Image(systemName: "arrow.right.circle.fill")
-                        .font(KingTypography.labelLarge)
-                        .foregroundColor(KingColors.textInverse)
+                        .font(KingDesignTokens.Typography.labelLarge)
+                        .foregroundColor(KingDesignTokens.Colors.onPrimary)
                 }
                 
                 Text(title)
-                    .font(KingTypography.buttonPrimary)
+                    .font(KingDesignTokens.Typography.labelLarge)
                     .fontWeight(.bold)
-                    .foregroundColor(KingColors.textInverse)
+                    .foregroundColor(KingDesignTokens.Colors.onPrimary)
             }
             .frame(maxWidth: .infinity)
             .frame(height: 56)
             .background(
                 LinearGradient(
                     colors: [
-                        KingColors.trustPurple,
-                        KingColors.trustPurple.opacity(0.8)
+                        KingDesignTokens.Colors.primary,
+                        KingDesignTokens.Colors.primary.opacity(0.8)
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
@@ -957,7 +957,7 @@ struct PremiumActionButton: View {
             )
             .clipShape(RoundedRectangle(cornerRadius: 16))
             .shadow(
-                color: KingColors.trustPurple.opacity(0.4),
+                color: KingDesignTokens.Colors.primary.opacity(0.4),
                 radius: 12,
                 x: 0,
                 y: 6
@@ -980,13 +980,13 @@ struct PremiumSecondaryButton: View {
         Button(action: action) {
             HStack(spacing: 8) {
                 Image(systemName: "arrow.left.circle")
-                    .font(KingTypography.labelMedium)
-                    .foregroundColor(KingColors.trustPurple)
+                    .font(KingDesignTokens.Typography.labelMedium)
+                    .foregroundColor(KingDesignTokens.Colors.primary)
                 
                 Text(title)
-                    .font(KingTypography.buttonSecondary)
+                    .font(KingDesignTokens.Typography.labelMedium)
                     .fontWeight(.semibold)
-                    .foregroundColor(KingColors.trustPurple)
+                    .foregroundColor(KingDesignTokens.Colors.primary)
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
@@ -997,12 +997,12 @@ struct PremiumSecondaryButton: View {
                 .fill(.ultraThinMaterial)
                 .background(
                     RoundedRectangle(cornerRadius: 16)
-                        .fill(KingColors.trustPurple.opacity(0.05))
+                        .fill(KingDesignTokens.Colors.primary.opacity(0.05))
                 )
         )
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(KingColors.trustPurple.opacity(0.3), lineWidth: 1)
+                .stroke(KingDesignTokens.Colors.primary.opacity(0.3), lineWidth: 1)
         )
     }
 }

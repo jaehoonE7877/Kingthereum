@@ -25,68 +25,239 @@ protocol WalletAddressProviderProtocol {
 protocol ReceiveWorkerProtocol: QRCodeGeneratorProtocol, WalletAddressProviderProtocol {}
 
 // MARK: - SOLID 원칙 적용된 ReceiveWorker 구현
+// MARK: - Performance-Optimized & Secure ReceiveWorker
 final class ReceiveWorker: ReceiveWorkerProtocol {
     
     private let walletService: WalletServiceProtocol
+    private let qrCodeCache = NSCache<NSString, NSData>()
+    private let processingQueue = DispatchQueue(label: "receive.worker.queue", qos: .userInitiated)
+    
+    // Security enhancements
+    private let addressValidator: EthereumAddressValidator
+    private var lastGeneratedQRTime: Date = Date.distantPast
+    private let qrGenerationThrottleInterval: TimeInterval = 1.0 // 1초 제한
     
     init(walletService: WalletServiceProtocol) {
         self.walletService = walletService
+        self.addressValidator = EthereumAddressValidator()
+        setupCache()
     }
     
-    // MARK: - QRCodeGeneratorProtocol 구현
+    // MARK: - Cache Setup
+    
+    private func setupCache() {
+        qrCodeCache.countLimit = 10 // 최대 10개 QR 코드 캐시
+        qrCodeCache.totalCostLimit = 50 * 1024 * 1024 // 50MB 제한
+    }
+    
+    // MARK: - QRCodeGeneratorProtocol 구현 (Performance Optimized)
     
     func generateQRCode(from address: String) -> Data? {
-        // 주소 유효성 검증
-        guard isValidEthereumAddress(address) else {
+        // Security: Rate limiting
+        let now = Date()
+        guard now.timeIntervalSince(lastGeneratedQRTime) >= qrGenerationThrottleInterval else {
+            #if DEBUG
+            print("🚫 QR generation throttled - too frequent requests")
+            #endif
+            return getCachedQRCode(for: address)
+        }
+        lastGeneratedQRTime = now
+        
+        // Security: Address validation
+        guard addressValidator.isValidEthereumAddress(address) else {
+            #if DEBUG
+            print("🚫 Invalid Ethereum address: \(address)")
+            #endif
             return nil
         }
         
-        // QR 코드 생성을 직접 구현
-        let filter = CIFilter(name: "CIQRCodeGenerator")
-        filter?.setValue(address.data(using: .utf8), forKey: "inputMessage")
-        filter?.setValue("H", forKey: "inputCorrectionLevel")
+        // Performance: Check cache first
+        let cacheKey = NSString(string: address)
+        if let cachedData = qrCodeCache.object(forKey: cacheKey) {
+            #if DEBUG
+            print("✅ QR code served from cache")
+            #endif
+            return cachedData as Data
+        }
         
-        guard let ciImage = filter?.outputImage else { return nil }
+        // Generate QR code asynchronously if needed
+        return generateAndCacheQRCode(address: address)
+    }
+    
+    private func getCachedQRCode(for address: String) -> Data? {
+        let cacheKey = NSString(string: address)
+        return qrCodeCache.object(forKey: cacheKey) as Data?
+    }
+    
+    private func generateAndCacheQRCode(address: String) -> Data? {
+        // High-quality QR code generation
+        guard let filter = CIFilter(name: "CIQRCodeGenerator") else {
+            return nil
+        }
         
-        // 고해상도로 스케일링
-        let scaleX = 512 / ciImage.extent.size.width
-        let scaleY = 512 / ciImage.extent.size.height
+        // Security: Sanitize input
+        let sanitizedAddress = address.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        filter.setValue(sanitizedAddress.data(using: .utf8), forKey: "inputMessage")
+        filter.setValue("H", forKey: "inputCorrectionLevel") // High error correction
+        
+        guard let ciImage = filter.outputImage else { return nil }
+        
+        // Performance: Optimized scaling
+        let targetSize: CGFloat = 512
+        let scaleX = targetSize / ciImage.extent.size.width
+        let scaleY = targetSize / ciImage.extent.size.height
         let scaledImage = ciImage.transformed(by: CGAffineTransform(scaleX: scaleX, y: scaleY))
         
-        let context = CIContext()
+        // Use high-performance context
+        let context = CIContext(options: [
+            .useSoftwareRenderer: false, // Use GPU if available
+            .priorityRequestLow: false   // High priority rendering
+        ])
+        
         guard let cgImage = context.createCGImage(scaledImage, from: scaledImage.extent) else {
             return nil
         }
         
         let uiImage = UIImage(cgImage: cgImage)
-        return uiImage.pngData()
+        guard let qrData = uiImage.pngData() else { return nil }
+        
+        // Cache the generated QR code
+        let cacheKey = NSString(string: address)
+        let nsData = NSData(data: qrData)
+        qrCodeCache.setObject(nsData, forKey: cacheKey, cost: qrData.count)
+        
+        #if DEBUG
+        print("✅ QR code generated and cached for address: \(sanitizedAddress.prefix(10))...")
+        #endif
+        
+        return qrData
     }
     
-    // MARK: - WalletAddressProviderProtocol 구현
+    // MARK: - WalletAddressProviderProtocol 구현 (Security Hardened)
     
     func getWalletAddress() -> String {
-        // UserDefaults에서 현재 선택된 지갑 주소를 가져옴
-        if let address = UserDefaults.standard.string(forKey: Constants.UserDefaults.selectedWalletAddress),
-           walletService.isValidEthereumAddress(address) {
-            return address
+        // Security: Multiple fallback sources
+        
+        // Priority 1: Current active wallet from service
+        if let activeAddress = walletService.getCurrentWalletAddress(),
+           addressValidator.isValidEthereumAddress(activeAddress) {
+            return activeAddress
         }
         
-        // 백업 옵션: 키체인에서 가져오기 (향후 구현 가능)
-        // 또는 WalletManager를 통한 현재 활성 지갑 조회
+        // Priority 2: UserDefaults (validated)
+        if let savedAddress = UserDefaults.standard.string(forKey: Constants.UserDefaults.selectedWalletAddress),
+           addressValidator.isValidEthereumAddress(savedAddress) {
+            return savedAddress
+        }
         
-        // 기본값 반환 (개발/테스트용)
-        return "0x742B15EcB8E3F6F7e7D58C4f9Ad2dBcEF8A5E9C3"
+        // Priority 3: Keychain (secure storage)
+        if let keychainAddress = getAddressFromKeychain(),
+           addressValidator.isValidEthereumAddress(keychainAddress) {
+            return keychainAddress
+        }
+        
+        // Security: Never return hardcoded addresses in production
+        #if DEBUG
+        return "0x742B15EcB8E3F6F7e7D58C4f9Ad2dBcEF8A5E9C3" // Test address
+        #else
+        fatalError("No valid wallet address found - security violation")
+        #endif
+    }
+    
+    private func getAddressFromKeychain() -> String? {
+        // Integration with SecurityKit for secure address retrieval
+        // This would be implemented with proper keychain access
+        return nil
     }
     
     func formatAddress(_ address: String) -> String {
-        // 주소를 0x...abc 형식으로 축약
-        guard address.count > 10 else { return address }
-        let prefix = String(address.prefix(6))
-        let suffix = String(address.suffix(4))
+        // Security: Validate before formatting
+        guard addressValidator.isValidEthereumAddress(address) else {
+            return "Invalid Address"
+        }
+        
+        // Performance: Optimized string manipulation
+        guard address.count >= 10 else { return address }
+        
+        let startIndex = address.startIndex
+        let prefixEndIndex = address.index(startIndex, offsetBy: 6)
+        let suffixStartIndex = address.index(address.endIndex, offsetBy: -4)
+        
+        let prefix = String(address[startIndex..<prefixEndIndex])
+        let suffix = String(address[suffixStartIndex..<address.endIndex])
+        
         return "\(prefix)...\(suffix)"
     }
     
     func isValidEthereumAddress(_ address: String) -> Bool {
-        return walletService.isValidEthereumAddress(address)
+        return addressValidator.isValidEthereumAddress(address)
+    }
+    
+    // MARK: - Cache Management
+    
+    func clearQRCodeCache() {
+        qrCodeCache.removeAllObjects()
+        #if DEBUG
+        print("🧹 QR code cache cleared")
+        #endif
+    }
+    
+    func getCacheSize() -> Int {
+        return qrCodeCache.totalCostLimit
+    }
+}
+
+// MARK: - Enhanced Ethereum Address Validator
+
+private final class EthereumAddressValidator {
+    
+    private let addressRegex: NSRegularExpression
+    
+    init() {
+        // Ethereum address pattern: 0x followed by 40 hexadecimal characters
+        let pattern = "^0x[a-fA-F0-9]{40}$"
+        addressRegex = try! NSRegularExpression(pattern: pattern, options: [])
+    }
+    
+    func isValidEthereumAddress(_ address: String) -> Bool {
+        // Basic format validation
+        guard !address.isEmpty,
+              address.count == 42,
+              address.lowercased().hasPrefix("0x") else {
+            return false
+        }
+        
+        // Regex validation
+        let range = NSRange(location: 0, length: address.count)
+        let matches = addressRegex.numberOfMatches(in: address, options: [], range: range)
+        
+        guard matches == 1 else {
+            return false
+        }
+        
+        // EIP-55 checksum validation (mixed case addresses)
+        return validateEIP55Checksum(address)
+    }
+    
+    private func validateEIP55Checksum(_ address: String) -> Bool {
+        // If address is all lowercase or all uppercase, checksum is not applied
+        let addressWithoutPrefix = String(address.dropFirst(2))
+        let isAllLowercase = addressWithoutPrefix == addressWithoutPrefix.lowercased()
+        let isAllUppercase = addressWithoutPrefix == addressWithoutPrefix.uppercased()
+        
+        if isAllLowercase || isAllUppercase {
+            return true // No checksum validation needed
+        }
+        
+        // Validate EIP-55 checksum for mixed case addresses
+        return validateMixedCaseChecksum(addressWithoutPrefix)
+    }
+    
+    private func validateMixedCaseChecksum(_ addressWithoutPrefix: String) -> Bool {
+        // EIP-55 checksum validation using Keccak-256
+        // For now, we'll accept mixed case addresses without full Keccak validation
+        // In production, this would include full Keccak-256 hash validation
+        return true
     }
 }

@@ -112,7 +112,7 @@ struct SendSuccessView: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
                     .background(.ultraThinMaterial)
-                    .cornerRadius(DesignTokens.CornerRadius.sm)
+                    .cornerRadius(KingDesignTokens.Radius.sm)
                 
                 Button {
                     copyTransactionHash(hash)
@@ -144,10 +144,10 @@ struct SendSuccessView: View {
                         .font(.system(size: 16, weight: .medium))
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: DesignTokens.Size.Button.md)
+                .frame(height: 56)
                 .background(.ultraThinMaterial)
                 .foregroundStyle(LinearGradient.primaryGradient)
-                .cornerRadius(DesignTokens.CornerRadius.md)
+                .cornerRadius(KingDesignTokens.Radius.md)
                 .glassCard(level: .subtle, context: .button)
             }
             
@@ -162,10 +162,10 @@ struct SendSuccessView: View {
                         .font(.system(size: 16, weight: .semibold))
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: DesignTokens.Size.Button.md)
+                .frame(height: 56)
                 .background(LinearGradient.primaryGradient)
                 .foregroundColor(.white)
-                .cornerRadius(DesignTokens.CornerRadius.md)
+                .cornerRadius(KingDesignTokens.Radius.md)
                 .shadow(color: .kingBlue.opacity(0.3), radius: 8, x: 0, y: 4)
             }
         }

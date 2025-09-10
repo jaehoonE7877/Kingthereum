@@ -3,6 +3,8 @@ import Core
 import WalletKit
 import SecurityKit
 import Factory
+import Entity
+import os.log
 
 // MARK: - App Module Services Factory Registration
 
@@ -35,7 +37,6 @@ public extension Container {
                 return service
             } catch {
                 // 더 나은 에러 핸들링
-                print("[Factory] Failed to initialize WalletService: \(error)")
                 fatalError("Critical service initialization failed: \(error.localizedDescription)")
             }
         }
@@ -46,6 +47,22 @@ public extension Container {
     /// 생체 인식, PIN 인증 등 보안 기능 담당
     var securityService: Factory<SecurityService> {
         self { SecurityService() }
+            .singleton
+    }
+    /// HistoryService 구현체 (네이밍 통일)
+    /// Etherscan API를 통한 블록체인 거래 내역 처리
+    var historyService: Factory<HistoryServiceProtocol> {
+        self {
+            let etherscanService = EtherscanService()
+            return HistoryService(etherscanService: etherscanService)
+        }
+        .singleton
+    }
+    
+    /// EtherscanService 구현체
+    /// Ethereum 블록체인 데이터 API 서비스
+    var etherscanService: Factory<EtherscanService> {
+        self { EtherscanService() }
             .singleton
     }
     
@@ -77,6 +94,16 @@ public actor ContainerManager {
     /// SecurityService 안전한 해결
     public func resolveSecurityService() -> SecurityService {
         container.securityService()
+    }
+    
+    /// HistoryService 안전한 해결
+    public func resolveHistoryService() -> HistoryServiceProtocol {
+        container.historyService()
+    }
+    
+    /// EtherscanService 안전한 해결
+    public func resolveEtherscanService() -> EtherscanService {
+        container.etherscanService()
     }
 }
 
