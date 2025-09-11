@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 /// 송금 Scene의 VIP 모델들
 public enum SendScene {
@@ -79,19 +80,23 @@ public enum SendScene {
         public struct Request {
             public let recipientAddress: String
             public let amount: String
+            public let gasFeeLevel: GasPriority
             
-            public init(recipientAddress: String, amount: String) {
+            public init(recipientAddress: String, amount: String, gasFeeLevel: GasPriority = .normal) {
                 self.recipientAddress = recipientAddress
                 self.amount = amount
+                self.gasFeeLevel = gasFeeLevel
             }
         }
         
         public struct Response {
             public let gasOptions: GasOptions?
+            public let estimatedGas: String?
             public let error: String?
             
-            public init(gasOptions: GasOptions? = nil, error: String? = nil) {
+            public init(gasOptions: GasOptions? = nil, estimatedGas: String? = nil, error: String? = nil) {
                 self.gasOptions = gasOptions
+                self.estimatedGas = estimatedGas
                 self.error = error
             }
         }
@@ -208,7 +213,7 @@ public enum SendScene {
 // MARK: - Supporting Models
 
 /// 송금 준비 단계의 거래 정보 (Core.Transaction과 구분)
-public struct PendingTransaction {
+public struct PendingTransaction: Sendable {
     public let recipientAddress: String
     public let amount: Decimal
     public let gasPrice: String // BigUInt 대신 String 사용 (Entity 모듈은 BigInt 의존성 없음)
@@ -225,7 +230,7 @@ public struct PendingTransaction {
 }
 
 /// 가스 옵션
-public struct GasOptions {
+public struct GasOptions: Sendable {
     public let slow: GasFee
     public let normal: GasFee
     public let fast: GasFee
@@ -238,7 +243,7 @@ public struct GasOptions {
 }
 
 /// 가스 수수료
-public struct GasFee {
+public struct GasFee: Sendable {
     public let gasPrice: String // BigUInt 대신 String 사용
     public let estimatedTime: TimeInterval
     public let feeInETH: Decimal
@@ -266,7 +271,7 @@ public struct GasFee {
 }
 
 /// 송금 표시용 아이템
-public struct SendDisplayItem {
+public struct SendDisplayItem: Sendable {
     public let recipientAddress: String
     public let formattedRecipientAddress: String
     public let amount: String

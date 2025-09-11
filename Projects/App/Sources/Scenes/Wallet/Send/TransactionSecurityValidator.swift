@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+
 import Entity
 import Core
 
@@ -44,7 +45,7 @@ actor TransactionSecurityValidator {
         userBalance: Decimal
     ) async throws -> TransactionValidationResult {
         
-        try await updateCounters()
+        await updateCounters()
         
         // 🔒 1단계: 기본 금액 검증
         try validateBasicAmountLimits(amount)
@@ -92,7 +93,7 @@ actor TransactionSecurityValidator {
         )
     }
     
-    func getCurrentSecurityMetrics() async -> SecurityMetrics {
+    func getCurrentSecurityMetrics() async -> TransactionSecurityMetrics {
         await updateCounters()
         
         let recentSuspiciousCount = suspiciousActivityLog.filter { activity in
@@ -102,7 +103,7 @@ actor TransactionSecurityValidator {
         let averageTransactionAmount = recentTransactions.isEmpty ? 0 : 
             recentTransactions.reduce(0) { $0 + $1.amount } / Decimal(recentTransactions.count)
         
-        return SecurityMetrics(
+        return TransactionSecurityMetrics(
             dailyTransactionAmount: dailyTransactionAmount,
             dailyTransactionCount: dailyTransactionCount,
             hourlyTransactionCount: hourlyTransactionCount,
@@ -366,7 +367,9 @@ actor TransactionSecurityValidator {
     }
     
     private func isRoundNumber(_ amount: Decimal) -> Bool {
-        return amount.truncatingRemainder(dividingBy: 1) == 0
+        let integerPart = NSDecimalNumber(decimal: amount).intValue
+        let reconstructed = Decimal(integerPart)
+        return amount == reconstructed
     }
     
     private func getEstimatedProcessingTime(for riskLevel: RiskLevel) -> TimeInterval {
@@ -436,7 +439,7 @@ struct TransactionEligibility {
     let nextResetTime: Date
 }
 
-struct SecurityMetrics {
+struct TransactionSecurityMetrics {
     let dailyTransactionAmount: Decimal
     let dailyTransactionCount: Int
     let hourlyTransactionCount: Int

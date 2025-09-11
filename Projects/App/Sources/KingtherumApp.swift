@@ -52,7 +52,11 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             // 배경 그라데이션
-            LinearGradient.enhancedBackgroundGradient
+            LinearGradient(
+                colors: [Color.black, Color.gray.opacity(0.3)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
                 .ignoresSafeArea()
             
             // 메인 콘텐츠

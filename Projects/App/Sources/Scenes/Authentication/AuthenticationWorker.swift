@@ -51,7 +51,7 @@ actor AuthenticationWorker {
         await initializeWalletService()
         
         guard let walletService = walletService else {
-            throw SecurityError.noSecuritySetup
+            throw WalletError.noWalletFound
         }
         
         return walletService
@@ -73,7 +73,7 @@ actor AuthenticationWorker {
         return securityService.isBiometricAvailable()
     }
     
-    func getBiometricType() -> BiometricType {
+    func getBiometricType() -> Entity.SecurityError.BiometricType {
         return securityService.getBiometricType()
     }
     

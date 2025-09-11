@@ -1,12 +1,11 @@
 import Foundation
 import Entity
 import UIKit
-import WalletKit
 import Factory
 
 @MainActor
 protocol ReceiveBusinessLogic {
-    func loadWalletAddress(request: ReceiveScene.LoadWalletAddress.Request)
+    func loadWalletAddress(request: ReceiveScene.LoadWalletAddress.Request) async
     func copyAddress(request: ReceiveScene.CopyAddress.Request)
     func shareAddress(request: ReceiveScene.ShareAddress.Request)
     func generateQRCode(request: ReceiveScene.GenerateQRCode.Request)
@@ -29,16 +28,16 @@ final class ReceiveInteractor: ReceiveBusinessLogic, ReceiveDataStore {
     
     // MARK: - Business Logic
     
-    func loadWalletAddress(request: ReceiveScene.LoadWalletAddress.Request) {
+    func loadWalletAddress(request: ReceiveScene.LoadWalletAddress.Request) async {
         let worker: ReceiveWorker
         if let existingWorker = self.worker {
             worker = existingWorker
         } else {
-            worker = ReceiveWorker(walletService: walletService)
+            worker = ReceiveWorker()
         }
         
-        let address = worker.getWalletAddress()
-        let formattedAddress = worker.formatAddress(address)
+        let address = await worker.getWalletAddress()
+        let formattedAddress = await worker.formatAddress(address)
         
         // 데이터 스토어에 저장
         self.walletAddress = address
@@ -72,7 +71,7 @@ final class ReceiveInteractor: ReceiveBusinessLogic, ReceiveDataStore {
         if let existingWorker = self.worker {
             worker = existingWorker
         } else {
-            worker = ReceiveWorker(walletService: walletService)
+            worker = ReceiveWorker()
         }
         
         let qrCodeData = worker.generateQRCode(from: request.address)

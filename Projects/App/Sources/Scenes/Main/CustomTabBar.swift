@@ -52,8 +52,11 @@ struct CustomTabBar: View {
             RoundedRectangle(cornerRadius: 28)
                 .fill(KingDesignTokens.Glass.ultraThin)
                 .background(
-                    RoundedRectangle(cornerRadius: 28)
-                        .fill(KingDesignTokens.Gradients.glassMorphism)
+                    LinearGradient(
+                        colors: [Color.blue, Color.purple],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
                 )
             
             // Premium ambient gradient overlay
@@ -240,14 +243,14 @@ struct PremiumTabBarItem: View {
                 )
             )
         } else {
-            return AnyShapeStyle(KingDesignTokens.Colors.secondary)
+            return AnyShapeStyle(Color.gray)
         }
     }
     
     private var labelForegroundStyle: some ShapeStyle {
         isSelected ? 
         AnyShapeStyle(KingDesignTokens.Colors.primaryText) : 
-        AnyShapeStyle(KingDesignTokens.Colors.secondary)
+        AnyShapeStyle(Color.gray)
     }
     
     private var selectedBackgroundGradient: some ShapeStyle {

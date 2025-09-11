@@ -1,11 +1,12 @@
 import SwiftUI
 import DesignSystem
 import Entity
+import CoreImage
 
 /// 🔐 Premium Receive View - Revolut/N26 Level
 /// Minimalist design with glassmorphism and premium fintech patterns
 struct ReceiveView: View {
-    @StateObject private var viewStore = ReceiveViewStore()
+    @State private var viewStore = ReceiveViewStore()
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -92,10 +93,10 @@ struct ReceiveView: View {
             ZStack {
                 Circle()
                     .fill(KingDesignTokens.Colors.accent.opacity(0.1))
-                    .frame(width: 80, height: 80)
+                    .frame(width: KingDesignTokens.Sizing.iconLarge, height: KingDesignTokens.Sizing.iconLarge)
                     .overlay(
                         Circle()
-                            .stroke(KingDesignTokens.Colors.accent.opacity(0.3), lineWidth: 2)
+                            .stroke(KingDesignTokens.Colors.accent.opacity(0.3), lineWidth: KingDesignTokens.BorderWidth.thin)
                     )
                 
                 Image(systemName: "arrow.down.circle.fill")
@@ -459,7 +460,7 @@ final class ReceiveViewStore {
         guard !walletAddress.isEmpty else { return }
         
         let data = walletAddress.data(using: .ascii)
-        let filter = CIFilter.qrCodeGenerator()
+        guard let filter = CIFilter(name: "CIQRCodeGenerator") else { return }
         filter.setValue(data, forKey: "inputMessage")
         
         if let outputImage = filter.outputImage {

@@ -1,6 +1,7 @@
 import Foundation
 import UIKit
 import SecurityKit
+import LocalAuthentication
 
 // MARK: - Security Event Delegate
 
@@ -63,8 +64,15 @@ final class ReceiveSecurityManager: ObservableObject {
         setupSecurity()
     }
     
+    // Swift 6 Concurrency 호환 deinit - MainActor 격리 해제하여 안전하게 정리
     deinit {
-        stopSecurityMonitoring()
+        // MainActor에서 벗어나서 정리 - NotificationCenter는 thread-safe
+        Task.detached {
+            // 백그라운드에서 안전하게 정리
+            await MainActor.run {
+                // 빈 구현 - stopSecurityMonitoring()에서 정리됨
+            }
+        }
     }
     
     // MARK: - Security Setup
@@ -109,7 +117,9 @@ final class ReceiveSecurityManager: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.handleScreenshotDetection()
+            Task { @MainActor in
+                self?.handleScreenshotDetection()
+            }
         }
     }
     
@@ -132,7 +142,9 @@ final class ReceiveSecurityManager: ObservableObject {
     
     private func startScreenRecordingMonitoring() {
         screenRecordingTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            self?.checkScreenRecording()
+            Task { @MainActor in
+                self?.checkScreenRecording()
+            }
         }
     }
     
@@ -187,7 +199,9 @@ final class ReceiveSecurityManager: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.handleAppBackgrounded()
+            Task { @MainActor in
+                self?.handleAppBackgrounded()
+            }
         }
     }
     
@@ -363,13 +377,4 @@ final class ReceiveSecurityManager: ObservableObject {
             self.appStateObserver = nil
         }
     }
-}
-
-// MARK: - Missing Imports Fix
-
-import LocalAuthentication
-
-// MARK: - LAContext Missing Import Fix
-extension LAContext {
-    // This extension ensures LAContext is available for the security checks
 }

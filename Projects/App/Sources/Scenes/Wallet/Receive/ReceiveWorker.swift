@@ -4,7 +4,7 @@ import CoreImage
 import UIKit
 import Core
 import DesignSystem
-import WalletKit
+import Factory
 
 // MARK: - SOLID 원칙 적용: Interface Segregation Principle (ISP)
 // 기능별로 인터페이스를 분리하여 의존성을 최소화
@@ -16,8 +16,8 @@ protocol QRCodeGeneratorProtocol {
 
 /// 지갑 주소 관리 전용 프로토콜  
 protocol WalletAddressProviderProtocol {
-    func getWalletAddress() -> String
-    func formatAddress(_ address: String) -> String
+    func getWalletAddress() async -> String
+    func formatAddress(_ address: String) async -> String
     func isValidEthereumAddress(_ address: String) -> Bool
 }
 
@@ -26,9 +26,9 @@ protocol ReceiveWorkerProtocol: QRCodeGeneratorProtocol, WalletAddressProviderPr
 
 // MARK: - SOLID 원칙 적용된 ReceiveWorker 구현
 // MARK: - Performance-Optimized & Secure ReceiveWorker
-final class ReceiveWorker: ReceiveWorkerProtocol {
+final class ReceiveWorker: ReceiveWorkerProtocol, @unchecked Sendable {
     
-    private let walletService: WalletServiceProtocol
+    @Injected(\.walletService) private var walletService
     private let qrCodeCache = NSCache<NSString, NSData>()
     private let processingQueue = DispatchQueue(label: "receive.worker.queue", qos: .userInitiated)
     
@@ -37,8 +37,7 @@ final class ReceiveWorker: ReceiveWorkerProtocol {
     private var lastGeneratedQRTime: Date = Date.distantPast
     private let qrGenerationThrottleInterval: TimeInterval = 1.0 // 1초 제한
     
-    init(walletService: WalletServiceProtocol) {
-        self.walletService = walletService
+    init() {
         self.addressValidator = EthereumAddressValidator()
         setupCache()
     }
@@ -136,22 +135,44 @@ final class ReceiveWorker: ReceiveWorkerProtocol {
     
     // MARK: - WalletAddressProviderProtocol 구현 (Security Hardened)
     
-    func getWalletAddress() -> String {
+    func getWalletAddress() async -> String {
         // Security: Multiple fallback sources
         
         // Priority 1: Current active wallet from service
-        if let activeAddress = walletService.getCurrentWalletAddress(),
+        if let activeAddress = try? await walletService.getCurrentWalletAddress(),
            addressValidator.isValidEthereumAddress(activeAddress) {
             return activeAddress
         }
         
-        // Priority 2: UserDefaults (validated)
-        if let savedAddress = UserDefaults.standard.string(forKey: Constants.UserDefaults.selectedWalletAddress),
+        // Priority 2: UserDefaults (validated)  
+        if let savedAddress = UserDefaults.standard.string(forKey: "selectedWalletAddress"),
            addressValidator.isValidEthereumAddress(savedAddress) {
             return savedAddress
         }
         
         // Priority 3: Keychain (secure storage)
+        if let keychainAddress = getAddressFromKeychain(),
+           addressValidator.isValidEthereumAddress(keychainAddress) {
+            return keychainAddress
+        }
+        
+        // Security: Never return hardcoded addresses in production
+        #if DEBUG
+        return "0x742B15EcB8E3F6F7e7D58C4f9Ad2dBcEF8A5E9C3" // Test address
+        #else
+        fatalError("No valid wallet address found - security violation")
+        #endif
+    }
+    
+    // Synchronous version for compatibility
+    func getWalletAddress() -> String {
+        // Priority 1: UserDefaults (validated)
+        if let savedAddress = UserDefaults.standard.string(forKey: "selectedWalletAddress"),
+           addressValidator.isValidEthereumAddress(savedAddress) {
+            return savedAddress
+        }
+        
+        // Priority 2: Keychain (secure storage)
         if let keychainAddress = getAddressFromKeychain(),
            addressValidator.isValidEthereumAddress(keychainAddress) {
             return keychainAddress
@@ -171,7 +192,7 @@ final class ReceiveWorker: ReceiveWorkerProtocol {
         return nil
     }
     
-    func formatAddress(_ address: String) -> String {
+    func formatAddress(_ address: String) async -> String {
         // Security: Validate before formatting
         guard addressValidator.isValidEthereumAddress(address) else {
             return "Invalid Address"

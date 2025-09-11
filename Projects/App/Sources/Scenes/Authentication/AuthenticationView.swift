@@ -411,7 +411,7 @@ struct PremiumWelcomeView: View {
             viewStore.isLoading = true
         }
         
-        let request = AuthenticationScene.AuthenticateWithBiometrics.Request(
+        _ = AuthenticationScene.AuthenticateWithBiometrics.Request(
             reason: "지갑에 접근하기 위해 생체 인증을 사용하세요"
         )
         
@@ -422,7 +422,7 @@ struct PremiumWelcomeView: View {
     }
     
     private func createWallet() {
-        let request = AuthenticationScene.CreateWallet.Request(walletName: "My Wallet")
+        _ = AuthenticationScene.CreateWallet.Request(walletName: "My Wallet")
         // interactor.createWallet(request: request)
     }
 }

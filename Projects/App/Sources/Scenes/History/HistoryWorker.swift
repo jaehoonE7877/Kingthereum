@@ -1,19 +1,19 @@
 import Foundation
+
+import Core
 import Entity
 import WalletKit
-import Core
-import os.log
+
 import Factory
 
 /// 🚀 High-Performance History Worker (Cleaned)
 /// 🚀 Production-Level History Service with Etherscan API Integration
 /// Revolut/N26 수준의 프리미엄 핀테크 블록체인 데이터 통합
-actor HistoryService: HistoryServiceProtocol {
+public actor HistoryService: HistoryServiceProtocol {
     
     // MARK: - Core Dependencies
     
     private let etherscanService: EtherscanService
-    private let logger = Logger(subsystem: "com.kingthereum.history", category: "worker")
     
     // MARK: - Multi-Level Caching System
     
@@ -42,13 +42,20 @@ actor HistoryService: HistoryServiceProtocol {
         static let maxDiskSize = 100 * 1024 * 1024 // 100MB for blockchain data
     }
     
-    init(etherscanService: EtherscanService? = nil) {
-        self.etherscanService = etherscanService ?? EtherscanService()
-        
+    public init() {
+        self.etherscanService = MainActor.assumeIsolated {
+            EtherscanService()
+        }
+                
+        // Actor 초기화 완료 후 비동기 설정 시작
+        Task {
+            await self.initializeAsync()
+        }
+    }
+    
+    private func initializeAsync() async {
         configureCache()
         startBackgroundTasks()
-        
-        logger.info("🚀 HistoryService initialized with Etherscan API integration")
     }
     
     // MARK: - Cache Configuration
@@ -73,13 +80,13 @@ actor HistoryService: HistoryServiceProtocol {
     
     func fetchTransactionHistory(walletAddress: String, limit: Int, offset: Int) async throws -> ([Transaction], Bool) {
         let cacheKey = "\(walletAddress)_\(limit)_\(offset)"
-        logger.info("🔗 Fetching blockchain transaction history via Etherscan: address=\(walletAddress.prefix(6))...*** limit=\(limit) offset=\(offset)")
+        Logger.info("🔗 Fetching blockchain transaction history via Etherscan: address=\(walletAddress.prefix(6))...*** limit=\(limit) offset=\(offset)")
         
         await applyRequestThrottle()
         
         // 캐시 우선 확인
         if let cachedResult = await getCachedTransactionHistory(cacheKey: cacheKey) {
-            logger.info("✅ Cache hit for key: \(cacheKey)")
+            Logger.info("✅ Cache hit for key: \(cacheKey)")
             return cachedResult
         }
         
@@ -94,23 +101,23 @@ actor HistoryService: HistoryServiceProtocol {
         
         do {
             let result = try await withTimeout(seconds: 15) {
-                try await performEtherscanRequest(walletAddress: walletAddress, limit: limit, offset: offset)
+                try await self.performEtherscanRequest(walletAddress: walletAddress, limit: limit, offset: offset)
             }
             await cacheTransactionHistory(cacheKey: cacheKey, result: result)
-            logger.info("✅ Etherscan fetch completed for key: \(cacheKey) - \(result.0.count) transactions")
+            Logger.info("✅ Etherscan fetch completed for key: \(cacheKey) - \(result.0.count) transactions")
             
             // 지능형 프리페치 트리거
             triggerPrefetch(walletAddress: walletAddress, currentOffset: offset + limit)
             
             return result
         } catch {
-            logger.error("❌ Etherscan fetch failed for key \(cacheKey): \(error)")
+            Logger.error("❌ Etherscan fetch failed for key \(cacheKey): \(error)")
             throw error
         }
     }
     
     func searchTransactions(walletAddress: String, query: String) async throws -> [Transaction] {
-        logger.info("🔍 Searching blockchain transactions for query: \(query.prefix(10))...")
+        Logger.info("🔍 Searching blockchain transactions for query: \(query.prefix(10))...")
 
         var searchResults: [Transaction] = []
         var currentPage = 1
@@ -128,18 +135,18 @@ actor HistoryService: HistoryServiceProtocol {
                 )
                 
                 guard response.isSuccess else {
-                    logger.warning("⚠️ Etherscan search failed: \(response.message)")
+                    Logger.warning("⚠️ Etherscan search failed: \(response.message)")
                     break
                 }
                 
                 let transactions = response.result.map { $0.toTransaction() }
                 
                 // 쿼리로 필터링
-                let filteredBatch = transactions.filter { transaction in
-                    transaction.hash.lowercased().contains(lowercasedQuery) ||
-                    transaction.from.lowercased().contains(lowercasedQuery) ||
-                    transaction.to.lowercased().contains(lowercasedQuery) ||
-                    transaction.value.contains(lowercasedQuery)
+                let filteredBatch = transactions.filter {
+                    $0.hash.lowercased().contains(lowercasedQuery) ||
+                    $0.from.lowercased().contains(lowercasedQuery) ||
+                    $0.to.lowercased().contains(lowercasedQuery) ||
+                    $0.value.contains(lowercasedQuery)
                 }
                 
                 searchResults.append(contentsOf: filteredBatch)
@@ -152,29 +159,27 @@ actor HistoryService: HistoryServiceProtocol {
                 try? await Task.sleep(for: .milliseconds(200))
                 
             } catch {
-                logger.error("❌ Search failed at page \(currentPage): \(error)")
+                Logger.error("❌ Search failed at page \(currentPage): \(error)")
                 throw error
             }
         }
         
-        logger.info("✅ Blockchain search completed. Found \(searchResults.count) results.")
+        Logger.info("✅ Blockchain search completed. Found \(searchResults.count) results.")
         return searchResults
     }
     
     func exportTransactions(transactions: [Transaction], format: ExportFormat) async throws -> (Data, String) {
-        logger.info("📤 Exporting \(transactions.count) blockchain transactions in \(format.rawValue) format")
+        Logger.info("📤 Exporting \(transactions.count) blockchain transactions in \(format.rawValue) format")
         
-        return try await withCheckedThrowingContinuation { continuation in
-            backgroundQueue.async {
-                do {
-                    let result = try self.performBlockchainExport(transactions: transactions, format: format)
-                    self.logger.info("✅ Blockchain export completed")
-                    continuation.resume(returning: result)
-                } catch {
-                    self.logger.error("❌ Blockchain export failed: \(error)")
-                    continuation.resume(throwing: error)
-                }
-            }
+        do {
+            let result = try await Task.detached(priority: .utility) {
+                try self.performBlockchainExport(transactions: transactions, format: format)
+            }.value
+            Logger.info("✅ Blockchain export completed")
+            return result
+        } catch {
+            Logger.error("❌ Blockchain export failed: \(error)")
+            throw error
         }
     }
     
@@ -228,13 +233,13 @@ actor HistoryService: HistoryServiceProtocol {
     private func getCachedTransactionHistory(cacheKey: String) async -> ([Transaction], Bool)? {
         // 메모리 캐시 확인
         if let cachedData = memoryCache.object(forKey: cacheKey as NSString), !cachedData.isExpired {
-            logger.debug("💾 Memory cache hit for blockchain data: \(cacheKey)")
+            Logger.debug("💾 Memory cache hit for blockchain data: \(cacheKey)")
             return (cachedData.transactions, cachedData.hasMore)
         }
         
         // 디스크 캐시 확인
         if let diskData = await diskCacheManager.getCachedData(for: cacheKey), !diskData.isExpired {
-            logger.debug("💽 Disk cache hit for blockchain data: \(cacheKey)")
+            Logger.debug("💽 Disk cache hit for blockchain data: \(cacheKey)")
             memoryCache.setObject(diskData, forKey: cacheKey as NSString)
             return (diskData.transactions, diskData.hasMore)
         }
@@ -254,7 +259,7 @@ actor HistoryService: HistoryServiceProtocol {
         // 백그라운드로 디스크 캐시 저장
         Task { await diskCacheManager.setCachedData(cachedData, for: cacheKey) }
         
-        logger.debug("💾 Cached \(result.0.count) blockchain transactions for key: \(cacheKey)")
+        Logger.debug("💾 Cached \(result.0.count) blockchain transactions for key: \(cacheKey)")
     }
     
     private func applyRequestThrottle() async {
@@ -298,7 +303,7 @@ actor HistoryService: HistoryServiceProtocol {
                 )
                 
                 await cacheTransactionHistory(cacheKey: cacheKey, result: result)
-                logger.debug("🔮 Prefetched blockchain batch \(batch) with \(result.0.count) transactions")
+                Logger.debug("🔮 Prefetched blockchain batch \(batch) with \(result.0.count) transactions")
                 
                 if !result.1 { break } // 더 이상 데이터가 없음
                 
@@ -306,7 +311,7 @@ actor HistoryService: HistoryServiceProtocol {
                 try? await Task.sleep(for: .milliseconds(300))
                 
             } catch {
-                logger.warning("⚠️ Blockchain prefetch failed for batch \(batch): \(error)")
+                Logger.warning("⚠️ Blockchain prefetch failed for batch \(batch): \(error)")
                 break
             }
         }
@@ -317,7 +322,7 @@ actor HistoryService: HistoryServiceProtocol {
             try? await Task.sleep(for: .seconds(60)) // 블록체인 데이터는 1분마다 정리
             await cleanupExpiredCache()
             await diskCacheManager.optimizeStorageUsage()
-            logger.debug("🧹 Background blockchain cache optimization completed")
+            Logger.debug("🧹 Background blockchain cache optimization completed")
         }
     }
     
@@ -327,13 +332,13 @@ actor HistoryService: HistoryServiceProtocol {
         let now = Date()
         
         // 실시간 캐시 정리 (블록체인 데이터는 30초 TTL)
-        realTimeCache = realTimeCache.filter { key, _ in
-            guard let timestamp = getCacheTimestamp(for: key) else { return false }
+        realTimeCache = realTimeCache.filter {
+            guard let timestamp = getCacheTimestamp(for: $0.key) else { return false }
             return now.timeIntervalSince(timestamp) < CacheConfig.realTimeTTL
         }
         
         await diskCacheManager.cleanupExpiredEntries()
-        logger.debug("🧹 Blockchain cache cleanup completed")
+        Logger.debug("🧹 Blockchain cache cleanup completed")
     }
     
     private func invalidateRelatedCaches(walletAddress: String) async {
@@ -345,12 +350,12 @@ actor HistoryService: HistoryServiceProtocol {
             await diskCacheManager.invalidateCache(for: key)
         }
         
-        logger.debug("🗑️ Invalidated \(keysToInvalidate.count) blockchain cache entries for address")
+        Logger.debug("🗑️ Invalidated \(keysToInvalidate.count) blockchain cache entries for address")
     }
     
     // MARK: - Export with Blockchain-Specific Data
     
-    private func performBlockchainExport(transactions: [Transaction], format: ExportFormat) throws -> (Data, String) {
+    private nonisolated func performBlockchainExport(transactions: [Transaction], format: ExportFormat) throws -> (Data, String) {
         let timestamp = ISO8601DateFormatter().string(from: Date())
         let fileName = "kingthereum_blockchain_transactions_\(timestamp).\(format.fileExtension)"
         
@@ -369,7 +374,7 @@ actor HistoryService: HistoryServiceProtocol {
         return (data, fileName)
     }
     
-    private func generateBlockchainCSV(from transactions: [Transaction]) throws -> Data {
+    private nonisolated func generateBlockchainCSV(from transactions: [Transaction]) throws -> Data {
         var csvLines: [String] = [
             "Date,Transaction Hash,From Address,To Address,Amount,Symbol,Status,Gas Used,Gas Price,Block Number,Token Contract"
         ]
@@ -401,7 +406,7 @@ actor HistoryService: HistoryServiceProtocol {
         return data
     }
     
-    private func generateBlockchainJSON(from transactions: [Transaction]) throws -> Data {
+    private nonisolated func generateBlockchainJSON(from transactions: [Transaction]) throws -> Data {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -415,7 +420,7 @@ actor HistoryService: HistoryServiceProtocol {
         return try encoder.encode(exportData)
     }
     
-    private func generateBlockchainPDF(from transactions: [Transaction]) throws -> Data {
+    private nonisolated func generateBlockchainPDF(from transactions: [Transaction]) throws -> Data {
         var content = "KINGTHEREUM BLOCKCHAIN TRANSACTION HISTORY\n"
         content += "Export Date: \(ISO8601DateFormatter().string(from: Date()))\n"
         content += "Total Transactions: \(transactions.count)\n\n"
@@ -466,7 +471,7 @@ actor HistoryService: HistoryServiceProtocol {
         // 실제 구현에서는 별도의 타임스탬프 저장소 사용
     }
     
-    private func withTimeout<T>(seconds: TimeInterval, operation: @escaping () async throws -> T) async throws -> T {
+    private func withTimeout<T: Sendable>(seconds: TimeInterval, operation: @escaping @Sendable () async throws -> T) async throws -> T {
         return try await withThrowingTaskGroup(of: T.self) { group in
             group.addTask {
                 try await operation()
@@ -489,7 +494,7 @@ actor HistoryService: HistoryServiceProtocol {
 
 // MARK: - Blockchain Export Data Model
 
-private struct BlockchainExportData: Codable {
+private struct BlockchainExportData: Encodable {
     let exportDate: Date
     let totalTransactions: Int
     let blockchainNetwork: String = "Ethereum Mainnet"
@@ -499,16 +504,19 @@ private struct BlockchainExportData: Codable {
 
 // MARK: - Supporting Types
 
-final class CachedTransactionData: NSObject {
+final class CachedTransactionData: Sendable {
     let transactions: [Transaction]; let hasMore: Bool; let timestamp: Date
     init(transactions: [Transaction], hasMore: Bool, timestamp: Date) { self.transactions = transactions; self.hasMore = hasMore; self.timestamp = timestamp }
     var isExpired: Bool { Date().timeIntervalSince(timestamp) > 300 }
 }
 
+enum ExportError: Error {
+    case dataConversionFailed
+}
+
 actor HistoryDiskCacheManager {
     private let cacheDirectory: URL
     private let fileManager = FileManager.default
-    private let logger = Logger(subsystem: "com.kingthereum.history", category: "disk-cache")
     
     init() {
         let cacheDir = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first!
@@ -522,7 +530,7 @@ actor HistoryDiskCacheManager {
             let data = try Data(contentsOf: fileURL)
             let cachedData = try JSONDecoder().decode(CachedTransactionDataStorage.self, from: data)
             let result = CachedTransactionData(transactions: cachedData.transactions, hasMore: cachedData.hasMore, timestamp: cachedData.timestamp)
-            if !result.isExpired { logger.debug("💽 Disk cache hit for: \(key)"); return result }
+            if !result.isExpired { Logger.debug("💽 Disk cache hit for: \(key)"); return result } 
             else { try? fileManager.removeItem(at: fileURL); return nil }
         } catch { return nil }
     }
@@ -533,8 +541,8 @@ actor HistoryDiskCacheManager {
             let storageData = CachedTransactionDataStorage(transactions: data.transactions, hasMore: data.hasMore, timestamp: data.timestamp)
             let encodedData = try JSONEncoder().encode(storageData)
             try encodedData.write(to: fileURL)
-            logger.debug("💽 Cached to disk: \(key)")
-        } catch { logger.error("❌ Failed to cache to disk: \(error)") }
+            Logger.debug("💽 Cached to disk: \(key)")
+        } catch { Logger.error("❌ Failed to cache to disk: \(error)") }
     }
     
     func invalidateCache(for key: String) async { let fileURL = cacheDirectory.appendingPathComponent("\(key).cache"); try? fileManager.removeItem(at: fileURL) }
@@ -545,7 +553,7 @@ actor HistoryDiskCacheManager {
             for file in files {
                 if let creationDate = try? file.resourceValues(forKeys: [.creationDateKey]).creationDate, Date().timeIntervalSince(creationDate) > 3600 { try? fileManager.removeItem(at: file) }
             }
-        } catch { logger.error("❌ Failed to cleanup disk cache: \(error)") }
+        } catch { Logger.error("❌ Failed to cleanup disk cache: \(error)") }
     }
     
     func optimizeStorageUsage() async {
@@ -560,20 +568,16 @@ actor HistoryDiskCacheManager {
                     if let fileSize = try? file.resourceValues(forKeys: [.fileSizeKey]).fileSize { currentSize -= fileSize; if currentSize <= maxSize * 3/4 { break } }
                 }
             }
-        } catch { logger.error("❌ Failed to optimize storage: \(error)") }
+        } catch { Logger.error("❌ Failed to optimize storage: \(error)") }
     }
 }
 
-private struct CachedTransactionDataStorage: Codable { let transactions: [Transaction]; let hasMore: Bool; let timestamp: Date }
-enum TimeoutError: Error { case operationTimeout }
-private class MockWalletService: WalletService { override func getTransactionHistory(address: String) async throws -> [Transaction] { return [] } }
-enum ExportError: LocalizedError {
-    case dataConversionFailed, jsonEncodingFailed(Error), pdfGenerationFailed(Error)
-    var errorDescription: String? {
-        switch self {
-        case .dataConversionFailed: return "데이터 변환에 실패했습니다"
-        case .jsonEncodingFailed(let e): return "JSON 인코딩 실패: \(e.localizedDescription)"
-        case .pdfGenerationFailed(let e): return "PDF 생성 실패: \(e.localizedDescription)"
-        }
-    }
+private struct CachedTransactionDataStorage: Codable {
+    let transactions: [Transaction]
+    let hasMore: Bool
+    let timestamp: Date
+}
+
+enum TimeoutError: Error {
+    case operationTimeout
 }

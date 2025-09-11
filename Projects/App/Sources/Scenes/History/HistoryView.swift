@@ -5,7 +5,10 @@ import Entity
 import os.log
 import Factory
 
-// MARK: - Display & Routing Protocols
+/// Premium History View - 거래 내역 뷰 (VIP Architecture)
+/// 프리미엄 피나테크 디자인 + Clean Swift Architecture 적용
+
+// MARK: - Display Protocol
 
 @MainActor
 protocol HistoryDisplayLogic: AnyObject {
@@ -17,7 +20,51 @@ protocol HistoryDisplayLogic: AnyObject {
     func displayExportResult(viewModel: HistoryScene.ExportTransactions.ViewModel)
 }
 
-// MARK: - Premium High-Performance View (UI Improved & Fixed)
+// MARK: - ViewStore (SwiftUI Observable)
+
+@MainActor
+@Observable
+final class OptimizedHistoryViewStore: HistoryDisplayLogic {
+    var transactions: [TransactionViewModel] = []
+    var isInitialLoading = true
+    var isLoadingMore = false
+    var hasMoreTransactions = false
+    var selectedFilter: TransactionFilterType = .all
+    var alertMessage: String?
+    
+    func displayTransactionHistory(viewModel: HistoryScene.LoadTransactionHistory.ViewModel) {
+        isInitialLoading = false
+        if let errorMessage = viewModel.errorMessage { alertMessage = errorMessage; return }
+        self.transactions = viewModel.transactionViewModels
+        self.hasMoreTransactions = viewModel.hasMoreTransactions
+    }
+    
+    func displayMoreTransactions(viewModel: HistoryScene.LoadMoreTransactions.ViewModel) {
+        isLoadingMore = false
+        if let errorMessage = viewModel.errorMessage { alertMessage = errorMessage; return }
+        self.transactions.append(contentsOf: viewModel.newTransactionViewModels)
+        self.hasMoreTransactions = viewModel.hasMoreTransactions
+    }
+    
+    func displayRefreshedHistory(viewModel: HistoryScene.RefreshTransactionHistory.ViewModel) {
+        if let errorMessage = viewModel.errorMessage { alertMessage = errorMessage; return }
+        self.transactions = viewModel.transactionViewModels
+        self.hasMoreTransactions = viewModel.hasMore
+    }
+    
+    func displayFilteredTransactions(viewModel: HistoryScene.FilterTransactions.ViewModel) {}
+    func displaySearchResults(viewModel: HistoryScene.SearchTransactions.ViewModel) {}
+    func displayExportResult(viewModel: HistoryScene.ExportTransactions.ViewModel) {
+        if let errorMessage = viewModel.errorMessage { alertMessage = errorMessage; return }
+        if let successMessage = viewModel.successMessage { alertMessage = successMessage }
+    }
+    
+    func clearAlert() {
+        alertMessage = nil
+    }
+}
+
+// MARK: - Main View
 
 @MainActor
 struct HistoryView: View {
@@ -28,8 +75,10 @@ struct HistoryView: View {
     @State private var scrollPosition: CGPoint = .zero
     @State private var prefetchTrigger: Double = 0
     
-    private var interactor: HistoryBusinessLogic
-    private var router: HistoryRoutingLogic
+    // MARK: - VIP Architecture Components
+    private let interactor: HistoryInteractor
+    private let presenter: HistoryPresenter
+    private let router: HistoryRouter
     
     init(showTabBar: Binding<Bool>, selectedTab: Binding<AppTab>) {
         self._showTabBar = showTabBar
@@ -40,18 +89,25 @@ struct HistoryView: View {
         let router = HistoryRouter()
         
         interactor.presenter = presenter
-        presenter.viewController = viewStore
-        router.viewController = viewStore
-        router.dataStore = interactor
         
         self.interactor = interactor
+        self.presenter = presenter
         self.router = router
     }
     
     var body: some View {
         NavigationView {
             ZStack {
-                KingDesignTokens.Colors.background.ignoresSafeArea()
+                // 프리미엄 피나테크 배경
+                LinearGradient(
+                    colors: [
+                        KingDesignTokens.Colors.background,
+                        KingDesignTokens.Colors.surfaceVariant.opacity(0.3)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
                 
                 if viewStore.isInitialLoading && viewStore.transactions.isEmpty {
                     premiumLoadingView
@@ -66,12 +122,31 @@ struct HistoryView: View {
             .toolbarBackground(.hidden, for: .navigationBar)
             .toolbar {
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
-                    premiumToolbarButton(icon: "line.3.horizontal.decrease.circle", action: { router.routeToFilterSettings() })
-                    premiumToolbarButton(icon: "square.and.arrow.up", action: { router.routeToExportOptions() })
+                    premiumToolbarButton(icon: "line.3.horizontal.decrease.circle", action: filterTransactions)
+                    premiumToolbarButton(icon: "square.and.arrow.up", action: exportTransactions)
                 }
             }
-            .task { await loadInitialTransactions() }
-            .onChange(of: prefetchTrigger) { _, _ in Task { await loadMoreTransactions() } }
+            .alert("알림", isPresented: Binding<Bool>(
+                get: { viewStore.alertMessage != nil },
+                set: { _ in viewStore.clearAlert() }
+            )) {
+                Button("확인") {
+                    viewStore.clearAlert()
+                }
+            } message: {
+                if let message = viewStore.alertMessage {
+                    Text(message)
+                        .font(KingDesignTokens.Typography.body)
+                        .foregroundColor(KingDesignTokens.Colors.secondaryText)
+                }
+            }
+        }
+        .onAppear {
+            setupVIPComponents()
+            Task { await loadInitialTransactions() }
+        }
+        .onChange(of: prefetchTrigger) { _, _ in 
+            Task { await loadMoreTransactions() }
         }
     }
     
@@ -162,7 +237,15 @@ struct HistoryView: View {
         }
     }
     
-    // MARK: - Business Logic & Routing Calls
+    // MARK: - VIP Setup
+    
+    private func setupVIPComponents() {
+        presenter.viewController = viewStore
+        router.viewController = viewStore
+        router.dataStore = interactor
+    }
+    
+    // MARK: - Business Logic Methods
     
     private func loadInitialTransactions() async {
         guard let walletAddress = getCurrentWalletAddress() else { return }
@@ -182,61 +265,36 @@ struct HistoryView: View {
         interactor.loadMoreTransactions(request: request)
     }
     
+    // MARK: - Routing Actions
+    
     private func selectTransaction(_ transactionId: String) {
         router.routeToTransactionDetail(transactionHash: transactionId)
     }
+    
+    private func filterTransactions() {
+        router.routeToFilterSettings()
+    }
+    
+    private func exportTransactions() {
+        router.routeToExportOptions()
+    }
+    
+    // MARK: - Helper Methods
     
     private func getCurrentWalletAddress() -> String? {
         return UserDefaults.standard.string(forKey: Constants.UserDefaults.selectedWalletAddress)
     }
     
     private func optimizeScrollHandling(newOffset: CGFloat) {
-        withAnimation(KingDesignTokens.Animation.normal) { showTabBar = newOffset < 50 }
+        withAnimation(KingDesignTokens.Animation.normal) { 
+            showTabBar = newOffset < 50 
+        }
     }
 }
 
-// MARK: - ViewStore
+// MARK: - Premium UI Components
 
-@MainActor
-@Observable
-final class OptimizedHistoryViewStore: HistoryDisplayLogic {
-    var transactions: [TransactionViewModel] = []
-    var isInitialLoading = true
-    var isLoadingMore = false
-    var hasMoreTransactions = false
-    var selectedFilter: TransactionFilterType = .all
-    var alertMessage: String?
-    
-    func displayTransactionHistory(viewModel: HistoryScene.LoadTransactionHistory.ViewModel) {
-        isInitialLoading = false
-        if let errorMessage = viewModel.errorMessage { alertMessage = errorMessage; return }
-        self.transactions = viewModel.transactionViewModels
-        self.hasMoreTransactions = viewModel.hasMoreTransactions
-    }
-    
-    func displayMoreTransactions(viewModel: HistoryScene.LoadMoreTransactions.ViewModel) {
-        isLoadingMore = false
-        if let errorMessage = viewModel.errorMessage { alertMessage = errorMessage; return }
-        self.transactions.append(contentsOf: viewModel.newTransactionViewModels)
-        self.hasMoreTransactions = viewModel.hasMoreTransactions
-    }
-    
-    func displayRefreshedHistory(viewModel: HistoryScene.RefreshTransactionHistory.ViewModel) {
-        if let errorMessage = viewModel.errorMessage { alertMessage = errorMessage; return }
-        self.transactions = viewModel.transactionViewModels
-        self.hasMoreTransactions = viewModel.hasMore
-    }
-    
-    func displayFilteredTransactions(viewModel: HistoryScene.FilterTransactions.ViewModel) {}
-    func displaySearchResults(viewModel: HistoryScene.SearchTransactions.ViewModel) {}
-    func displayExportResult(viewModel: HistoryScene.ExportTransactions.ViewModel) {
-        if let errorMessage = viewModel.errorMessage { alertMessage = errorMessage; return }
-        if let successMessage = viewModel.successMessage { alertMessage = successMessage }
-    }
-}
-
-// MARK: - Premium Transaction Row
-
+/// 프리미엄 거래 행 컴포넌트 - 피나테크 스타일
 struct PremiumTransactionRow: View {
     let viewModel: TransactionViewModel
     
@@ -251,10 +309,20 @@ struct PremiumTransactionRow: View {
     
     var body: some View {
         HStack(spacing: KingDesignTokens.Spacing.md) {
-            // Status Icon
+            // 프리미엄 상태 아이콘
             ZStack {
                 Circle()
-                    .fill(statusColor.opacity(0.1))
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                statusColor.opacity(0.15),
+                                statusColor.opacity(0.05)
+                            ],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 22
+                        )
+                    )
                     .frame(width: 44, height: 44)
                 
                 Image(systemName: viewModel.statusIcon)
@@ -262,7 +330,7 @@ struct PremiumTransactionRow: View {
                     .foregroundColor(statusColor)
             }
             
-            // Details
+            // 거래 세부 정보
             VStack(alignment: .leading, spacing: KingDesignTokens.Spacing.xxs) {
                 Text(viewModel.title)
                     .font(KingDesignTokens.Typography.body)
@@ -277,12 +345,16 @@ struct PremiumTransactionRow: View {
             
             Spacer()
             
-            // Amount & Date
+            // 금액 및 날짜
             VStack(alignment: .trailing, spacing: KingDesignTokens.Spacing.xxs) {
                 Text(viewModel.amount)
                     .font(KingDesignTokens.Typography.mono)
                     .fontWeight(.semibold)
-                    .foregroundColor(viewModel.isIncoming ? KingDesignTokens.Colors.success : KingDesignTokens.Colors.primaryText)
+                    .foregroundColor(
+                        viewModel.isIncoming 
+                        ? KingDesignTokens.Colors.success 
+                        : KingDesignTokens.Colors.primaryText
+                    )
                 
                 Text(viewModel.formattedDate)
                     .font(KingDesignTokens.Typography.caption)
@@ -299,7 +371,9 @@ struct PremiumTransactionRow: View {
     }
 }
 
-// MARK: - Dummy Button Style for Preview
+// MARK: - Supporting Components
+
+/// 킹 프라이머리 버튼 스타일
 struct KingPrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -308,9 +382,24 @@ struct KingPrimaryButtonStyle: ButtonStyle {
             .foregroundColor(KingDesignTokens.Colors.onPrimary)
             .padding()
             .frame(maxWidth: .infinity)
-            .background(KingDesignTokens.Colors.primary)
+            .background(
+                LinearGradient(
+                    colors: [
+                        KingDesignTokens.Colors.primary,
+                        KingDesignTokens.Colors.primary.opacity(0.8)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
             .cornerRadius(KingDesignTokens.Radius.md)
             .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
             .animation(KingDesignTokens.Animation.fast, value: configuration.isPressed)
+            .shadow(
+                color: KingDesignTokens.Colors.primary.opacity(0.3),
+                radius: configuration.isPressed ? 2 : 4,
+                x: 0,
+                y: configuration.isPressed ? 1 : 2
+            )
     }
 }

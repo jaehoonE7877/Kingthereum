@@ -12,8 +12,10 @@ class MainTabViewStore {
         didSet {
             // Premium haptic feedback on tab change
             if selectedTab != oldValue {
-                let selectionFeedback = UISelectionFeedbackGenerator()
-                selectionFeedback.selectionChanged()
+                Task { @MainActor in
+                    let selectionFeedback = UISelectionFeedbackGenerator()
+                    selectionFeedback.selectionChanged()
+                }
             }
         }
     }
@@ -26,13 +28,13 @@ class MainTabViewStore {
     private var lastTabChangeTime: Date = Date()
     
     /// Debounced tab selection to prevent rapid state changes
-    func selectTab(_ tab: AppTab, withAnimation: Bool = true) {
+    func selectTab(_ tab: AppTab, animated: Bool = true) {
         let now = Date()
         guard now.timeIntervalSince(lastTabChangeTime) > 0.1 else { return }
         
         lastTabChangeTime = now
         
-        if withAnimation {
+        if animated {
             withAnimation(KingDesignTokens.Animation.spring) {
                 selectedTab = tab
             }
@@ -54,8 +56,10 @@ class MainTabViewStore {
     
     /// Present receive view with haptic feedback
     func presentReceiveView() {
-        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-        impactFeedback.impactOccurred()
+        Task { @MainActor in
+            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+            impactFeedback.impactOccurred()
+        }
         
         withAnimation(KingDesignTokens.Animation.spring) {
             showReceiveView = true
@@ -176,7 +180,7 @@ struct PremiumSidebar: View {
                 HStack {
                     Image(systemName: "crown.fill")
                         .font(.title2)
-                        .foregroundStyle(KingDesignTokens.Gradients.buttonPrimary)
+                        .foregroundStyle(KingDesignTokens.Colors.accent)
                     
                     Text("Kingthereum")
                         .font(KingDesignTokens.Typography.heading)
@@ -202,7 +206,7 @@ struct PremiumSidebar: View {
         .listStyle(.sidebar)
         .navigationTitle("Kingthereum")
         .background(
-            KingDesignTokens.Gradients.background
+            KingDesignTokens.Colors.background
                 .ignoresSafeArea(.all)
         )
     }
@@ -304,8 +308,10 @@ struct TabContentContainer: View {
         guard newTab != previousTab else { return }
         
         // Premium haptic sequence for tab transition
-        let impactGenerator = UIImpactFeedbackGenerator(style: .light)
-        impactGenerator.impactOccurred(intensity: 0.6)
+        Task { @MainActor in
+            let impactGenerator = UIImpactFeedbackGenerator(style: .light)
+            impactGenerator.impactOccurred(intensity: 0.6)
+        }
         
         withAnimation(KingDesignTokens.Animation.spring) {
             isTransitioning = true

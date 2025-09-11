@@ -6,7 +6,7 @@ import os.log
 /// 🔗 Etherscan API 서비스 - Production Level
 /// Revolut/N26 수준의 안정적인 블록체인 데이터 통합
 @MainActor
-final class EtherscanService {
+public final class EtherscanService {
     
     // MARK: - Configuration
     
@@ -32,7 +32,7 @@ final class EtherscanService {
     
     // MARK: - Initialization
     
-    init() {
+    public init() {
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = Config.requestTimeout
         configuration.timeoutIntervalForResource = Config.requestTimeout * 2
@@ -415,10 +415,10 @@ extension EtherscanTransaction {
             from: from,
             to: to,
             value: value,
-            gasPrice: gasPrice,
             gasUsed: gasUsed,
-            timestamp: timestamp,
+            gasPrice: gasPrice,
             status: status,
+            timestamp: timestamp,
             blockNumber: Int(blockNumber) ?? 0,
             tokenSymbol: nil,
             tokenName: nil
@@ -437,10 +437,10 @@ extension EtherscanTokenTransfer {
             from: from,
             to: to,
             value: value,
-            gasPrice: gasPrice,
             gasUsed: gasUsed,
-            timestamp: timestamp,
+            gasPrice: gasPrice,
             status: status,
+            timestamp: timestamp,
             blockNumber: Int(blockNumber) ?? 0,
             tokenSymbol: tokenSymbol,
             tokenName: tokenName

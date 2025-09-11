@@ -5,7 +5,7 @@ import Entity
 
 public protocol BiometricAuthManagerProtocol: Sendable {
     var isAvailable: Bool { get }
-    var biometricType: BiometricType { get }
+    var biometricType: Entity.SecurityError.BiometricType { get }
     func authenticate(reason: String) async throws -> Bool
 }
 
@@ -21,7 +21,7 @@ public actor BiometricAuthManager: BiometricAuthManagerProtocol {
         return context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error)
     }
     
-    public nonisolated var biometricType: BiometricType {
+    public nonisolated var biometricType: Entity.SecurityError.BiometricType {
         let context = LAContext()
         var error: NSError?
         
@@ -55,17 +55,17 @@ public actor BiometricAuthManager: BiometricAuthManagerProtocol {
         } catch let error as LAError {
             switch error.code {
             case .userCancel:
-                throw BiometricError.userCancel
+                throw Entity.SecurityError.BiometricError.userCancel
             case .userFallback:
-                throw BiometricError.userFallback
+                throw Entity.SecurityError.BiometricError.userFallback
             case .biometryNotAvailable:
-                throw BiometricError.biometryNotAvailable
+                throw Entity.SecurityError.BiometricError.biometryNotAvailable
             case .biometryNotEnrolled:
-                throw BiometricError.notEnrolled
+                throw Entity.SecurityError.BiometricError.notEnrolled
             case .biometryLockout:
-                throw BiometricError.biometryLockout
+                throw Entity.SecurityError.BiometricError.biometryLockout
             default:
-                throw BiometricError.authenticationFailed
+                throw Entity.SecurityError.BiometricError.authenticationFailed
             }
         }
     }

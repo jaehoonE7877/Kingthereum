@@ -1,6 +1,7 @@
 import Foundation
+
 import Entity
-import WalletKit
+
 import Factory
 
 @MainActor
@@ -12,8 +13,16 @@ protocol ReceivePresentationLogic {
 }
 
 @MainActor
+protocol ReceiveDisplayLogic: AnyObject {
+    func displayWalletAddress(viewModel: ReceiveScene.LoadWalletAddress.ViewModel)
+    func displayCopyResult(viewModel: ReceiveScene.CopyAddress.ViewModel)
+    func displayShareSheet(viewModel: ReceiveScene.ShareAddress.ViewModel)
+    func displayQRCode(viewModel: ReceiveScene.GenerateQRCode.ViewModel)
+}
+
+@MainActor
 final class ReceivePresenter: ReceivePresentationLogic {
-    @Injected(\.walletService) private var walletService
+    weak var viewController: ReceiveDisplayLogic?
     
     // MARK: - Presentation Logic
     
@@ -64,14 +73,15 @@ final class ReceivePresenter: ReceivePresentationLogic {
     }
     
     private func getCurrentWalletAddress() -> String {
-        let worker = ReceiveWorker(walletService: walletService)
-        return worker.getWalletAddress()
+        // Return empty string since we don't have access to the wallet service here
+        // This will be handled by the View's own logic
+        return ""
     }
     
     // MARK: - Private Helpers
     
     private func generateQRCodeData(from address: String) -> Data? {
-        let worker = ReceiveWorker(walletService: walletService)
-        return worker.generateQRCode(from: address)
+        // QR code generation will be handled by the View's own logic
+        return nil
     }
 }

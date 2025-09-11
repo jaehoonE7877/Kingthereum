@@ -1,10 +1,11 @@
 import Foundation
+
 import Core
-import WalletKit
-import SecurityKit
-import Factory
 import Entity
-import os.log
+import SecurityKit
+import WalletKit
+
+import Factory
 
 // MARK: - App Module Services Factory Registration
 
@@ -16,7 +17,9 @@ public extension Container {
     /// 다크모드/라이트모드 관리 서비스
     var displayModeService: Factory<DisplayModeService> {
         self {
-            MainActor.assumeIsolated {
+            // MainActor에서 안전하게 DisplayModeService 생성
+            // assumeIsolated는 현재 컨텍스트가 MainActor임을 가정
+            return MainActor.assumeIsolated {
                 DisplayModeService()
             }
         }
@@ -43,18 +46,12 @@ public extension Container {
         .singleton
     }
     
-    /// SecurityService 구현체
-    /// 생체 인식, PIN 인증 등 보안 기능 담당
-    var securityService: Factory<SecurityService> {
-        self { SecurityService() }
-            .singleton
-    }
+    // SecurityService는 이제 SecurityKit/Container+SecurityKit.swift에서 관리됨
     /// HistoryService 구현체 (네이밍 통일)
     /// Etherscan API를 통한 블록체인 거래 내역 처리
-    var historyService: Factory<HistoryServiceProtocol> {
+    var historyService: Factory<HistoryService> {
         self {
-            let etherscanService = EtherscanService()
-            return HistoryService(etherscanService: etherscanService)
+            return HistoryService()
         }
         .singleton
     }
@@ -62,8 +59,12 @@ public extension Container {
     /// EtherscanService 구현체
     /// Ethereum 블록체인 데이터 API 서비스
     var etherscanService: Factory<EtherscanService> {
-        self { EtherscanService() }
-            .singleton
+        self {
+            MainActor.assumeIsolated {
+                EtherscanService()
+            }
+        }
+        .singleton
     }
     
 }
@@ -72,37 +73,38 @@ public extension Container {
 
 /// Thread-safe Container 접근을 위한 헬퍼
 /// Swift 6.0 동시성 안전성 보장
-public actor ContainerManager {
+actor ContainerManager {
+    
     private let container: Container
     
-    public init(container: Container = Container.shared) {
+    init(container: Container = Container.shared) {
         self.container = container
     }
     
     /// WalletService 안전한 해결
-    public func resolveWalletService() -> WalletService {
+    func resolveWalletService() -> WalletService {
         container.walletService()
     }
     
     
     /// DisplayModeService 안전한 해결 (MainActor)
     @MainActor
-    public func resolveDisplayModeService() -> DisplayModeService {
+    func resolveDisplayModeService() -> DisplayModeService {
         container.displayModeService()
     }
     
-    /// SecurityService 안전한 해결
-    public func resolveSecurityService() -> SecurityService {
-        container.securityService()
+    /// SecurityService 안전한 해결 (SecurityKit에서 제공)
+    func resolveSecurityService() async -> any SecurityServiceProtocol {
+        await container.resolveSecurityService()
     }
     
     /// HistoryService 안전한 해결
-    public func resolveHistoryService() -> HistoryServiceProtocol {
+    func resolveHistoryService() -> HistoryService {
         container.historyService()
     }
     
     /// EtherscanService 안전한 해결
-    public func resolveEtherscanService() -> EtherscanService {
+    func resolveEtherscanService() -> EtherscanService {
         container.etherscanService()
     }
 }

@@ -136,8 +136,6 @@ struct WalletHomeView: View {
             SendView()
         }
     }
-    
-    // MARK: - Actions (ViewStore로 이전됨)
 }
 
 // MARK: - Premium Balance Card

@@ -8,7 +8,7 @@ import Factory
 // MARK: - Protocols (VIP)
 
 /// History 비즈니스 로직을 위한 서비스 프로토콜 (네이밍 통일)
-protocol HistoryServiceProtocol {
+protocol HistoryServiceProtocol: Sendable {
     func fetchTransactionHistory(walletAddress: String, limit: Int, offset: Int) async throws -> ([Entity.Transaction], Bool)
     func searchTransactions(walletAddress: String, query: String) async throws -> [Entity.Transaction]
     func exportTransactions(transactions: [Entity.Transaction], format: ExportFormat) async throws -> (Data, String)
@@ -61,7 +61,6 @@ final class HistoryInteractor: ObservableObject, HistoryBusinessLogic, HistoryDa
     
     init(service: HistoryServiceProtocol = HistoryService()) {
         self.service = service
-        logger.info("🚀 HistoryInteractor initialized with HistoryService")
     }
     
     // MARK: - Business Logic Implementation
@@ -96,7 +95,6 @@ final class HistoryInteractor: ObservableObject, HistoryBusinessLogic, HistoryDa
                 
             } catch {
                 await MainActor.run {
-                    logger.error("Failed to load transaction history: \(error.localizedDescription)")
                     let response = HistoryScene.LoadTransactionHistory.Response(
                         transactions: [], 
                         hasMore: false, 
@@ -139,7 +137,6 @@ final class HistoryInteractor: ObservableObject, HistoryBusinessLogic, HistoryDa
                 
             } catch {
                 await MainActor.run {
-                    logger.error("Failed to load more transactions: \(error.localizedDescription)")
                     let response = HistoryScene.LoadMoreTransactions.Response(
                         newTransactions: [], 
                         hasMore: false, 
@@ -183,7 +180,6 @@ final class HistoryInteractor: ObservableObject, HistoryBusinessLogic, HistoryDa
                 
             } catch {
                 await MainActor.run {
-                    logger.error("Failed to refresh transaction history: \(error.localizedDescription)")
                     let response = HistoryScene.RefreshTransactionHistory.Response(
                         transactions: [], 
                         hasMore: false, 
@@ -220,7 +216,6 @@ final class HistoryInteractor: ObservableObject, HistoryBusinessLogic, HistoryDa
                 
             } catch {
                 await MainActor.run {
-                    logger.error("Failed to search transactions for query '\(request.query)': \(error.localizedDescription)")
                     let response = HistoryScene.SearchTransactions.Response(
                         results: [], 
                         query: request.query, 
@@ -258,7 +253,6 @@ final class HistoryInteractor: ObservableObject, HistoryBusinessLogic, HistoryDa
                 
             } catch {
                 await MainActor.run {
-                    logger.error("Failed to export transactions: \(error.localizedDescription)")
                     let response = HistoryScene.ExportTransactions.Response(
                         exportURL: nil, 
                         format: request.format, 
@@ -269,8 +263,4 @@ final class HistoryInteractor: ObservableObject, HistoryBusinessLogic, HistoryDa
             }
         }
     }
-    
-    // MARK: - Private Properties
-    
-    private let logger = Logger(subsystem: "com.kingthereum.history", category: "interactor")
 }

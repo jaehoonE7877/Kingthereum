@@ -121,14 +121,14 @@ public final class AuthenticationRouter {
 public struct AuthenticationContext: Sendable {
     public let isSetupMode: Bool
     public let hasExistingWallet: Bool
-    public let availableBiometricTypes: [BiometricType]
+    public let availableBiometricTypes: [Entity.SecurityError.BiometricType]
     public let recommendedSecurityMethod: SecurityMethod?
     public let walletAddress: String?
     
     public init(
         isSetupMode: Bool = false,
         hasExistingWallet: Bool = false,
-        availableBiometricTypes: [BiometricType] = [],
+        availableBiometricTypes: [Entity.SecurityError.BiometricType] = [],
         recommendedSecurityMethod: SecurityMethod? = nil,
         walletAddress: String? = nil
     ) {
