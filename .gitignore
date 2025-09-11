@@ -117,3 +117,5 @@ DerivedData/
 # Temporary files
 *.tmp
 *.temp
+
+CLAUDE.md
