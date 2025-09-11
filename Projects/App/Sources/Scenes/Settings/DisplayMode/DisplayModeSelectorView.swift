@@ -17,9 +17,9 @@ struct DisplayModeSelectorView: View {
                 // 프리미엄 피나테크 배경 - 다크모드 가독성 개선 그라데이션
                 LinearGradient(
                     colors: [
-                        KingColors.backgroundPrimary,
-                        KingColors.backgroundSecondary,
-                        KingColors.trustPurple.opacity(0.85)
+                        KingDesignTokens.Colors.background,
+                        KingDesignTokens.Colors.surface,
+                        KingDesignTokens.Colors.accent.opacity(0.85)
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
@@ -62,8 +62,8 @@ struct DisplayModeSelectorView: View {
                     Button("취소") {
                         dismiss()
                     }
-                    .font(KingTypography.bodyMedium)
-                    .foregroundColor(KingColors.textSecondary)
+                    .font(KingDesignTokens.Typography.body)
+                    .foregroundColor(KingDesignTokens.Colors.secondary)
                 }
             }
             .onAppear {
@@ -83,8 +83,8 @@ struct DisplayModeSelectorView: View {
                     .fill(
                         RadialGradient(
                             colors: [
-                                KingColors.trustPurple.opacity(0.3),
-                                KingColors.trustPurple.opacity(0.1),
+                                KingDesignTokens.Colors.accent.opacity(0.3),
+                                KingDesignTokens.Colors.accent.opacity(0.1),
                                 Color.clear
                             ],
                             center: .center,
@@ -99,7 +99,7 @@ struct DisplayModeSelectorView: View {
                         .fill(.ultraThinMaterial)
                         .background(
                             Circle()
-                                .fill(KingColors.trustPurple.opacity(0.2))
+                                .fill(KingDesignTokens.Colors.accent.opacity(0.2))
                         )
                         .frame(width: 56, height: 56)
                     
@@ -108,28 +108,28 @@ struct DisplayModeSelectorView: View {
                         .foregroundStyle(
                             LinearGradient(
                                 colors: [
-                                    KingColors.trustPurple,
-                                    KingColors.trustPurple.opacity(0.8)
+                                    KingDesignTokens.Colors.accent,
+                                    KingDesignTokens.Colors.accent.opacity(0.8)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
                 }
-                .shadow(color: KingColors.trustPurple.opacity(0.3), radius: 12, x: 0, y: 6)
+                .shadow(color: KingDesignTokens.Colors.accent.opacity(0.3), radius: 12, x: 0, y: 6)
             }
             
             VStack(spacing: 8) {
                 Text("화면 모드 선택")
-                    .font(KingTypography.displaySmall)
+                    .font(KingDesignTokens.Typography.body)
                     .fontWeight(.bold)
-                    .foregroundColor(KingColors.textPrimary)
+                    .foregroundColor(KingDesignTokens.Colors.onSurface)
                     .shadow(color: Color.black.opacity(0.3), radius: 2, x: 0, y: 1)
                 
                 Text("앱 테마를 개인화하세요")
-                    .font(KingTypography.bodyMedium)
+                    .font(KingDesignTokens.Typography.body)
                     .fontWeight(.medium)
-                    .foregroundColor(KingColors.textSecondary)
+                    .foregroundColor(KingDesignTokens.Colors.secondary)
                     .shadow(color: Color.black.opacity(0.2), radius: 1, x: 0, y: 0.5)
                     .multilineTextAlignment(.center)
             }
@@ -154,21 +154,21 @@ struct DisplayModeSelectorView: View {
             } label: {
                 HStack(spacing: 12) {
                     Image(systemName: "checkmark.circle.fill")
-                        .font(KingTypography.bodyLarge)
-                        .foregroundColor(KingColors.textInverse)
+                        .font(KingDesignTokens.Typography.body)
+                        .foregroundColor(KingDesignTokens.Colors.accent)
                     
                     Text("모드 적용")
-                        .font(KingTypography.buttonPrimary)
+                        .font(KingDesignTokens.Typography.body)
                         .fontWeight(.bold)
-                        .foregroundColor(KingColors.textInverse)
+                        .foregroundColor(KingDesignTokens.Colors.accent)
                 }
                 .frame(maxWidth: .infinity)
                 .frame(height: 56)
                 .background(
                     LinearGradient(
                         colors: [
-                            KingColors.trustPurple,
-                            KingColors.trustPurple.opacity(0.8)
+                            KingDesignTokens.Colors.accent,
+                            KingDesignTokens.Colors.accent.opacity(0.8)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -176,7 +176,7 @@ struct DisplayModeSelectorView: View {
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 16))
                 .shadow(
-                    color: KingColors.trustPurple.opacity(0.4),
+                    color: KingDesignTokens.Colors.accent.opacity(0.4),
                     radius: 12,
                     x: 0,
                     y: 6
@@ -186,9 +186,9 @@ struct DisplayModeSelectorView: View {
             
             // 부가 정보
             Text("변경사항은 즉시 적용됩니다")
-                .font(KingTypography.caption)
+                .font(KingDesignTokens.Typography.body)
                 .fontWeight(.medium)
-                .foregroundColor(KingColors.textTertiary)
+                .foregroundColor(KingDesignTokens.Colors.accent)
                 .shadow(color: Color.black.opacity(0.2), radius: 0.5, x: 0, y: 0.5)
         }
         .padding(.horizontal, 24)
@@ -206,11 +206,11 @@ struct PremiumDisplayModeCard: View {
     private var accentColor: Color {
         switch mode {
         case .light:
-            return KingColors.exclusiveGold
+            return KingDesignTokens.Colors.accent
         case .dark:
-            return KingColors.trustPurple
+            return KingDesignTokens.Colors.accent
         case .system:
-            return KingColors.info
+            return KingDesignTokens.Colors.accent
         }
     }
     
@@ -288,15 +288,15 @@ struct PremiumDisplayModeCard: View {
                 // 텍스트 정보
                 VStack(alignment: .leading, spacing: 6) {
                     Text(mode.displayName)
-                        .font(KingTypography.bodyLarge)
+                        .font(KingDesignTokens.Typography.body)
                         .fontWeight(.bold)
-                        .foregroundColor(KingColors.textPrimary)
+                        .foregroundColor(KingDesignTokens.Colors.onSurface)
                         .shadow(color: Color.black.opacity(0.3), radius: 1, x: 0, y: 0.5)
                     
                     Text(mode.description)
-                        .font(KingTypography.bodySmall)
+                        .font(KingDesignTokens.Typography.body)
                         .fontWeight(.medium)
-                        .foregroundColor(KingColors.textSecondary)
+                        .foregroundColor(KingDesignTokens.Colors.secondary)
                         .shadow(color: Color.black.opacity(0.2), radius: 0.5, x: 0, y: 0.5)
                         .multilineTextAlignment(.leading)
                         .lineLimit(2)
@@ -308,7 +308,7 @@ struct PremiumDisplayModeCard: View {
                 ZStack {
                     // 배경 원
                     Circle()
-                        .fill(isSelected ? accentColor.opacity(0.2) : KingColors.textTertiary.opacity(0.1))
+                        .fill(isSelected ? accentColor.opacity(0.2) : KingDesignTokens.Colors.accent.opacity(0.1))
                         .frame(width: 28, height: 28)
                     
                     if isSelected {
@@ -319,7 +319,7 @@ struct PremiumDisplayModeCard: View {
                     } else {
                         // 빈 원 테두리
                         Circle()
-                            .stroke(KingColors.textTertiary.opacity(0.3), lineWidth: 1.5)
+                            .stroke(KingDesignTokens.Colors.accent.opacity(0.3), lineWidth: 1.5)
                             .frame(width: 18, height: 18)
                     }
                 }
@@ -327,37 +327,17 @@ struct PremiumDisplayModeCard: View {
             .padding(24)
         }
         .buttonStyle(PlainButtonStyle())
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(.ultraThinMaterial)
-                .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(
-                            isSelected 
-                            ? accentColor.opacity(0.05)
-                            : KingColors.glassMinimalBase
-                        )
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20)
-                        .stroke(
-                            isSelected 
-                            ? accentColor.opacity(0.3) 
-                            : KingColors.glassBorder,
-                            lineWidth: isSelected ? 1.5 : 0.5
-                        )
-                )
-        )
+        .glass(cornerRadius: 20)
         .shadow(
             color: isSelected 
             ? accentColor.opacity(0.2) 
-            : KingColors.glassShadow,
+            : KingDesignTokens.Colors.accent,
             radius: isSelected ? 12 : 6,
             x: 0,
             y: isSelected ? 6 : 3
         )
         .scaleEffect(isSelected ? 1.02 : 1.0)
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
+        .animation(KingDesignTokens.Animation.spring, value: isSelected)
     }
 }
 

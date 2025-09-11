@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 // MARK: - View Extensions for Common UI Patterns
 
@@ -29,14 +30,17 @@ public extension View {
     }
     
     /// 로딩 오버레이 추가
-    func loadingOverlay(isLoading: Bool, style: LoadingStyle = .spinner) -> some View {
+    func loadingOverlay(isLoading: Bool) -> some View {
         overlay {
             if isLoading {
                 ZStack {
                     Color.black.opacity(0.3)
                         .ignoresSafeArea()
                     
-                    LoadingView(style: style, size: .medium)
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle())
+                        .tint(KingDesignTokens.Colors.accent)
+                        .scaleEffect(1.5)
                         .background(
                             RoundedRectangle(cornerRadius: 12)
                                 .fill(.ultraThinMaterial)
@@ -76,33 +80,37 @@ public extension View {
         }
     }
     
-    /// 키보드 높이에 따른 패딩 자동 조정
-    func keyboardAdaptive() -> some View {
-        modifier(KeyboardAdaptiveModifier())
+    // MARK: - Glass Morphism Effects
+    
+    /// 신뢰성 글래스 카드 효과
+    func trustGlassCard(level: GlassLevel, cornerRadius: CGFloat = 16) -> some View {
+        background(
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .stroke(level.borderColor, lineWidth: level.borderWidth)
+                )
+        )
     }
     
-    /// 장치별 조건부 뷰
-    @ViewBuilder
-    func iPhone<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        if UIDevice.current.userInterfaceIdiom == .phone {
-            content()
-        } else {
-            self
-        }
+    /// 울트라 미니멀 글래스 효과
+    func ultraMinimalGlass(level: GlassLevel) -> some View {
+        background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(.thinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(level.borderColor.opacity(0.3), lineWidth: 0.5)
+                )
+        )
     }
     
-    @ViewBuilder
-    func iPad<Content: View>(@ViewBuilder content: () -> Content) -> some View {
-        if UIDevice.current.userInterfaceIdiom == .pad {
-            content()
-        } else {
-            self
-        }
-    }
+    // MARK: - Additional View Modifiers
     
     /// 햅틱 피드백 추가
     func hapticFeedback(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .medium) -> some View {
-        onTapGesture {
+        self.onTapGesture {
             let impactFeedback = UIImpactFeedbackGenerator(style: style)
             impactFeedback.impactOccurred()
         }
@@ -110,11 +118,11 @@ public extension View {
     
     /// 커스텀 테두리
     func customBorder(
-        color: Color = .gray.opacity(0.3),
+        color: Color = Color.gray.opacity(0.3),
         width: CGFloat = 1,
         cornerRadius: CGFloat = 8
     ) -> some View {
-        overlay(
+        self.overlay(
             RoundedRectangle(cornerRadius: cornerRadius)
                 .stroke(color, lineWidth: width)
         )
@@ -122,12 +130,41 @@ public extension View {
     
     /// 섀도우 프리셋
     func shadowPreset(_ preset: ShadowPreset) -> some View {
-        shadow(
+        self.shadow(
             color: preset.color,
             radius: preset.radius,
             x: preset.offset.x,
             y: preset.offset.y
         )
+    }
+}
+
+// MARK: - Glass Level Enum
+public enum GlassLevel {
+    case standard
+    case prominent
+    case subtle
+    
+    var borderColor: Color {
+        switch self {
+        case .standard:
+            return KingDesignTokens.Colors.border
+        case .prominent:
+            return KingDesignTokens.Colors.accent.opacity(0.5)
+        case .subtle:
+            return KingDesignTokens.Colors.tertiaryText.opacity(0.3)
+        }
+    }
+    
+    var borderWidth: CGFloat {
+        switch self {
+        case .standard:
+            return 0.5
+        case .prominent:
+            return 1.0
+        case .subtle:
+            return 0.3
+        }
     }
 }
 
@@ -167,50 +204,3 @@ public enum ShadowPreset {
         }
     }
 }
-
-// MARK: - Keyboard Adaptive Modifier
-
-private struct KeyboardAdaptiveModifier: ViewModifier {
-    @State private var keyboardHeight: CGFloat = 0
-    
-    func body(content: Content) -> some View {
-        content
-            .padding(.bottom, keyboardHeight)
-            .animation(.easeInOut(duration: 0.3), value: keyboardHeight)
-            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { notification in
-                if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue {
-                    keyboardHeight = keyboardFrame.cgRectValue.height
-                }
-            }
-            .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
-                keyboardHeight = 0
-            }
-    }
-}
-
-// MARK: - Safe Area Extensions
-
-public extension View {
-    /// 안전 영역 여백 적용
-    func safeAreaPadding(_ edges: Edge.Set = .all, _ length: CGFloat? = nil) -> some View {
-        padding(edges, length)
-            .safeAreaInset(edge: .bottom) {
-                Color.clear.frame(height: 0)
-            }
-    }
-}
-
-// MARK: - Navigation Extensions
-
-//public extension View {
-//    /// 네비게이션 타이틀 스타일 설정
-//    func navigationTitle(_ title: String, displayMode: NavigationBarItem.TitleDisplayMode = .automatic) -> some View {
-//        navigationTitle(title)
-//            .navigationBarTitleDisplayMode(displayMode)
-//    }
-//    
-//    /// 네비게이션 바 숨기기/보이기
-//    func navigationBarHidden(_ hidden: Bool = true) -> some View {
-//        navigationBarHidden(hidden)
-//    }
-//}

@@ -1,7 +1,7 @@
-import Foundation
-
+import UIKit
 import Core
 import Entity
+import Foundation
 
 public protocol SecurityServiceProtocol: Sendable {
     func authenticateWithBiometrics(reason: String) async throws -> Bool
@@ -9,7 +9,7 @@ public protocol SecurityServiceProtocol: Sendable {
     func setupPIN(_ pin: String) async throws
     func changePIN(oldPIN: String, newPIN: String) async throws
     func isSecuritySetup() async -> Bool
-    func getBiometricType() -> BiometricType
+    func getBiometricType() -> Entity.SecurityError.BiometricType
     func isBiometricAvailable() -> Bool
     func deleteWalletData() async throws
     func storeWalletAddress(_ address: String) async throws
@@ -23,6 +23,12 @@ public actor SecurityService: SecurityServiceProtocol {
     private let pinManager: PINManagerProtocol
     private let keychainManager: KeychainManagerProtocol
     
+    // Rate limiting properties
+    private var failedAttempts: Int = 0
+    private var lastFailedAttemptTime: Date = Date.distantPast
+    private let maxAttempts: Int = 5
+    private let lockoutDuration: TimeInterval = 300 // 5분
+    
     public init(
         biometricManager: BiometricAuthManagerProtocol = BiometricAuthManager(),
         pinManager: PINManagerProtocol = PINManager(),
@@ -33,12 +39,30 @@ public actor SecurityService: SecurityServiceProtocol {
         self.keychainManager = keychainManager
     }
     
+    // MARK: - Authentication Methods
+    
     public func authenticateWithBiometrics(reason: String) async throws -> Bool {
-        guard biometricManager.isAvailable else {
-            throw BiometricError.notAvailable
+        // Rate limiting check
+        guard await checkRateLimit() else {
+            throw SecurityError.biometricAuthenticationFailed
         }
         
-        return try await biometricManager.authenticate(reason: reason)
+        guard biometricManager.isAvailable else {
+            throw SecurityError.biometricNotAvailable
+        }
+        
+        do {
+            let success = try await biometricManager.authenticate(reason: reason)
+            if success {
+                await resetRateLimit()
+            } else {
+                await incrementFailedAttempts()
+            }
+            return success
+        } catch {
+            await incrementFailedAttempts()
+            throw error
+        }
     }
     
     public func authenticateWithPIN(_ pin: String) async throws -> Bool {
@@ -57,72 +81,52 @@ public actor SecurityService: SecurityServiceProtocol {
         return await pinManager.hasPIN()
     }
     
-    nonisolated public func getBiometricType() -> BiometricType {
+    nonisolated public func getBiometricType() -> Entity.SecurityError.BiometricType {
         return biometricManager.biometricType
     }
     
     nonisolated public func isBiometricAvailable() -> Bool {
         return biometricManager.isAvailable
     }
-}
-
-// MARK: - Wallet Security Methods
-public extension SecurityService {
     
-    func storeWalletData(privateKey: String) async throws {
+    // MARK: - Wallet Security Methods
+    
+    public func storeWalletData(privateKey: String) async throws {
         try await keychainManager.storePrivateKey(privateKey)
     }
     
-    func retrievePrivateKey() async throws -> String? {
+    public func retrievePrivateKey() async throws -> String? {
         return try await keychainManager.retrievePrivateKey()
     }
     
-    
-    func deleteWalletData() async throws {
-        try await keychainManager.deletePrivateKey()
-        try await pinManager.deletePIN()
-    }
-    
-    func storeWalletAddress(_ address: String) async throws {
-        // Store wallet address in keychain for security
+    public func storeWalletAddress(_ address: String) async throws {
         try await keychainManager.storeWalletAddress(address)
     }
     
-    func authenticateForWalletAccess(reason: String = "Access your wallet") async throws -> Bool {
-        if isBiometricAvailable() {
-            do {
-                return try await authenticateWithBiometrics(reason: reason)
-            } catch {
-                if await pinManager.hasPIN() {
-                    throw SecurityError.biometricFailedPINRequired
-                } else {
-                    throw error
-                }
-            }
-        } else if await pinManager.hasPIN() {
-            throw SecurityError.pinRequired
-        } else {
-            throw SecurityError.noSecuritySetup
-        }
+    public func deleteWalletData() async throws {
+        try await keychainManager.deleteAll()
     }
-}
-
-public enum SecurityError: LocalizedError {
-    case biometricFailedPINRequired
-    case pinRequired
-    case noSecuritySetup
-    case authenticationRequired
     
-    public var errorDescription: String? {
-        switch self {
-        case .biometricFailedPINRequired:
-            return "Biometric authentication failed. Please enter your PIN."
-        case .pinRequired:
-            return "Please enter your PIN to continue."
-        case .noSecuritySetup:
-            return "No security method has been set up."
-        case .authenticationRequired:
-            return "Authentication is required to access this feature."
+    // MARK: - Rate Limiting
+    
+    private func checkRateLimit() async -> Bool {
+        if failedAttempts >= maxAttempts {
+            if Date().timeIntervalSince(lastFailedAttemptTime) < lockoutDuration {
+                return false
+            } else {
+                await resetRateLimit()
+            }
         }
+        return true
+    }
+    
+    private func incrementFailedAttempts() async {
+        failedAttempts += 1
+        lastFailedAttemptTime = Date()
+    }
+    
+    private func resetRateLimit() async {
+        failedAttempts = 0
+        lastFailedAttemptTime = Date.distantPast
     }
 }

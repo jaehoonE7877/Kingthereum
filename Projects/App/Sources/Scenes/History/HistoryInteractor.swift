@@ -1,281 +1,266 @@
 import Foundation
-import Entity
-import WalletKit
+import SwiftUI
+
 import Core
+import Entity
 import Factory
 
-// Use ExportFormat from HistoryRouter (same module)
-// ExportFormat is defined in HistoryRouter.swift
+// MARK: - Protocols (VIP)
 
+/// History 비즈니스 로직을 위한 서비스 프로토콜 (네이밍 통일)
+protocol HistoryServiceProtocol: Sendable {
+    func fetchTransactionHistory(walletAddress: String, limit: Int, offset: Int) async throws -> ([Entity.Transaction], Bool)
+    func searchTransactions(walletAddress: String, query: String) async throws -> [Entity.Transaction]
+    func exportTransactions(transactions: [Entity.Transaction], format: ExportFormat) async throws -> (Data, String)
+}
+
+/// View가 Interactor에게 요청하는 비즈니스 로직을 정의합니다.
 @MainActor
 protocol HistoryBusinessLogic {
+    var presenter: HistoryPresentationLogic? { get set }
+
     func loadTransactionHistory(request: HistoryScene.LoadTransactionHistory.Request)
-    func refreshTransactions(request: HistoryScene.RefreshTransactions.Request)
-    func filterTransactions(request: HistoryScene.FilterTransactions.Request)
+    func loadMoreTransactions(request: HistoryScene.LoadMoreTransactions.Request)
+    func refreshTransactionHistory(request: HistoryScene.RefreshTransactionHistory.Request)
+    func searchTransactions(request: HistoryScene.SearchTransactions.Request)
     func exportTransactions(request: HistoryScene.ExportTransactions.Request)
 }
 
+/// 다른 Scene의 Router가 현재 Scene의 데이터에 접근할 수 있는 통로를 정의합니다.
 @MainActor
 protocol HistoryDataStore {
-    var currentTransactions: [Transaction] { get set }
-    var filteredTransactions: [Transaction] { get set }
-    var currentFilter: TransactionFilterType { get set }
-    var walletAddress: String? { get set }
-    var isLoading: Bool { get set }
-    var hasMoreTransactions: Bool { get set }
+    var transactions: [Entity.Transaction] { get }
+    var walletAddress: String? { get }
 }
 
+// MARK: - Interactor (Production Level)
+
 @MainActor
-final class HistoryInteractor: HistoryBusinessLogic, HistoryDataStore {
-    var presenter: HistoryPresentationLogic?
-    private var _worker: HistoryWorkerProtocol?
+final class HistoryInteractor: ObservableObject, HistoryBusinessLogic, HistoryDataStore {
     
-    @Injected(\.configurationService) private var configurationService
+    // MARK: - VIP Properties
     
-    // MARK: - Data Store
-    var currentTransactions: [Transaction] = []
-    var filteredTransactions: [Transaction] = []
-    var currentFilter: TransactionFilterType = .all
-    var walletAddress: String?
-    var isLoading = false
-    var hasMoreTransactions = false
+    weak var presenter: HistoryPresentationLogic?
+    private let service: HistoryServiceProtocol
+
+    // MARK: - DataStore Properties
     
-    init(worker: HistoryWorkerProtocol? = nil) {
-        self._worker = worker
-        loadWalletAddress()
+    private(set) var transactions: [Entity.Transaction] = []
+    private(set) var walletAddress: String?
+    private(set) var hasMore = true
+
+    // MARK: - State Management
+    
+    @Published public var isLoading = false
+    @Published public var isLoadingMore = false
+    
+    private var loadedTransactionsCount = 0
+    private let batchSize = 50
+    
+    // MARK: - Initialization (AuthenticationInteractor 패턴 따라함)
+    
+    init(service: HistoryServiceProtocol = HistoryService()) {
+        self.service = service
     }
     
-    // MARK: - Lazy Worker Initialization
-    
-    private var worker: HistoryWorkerProtocol {
-        if let worker = _worker {
-            return worker
-        }
-        
-        do {
-            let walletService = try WalletService.initialize(rpcURL: configurationService.ethereumRPCURL)
-            let newWorker = HistoryWorker(walletService: walletService)
-            self._worker = newWorker
-            return newWorker
-        } catch {
-            // In production, this should be handled more gracefully
-            fatalError("Failed to initialize WalletService: \(error)")
-        }
-    }
-    
-    // MARK: - Business Logic
+    // MARK: - Business Logic Implementation
     
     func loadTransactionHistory(request: HistoryScene.LoadTransactionHistory.Request) {
         guard !isLoading else { return }
         
         isLoading = true
         walletAddress = request.walletAddress
+        loadedTransactionsCount = 0
+        hasMore = true
         
-        Task { [weak self] in
+        Task {
             do {
-                let result = try await self?.worker.fetchTransactionHistory(
+                let (fetchedTransactions, hasMoreData) = try await service.fetchTransactionHistory(
                     walletAddress: request.walletAddress,
-                    limit: request.limit,
-                    offset: request.offset
+                    limit: batchSize,
+                    offset: 0
                 )
                 
-                guard let result = result else { return }
-                
-                await MainActor.run { [weak self] in
-                    guard let self = self else { return }
-                    
-                    if request.offset == 0 {
-                        // 새로운 로드
-                        self.currentTransactions = result.0
-                    } else {
-                        // 페이지네이션 로드
-                        self.currentTransactions.append(contentsOf: result.0)
-                    }
-                    
-                    self.filteredTransactions = self.currentTransactions
-                    self.hasMoreTransactions = result.1
-                    self.isLoading = false
+                await MainActor.run {
+                    self.transactions = fetchedTransactions
+                    self.hasMore = hasMoreData
+                    self.loadedTransactionsCount = self.transactions.count
                     
                     let response = HistoryScene.LoadTransactionHistory.Response(
-                        transactions: self.currentTransactions,
-                        hasMore: result.1,
-                        error: nil
+                        transactions: self.transactions, 
+                        hasMore: self.hasMore
                     )
-                    self.presenter?.presentTransactionHistory(response: response)
+                    presenter?.presentTransactionHistory(response: response)
                 }
+                
             } catch {
-                await MainActor.run { [weak self] in
-                    guard let self = self else { return }
-                    
-                    self.isLoading = false
-                    
+                await MainActor.run {
                     let response = HistoryScene.LoadTransactionHistory.Response(
-                        transactions: [],
-                        hasMore: false,
+                        transactions: [], 
+                        hasMore: false, 
                         error: error
                     )
-                    self.presenter?.presentTransactionHistory(response: response)
+                    presenter?.presentTransactionHistory(response: response)
                 }
+            }
+            
+            await MainActor.run {
+                self.isLoading = false
             }
         }
     }
     
-    func refreshTransactions(request: HistoryScene.RefreshTransactions.Request) {
-        Task { [weak self] in
+    func loadMoreTransactions(request: HistoryScene.LoadMoreTransactions.Request) {
+        guard !isLoadingMore, hasMore, let walletAddress else { return }
+        
+        isLoadingMore = true
+        
+        Task {
             do {
-                let result = try await self?.worker.fetchLatestTransactions(
-                    walletAddress: request.walletAddress
+                let (newTransactions, hasMoreData) = try await service.fetchTransactionHistory(
+                    walletAddress: walletAddress,
+                    limit: batchSize,
+                    offset: loadedTransactionsCount
                 )
                 
-                guard let result = result else { return }
-                
-                await MainActor.run { [weak self] in
-                    guard let self = self else { return }
+                await MainActor.run {
+                    self.transactions.append(contentsOf: newTransactions)
+                    self.hasMore = hasMoreData
+                    self.loadedTransactionsCount += newTransactions.count
                     
-                    let newTransactionsCount = result.count - self.currentTransactions.count
-                    self.currentTransactions = result
-                    self.filteredTransactions = self.applyCurrentFilter(to: result)
-                    
-                    let response = HistoryScene.RefreshTransactions.Response(
-                        transactions: self.filteredTransactions,
-                        newTransactionsCount: max(0, newTransactionsCount),
-                        error: nil
+                    let response = HistoryScene.LoadMoreTransactions.Response(
+                        newTransactions: newTransactions, 
+                        hasMore: self.hasMore
                     )
-                    self.presenter?.presentRefreshResult(response: response)
+                    presenter?.presentMoreTransactions(response: response)
                 }
+                
             } catch {
-                await MainActor.run { [weak self] in
-                    let response = HistoryScene.RefreshTransactions.Response(
-                        transactions: [],
-                        newTransactionsCount: 0,
+                await MainActor.run {
+                    let response = HistoryScene.LoadMoreTransactions.Response(
+                        newTransactions: [], 
+                        hasMore: false, 
                         error: error
                     )
-                    self?.presenter?.presentRefreshResult(response: response)
+                    presenter?.presentMoreTransactions(response: response)
                 }
+            }
+            
+            await MainActor.run {
+                self.isLoadingMore = false
             }
         }
     }
     
-    func filterTransactions(request: HistoryScene.FilterTransactions.Request) {
-        currentFilter = request.filterType
+    func refreshTransactionHistory(request: HistoryScene.RefreshTransactionHistory.Request) {
+        guard !isLoading else { return }
         
-        var filtered = currentTransactions
+        isLoading = true
+        hasMore = true
         
-        // 타입별 필터링
-        switch request.filterType {
-        case .all:
-            break // 모든 거래
-        case .sent:
-            // 현재 지갑 주소에서 보낸 거래 필터링
-            filtered = filtered.filter { transaction in
-                guard let currentWalletAddress = walletAddress else { return false }
-                return transaction.from.lowercased() == currentWalletAddress.lowercased()
-            }
-        case .received:
-            // 현재 지갑 주소로 받은 거래 필터링
-            filtered = filtered.filter { transaction in
-                guard let currentWalletAddress = walletAddress else { return false }
-                return transaction.to.lowercased() == currentWalletAddress.lowercased()
-            }
-        case .pending:
-            filtered = filtered.filter { $0.status == .pending }
-        case .failed:
-            filtered = filtered.filter { $0.status == .failed }
-        }
-        
-        // 날짜 범위 필터링
-        if let dateRange = request.dateRange {
-            filtered = filtered.filter { transaction in
-                transaction.timestamp >= dateRange.startDate && transaction.timestamp <= dateRange.endDate
-            }
-        }
-        
-        // 금액 범위 필터링
-        if let amountRange = request.amountRange {
-            filtered = filtered.filter { transaction in
-                // String value를 Decimal로 변환해서 비교
-                if let amount = Decimal(string: transaction.value) {
-                    return amount >= amountRange.minAmount && amount <= amountRange.maxAmount
+        Task {
+            do {
+                let (fetchedTransactions, hasMoreData) = try await service.fetchTransactionHistory(
+                    walletAddress: request.walletAddress,
+                    limit: batchSize,
+                    offset: 0
+                )
+                
+                await MainActor.run {
+                    self.transactions = fetchedTransactions
+                    self.hasMore = hasMoreData
+                    self.loadedTransactionsCount = self.transactions.count
+                    
+                    let response = HistoryScene.RefreshTransactionHistory.Response(
+                        transactions: self.transactions, 
+                        hasMore: self.hasMore
+                    )
+                    presenter?.presentRefreshedHistory(response: response)
                 }
-                return false
+                
+            } catch {
+                await MainActor.run {
+                    let response = HistoryScene.RefreshTransactionHistory.Response(
+                        transactions: [], 
+                        hasMore: false, 
+                        error: error
+                    )
+                    presenter?.presentRefreshedHistory(response: response)
+                }
+            }
+            
+            await MainActor.run {
+                self.isLoading = false
             }
         }
+    }
+    
+    func searchTransactions(request: HistoryScene.SearchTransactions.Request) {
+        guard !isLoading, let walletAddress = self.walletAddress else { return }
+        isLoading = true
         
-        filteredTransactions = filtered
-        
-        let response = HistoryScene.FilterTransactions.Response(
-            filteredTransactions: filtered,
-            filterType: request.filterType,
-            totalCount: currentTransactions.count
-        )
-        presenter?.presentFilteredTransactions(response: response)
+        Task {
+            do {
+                let results = try await service.searchTransactions(
+                    walletAddress: walletAddress, 
+                    query: request.query
+                )
+                
+                await MainActor.run {
+                    let response = HistoryScene.SearchTransactions.Response(
+                        results: results, 
+                        query: request.query
+                    )
+                    presenter?.presentSearchResults(response: response)
+                }
+                
+            } catch {
+                await MainActor.run {
+                    let response = HistoryScene.SearchTransactions.Response(
+                        results: [], 
+                        query: request.query, 
+                        error: error
+                    )
+                    presenter?.presentSearchResults(response: response)
+                }
+            }
+            
+            await MainActor.run {
+                self.isLoading = false
+            }
+        }
     }
     
     func exportTransactions(request: HistoryScene.ExportTransactions.Request) {
-        Task { [weak self] in
+        Task {
             do {
-                // Convert Entity.HistoryScene.ExportFormat to local ExportFormat
-                let localFormat = ExportFormat(rawValue: request.format.rawValue) ?? .csv
-                let exportResult = try await self?.worker.exportTransactions(
-                    transactions: request.transactions,
-                    format: localFormat
+                let exportResult = try await service.exportTransactions(
+                    transactions: request.transactions, 
+                    format: request.format
                 )
                 
-                guard let exportResult = exportResult else { return }
-                
-                await MainActor.run { [weak self] in
+                let tempDir = FileManager.default.temporaryDirectory
+                let fileURL = tempDir.appendingPathComponent(exportResult.1)
+                try exportResult.0.write(to: fileURL)
+
+                await MainActor.run {
                     let response = HistoryScene.ExportTransactions.Response(
-                        exportData: exportResult.0,
-                        fileName: exportResult.1,
-                        format: request.format,
-                        error: nil
+                        exportURL: fileURL, 
+                        format: request.format
                     )
-                    self?.presenter?.presentExportResult(response: response)
+                    presenter?.presentExportResult(response: response)
                 }
+                
             } catch {
-                await MainActor.run { [weak self] in
+                await MainActor.run {
                     let response = HistoryScene.ExportTransactions.Response(
-                        exportData: nil,
-                        fileName: "",
-                        format: request.format,
+                        exportURL: nil, 
+                        format: request.format, 
                         error: error
                     )
-                    self?.presenter?.presentExportResult(response: response)
+                    presenter?.presentExportResult(response: response)
                 }
             }
         }
-    }
-    
-    // MARK: - Private Methods
-    
-    private func loadWalletAddress() {
-        walletAddress = UserDefaults.standard.string(forKey: Constants.UserDefaults.selectedWalletAddress)
-    }
-    
-    private func applyCurrentFilter(to transactions: [Transaction]) -> [Transaction] {
-        var filtered = transactions
-        
-        switch currentFilter {
-        case .all:
-            break
-        case .sent:
-            // 현재 지갑 주소에서 보낸 거래 필터링
-            filtered = filtered.filter { transaction in
-                guard let currentWalletAddress = walletAddress else { return false }
-                return transaction.from.lowercased() == currentWalletAddress.lowercased()
-            }
-        case .received:
-            // 현재 지갑 주소로 받은 거래 필터링
-            filtered = filtered.filter { transaction in
-                guard let currentWalletAddress = walletAddress else { return false }
-                return transaction.to.lowercased() == currentWalletAddress.lowercased()
-            }
-        case .pending:
-            filtered = filtered.filter { $0.status == .pending }
-        case .failed:
-            filtered = filtered.filter { $0.status == .failed }
-        }
-        
-        return filtered
     }
 }
