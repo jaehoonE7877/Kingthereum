@@ -1,112 +1,215 @@
 import Foundation
 import Entity
-import Core
-import BigInt
+import UIKit
 
-// MARK: - SendPresenter Stub Implementation
+// MARK: - Presentation Logic Protocol
 
-/// SendPresenter의 Stub 구현
-/// TODO: 실제 UI 요구사항이 명확해지면 complex 버전으로 교체
 @MainActor
-public final class SendPresenter: SendPresentationLogic {
-    // MARK: - Properties
+protocol SendPresentationLogic: AnyObject {
+    func presentAddressValidation(response: SendScene.ValidateAddress.Response)
+    func presentAmountValidation(response: SendScene.ValidateAmount.Response)
+    func presentGasEstimation(response: SendScene.EstimateGas.Response)
+    func presentTransactionPreparation(response: SendScene.PrepareTransaction.Response)
+    func presentTransactionResult(response: SendScene.SendTransaction.Response)
+}
+
+// MARK: - Send Presenter
+
+@MainActor
+final class SendPresenter: SendPresentationLogic {
     
-    public var viewController: (any SendDisplayLogic)?
+    // MARK: - VIP Reference
+    weak var viewController: SendDisplayLogic?
     
-    // MARK: - 초기화
+    // MARK: - Formatters
+    private let currencyFormatter: NumberFormatter = {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = "USD"
+        formatter.minimumFractionDigits = 2
+        formatter.maximumFractionDigits = 6
+        return formatter
+    }()
     
-    public init(viewController: SendDisplayLogic? = nil) {
-        self.viewController = viewController
-        Logger.info("SendPresenter Stub 초기화 완료")
-    }
+    private let ethFormatter: NumberFormatter = {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.minimumFractionDigits = 1
+        formatter.maximumFractionDigits = 18
+        return formatter
+    }()
     
-    // MARK: - SendPresentationLogic Stub 구현
+    // MARK: - Presentation Logic Implementation
     
-    public func presentAddressValidation(response: SendScene.ValidateAddress.Response) {
-        Logger.debug("📧 주소 검증 결과 표시 (Stub): \(response.isValid)")
-        
+    func presentAddressValidation(response: SendScene.ValidateAddress.Response) {
         let viewModel = SendScene.ValidateAddress.ViewModel(
             isValid: response.isValid,
-            address: response.normalizedAddress ?? "",
-            addressTypeDescription: response.addressType?.rawValue,
             errorMessage: response.errorMessage,
-            showWarning: !response.isValid,
-            warningMessage: response.isValid ? nil : response.errorMessage
+            showError: !response.isValid && response.errorMessage != nil
         )
         
         viewController?.displayAddressValidation(viewModel: viewModel)
     }
     
-    public func presentGasFeeEstimation(response: SendScene.EstimateGasFee.Response) {
-        Logger.debug("⛽ 가스 수수료 표시 (Stub)")
-        
-        // Convert GasFeeInfo to FeeOptionViewModel
-        let feeOptions = response.gasFeeInfo.map { feeInfo in
-            SendScene.EstimateGasFee.FeeOptionViewModel(
-                type: feeInfo.feeType,
-                feeText: "\(feeInfo.estimatedFee) Wei",
-                timeEstimate: "약 2분",
-                isRecommended: feeInfo.feeType == .standard
-            )
+    func presentAmountValidation(response: SendScene.ValidateAmount.Response) {
+        let formattedAmount = response.parsedAmount.flatMap { amount in
+            ethFormatter.string(from: NSDecimalNumber(decimal: amount))
         }
         
-        let viewModel = SendScene.EstimateGasFee.ViewModel(
-            feeOptions: feeOptions,
-            selectedFeeIndex: 0,
-            canProceed: response.canAfford,
-            warningMessage: response.canAfford ? nil : "잔액이 부족합니다",
-            networkStatusText: "🟢 \(response.networkStatus.rawValue)",
-            balanceText: "잔액: \(response.currentBalance) Wei",
-            totalCostText: "총 비용: \(response.totalCost) Wei"
+        let viewModel = SendScene.ValidateAmount.ViewModel(
+            isValid: response.isValid,
+            errorMessage: response.errorMessage,
+            showError: !response.isValid && response.errorMessage != nil,
+            formattedAmount: formattedAmount
         )
         
-        viewController?.displayGasFeeEstimation(viewModel: viewModel)
+        viewController?.displayAmountValidation(viewModel: viewModel)
     }
     
-    public func presentTransactionResult(response: SendScene.SendTransaction.Response) {
-        Logger.info("💸 거래 결과 표시 (Stub): \(response.success)")
+    func presentGasEstimation(response: SendScene.EstimateGas.Response) {
+        let viewModel = SendScene.EstimateGas.ViewModel(
+            gasOptions: response.gasOptions,
+            errorMessage: response.error,
+            showError: response.error != nil
+        )
         
+        viewController?.displayGasEstimation(viewModel: viewModel)
+    }
+    
+    func presentTransactionPreparation(response: SendScene.PrepareTransaction.Response) {
+        var totalAmount: String?
+        var totalAmountUSD: String?
+        
+        if let transaction = response.transaction,
+           let gasFee = getCurrentGasFee() {
+            
+            // ETH 총액 계산 (송금액 + 가스비)
+            let total = transaction.amount + gasFee.feeInETH
+            totalAmount = ethFormatter.string(from: NSDecimalNumber(decimal: total))
+            
+            // USD 총액 계산
+            let totalUSD = (transaction.amount * getCurrentETHPrice()) + gasFee.feeInUSD
+            totalAmountUSD = currencyFormatter.string(from: NSDecimalNumber(decimal: totalUSD))
+        }
+        
+        let viewModel = SendScene.PrepareTransaction.ViewModel(
+            transaction: response.transaction,
+            isReadyToSend: response.isReadyToSend,
+            errorMessage: response.errorMessage,
+            showError: response.errorMessage != nil,
+            totalAmount: totalAmount,
+            totalAmountUSD: totalAmountUSD
+        )
+        
+        viewController?.displayTransactionPreparation(viewModel: viewModel)
+    }
+    
+    func presentTransactionResult(response: SendScene.SendTransaction.Response) {
         let viewModel = SendScene.SendTransaction.ViewModel(
             success: response.success,
-            title: response.success ? "송금 성공" : "송금 실패",
-            message: response.success ? "이더리움 전송이 완료되었습니다." : (response.error?.localizedDescription ?? "거래 처리 중 문제가 발생했습니다."),
             transactionHash: response.transactionHash,
-            blockExplorerURL: nil,
-            showRetryButton: !response.success,
-            showShareButton: response.success,
-            estimatedTime: response.success ? "5-10분" : nil
+            errorMessage: response.errorMessage,
+            showSuccess: response.success && response.transactionHash != nil,
+            showError: !response.success && response.errorMessage != nil
         )
         
         viewController?.displayTransactionResult(viewModel: viewModel)
     }
+}
+
+// MARK: - Public Helpers
+
+extension SendPresenter {
     
-    public func presentTransactionTracking(response: SendScene.TrackTransaction.Response) {
-        Logger.debug("🔍 거래 추적 결과 표시 (Stub)")
+    /// ETH 금액 포맷팅
+    func formatETH(_ amount: Decimal) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.minimumFractionDigits = 4
+        formatter.maximumFractionDigits = 4
+        formatter.locale = Locale(identifier: "ko_KR")
         
-        let transactionInfo = response.transactionInfo
-        let status = transactionInfo.status
+        if let formatted = formatter.string(from: amount as NSDecimalNumber) {
+            return "\(formatted) ETH"
+        }
+        return "\(amount) ETH"
+    }
+    
+    /// USD 금액 포맷팅
+    func formatUSD(_ amount: Decimal) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = "USD"
+        formatter.currencySymbol = "$"
+        formatter.maximumFractionDigits = 2
+        formatter.minimumFractionDigits = 2
+        formatter.locale = Locale(identifier: "en_US")
         
-        let viewModel = SendScene.TrackTransaction.ViewModel(
-            status: status,
-            progressText: "거래 처리 중...",
-            progressValue: status == .confirmed ? 1.0 : 0.6,
-            transactionInfo: transactionInfo,
-            showProgressBar: status != .confirmed,
-            statusIcon: status == .confirmed ? "checkmark.circle" : "clock",
-            actionButtonText: nil,
-            canCancel: false
-        )
-        
-        viewController?.displayTransactionTracking(viewModel: viewModel)
+        return formatter.string(from: amount as NSDecimalNumber) ?? "$0.00"
+    }
+    
+    /// 주소 축약 포맷팅
+    func formatAddress(_ address: String) -> String {
+        guard address.count > 10 else { return address }
+        let prefix = String(address.prefix(6))
+        let suffix = String(address.suffix(4))
+        return "\(prefix)...\(suffix)"
+    }
+    
+    /// 예상 시간 포맷팅
+    func formatEstimatedTime(_ seconds: TimeInterval) -> String {
+        let minutes = Int(seconds / 60)
+        if minutes < 1 {
+            return "< 1분"
+        } else if minutes < 60 {
+            return "~\(minutes)분"
+        } else {
+            let hours = minutes / 60
+            return "~\(hours)시간"
+        }
+    }
+    
+    /// 에러 메시지 현지화
+    func localizedErrorMessage(_ error: Error) -> String {
+        // 기본 에러 메시지 처리
+        if error.localizedDescription.contains("Network") || 
+           error.localizedDescription.contains("connection") {
+            return "네트워크 연결을 확인해주세요."
+        } else if error.localizedDescription.contains("Transaction") {
+            return "거래를 처리할 수 없습니다. 다시 시도해주세요."
+        }
+        return "오류가 발생했습니다. 다시 시도해주세요."
     }
 }
 
-// MARK: - SendDisplayLogic Protocol
+// MARK: - Private Helpers
 
-@MainActor
-public protocol SendDisplayLogic: AnyObject {
-    func displayAddressValidation(viewModel: SendScene.ValidateAddress.ViewModel)
-    func displayGasFeeEstimation(viewModel: SendScene.EstimateGasFee.ViewModel)
-    func displayTransactionResult(viewModel: SendScene.SendTransaction.ViewModel)
-    func displayTransactionTracking(viewModel: SendScene.TrackTransaction.ViewModel)
+private extension SendPresenter {
+    
+    /// 현재 선택된 가스비 정보 반환
+    func getCurrentGasFee() -> GasFee? {
+        // 실제 구현에서는 DataStore에서 가져오거나
+        // Interactor를 통해 현재 선택된 가스비를 반환
+        return nil
+    }
+    
+    /// 현재 ETH 가격 반환 (USD 계산용)
+    func getCurrentETHPrice() -> Decimal {
+        // 실제 구현에서는 가격 서비스에서 가져옴
+        // 임시로 고정값 사용
+        return 2500.0
+    }
+    
+    /// 가스비 레벨에 따른 설명 텍스트
+    func getGasLevelDescription(_ gasOptions: GasOptions?) -> [String] {
+        guard let gasOptions = gasOptions else {
+            return ["", "", ""]
+        }
+        
+        return [
+            "느림 • \(gasOptions.slow.formattedFeeETH) • \(formatEstimatedTime(gasOptions.slow.estimatedTime))",
+            "보통 • \(gasOptions.normal.formattedFeeETH) • \(formatEstimatedTime(gasOptions.normal.estimatedTime))",
+            "빠름 • \(gasOptions.fast.formattedFeeETH) • \(formatEstimatedTime(gasOptions.fast.estimatedTime))"
+        ]
+    }
 }

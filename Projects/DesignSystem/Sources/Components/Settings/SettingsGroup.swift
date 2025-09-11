@@ -13,13 +13,14 @@ public struct SettingsGroup<Content: View>: View {
     }
     
     public var body: some View {
-        VStack(alignment: .leading, spacing: DesignTokens.Spacing.sm) {
+        VStack(alignment: .leading, spacing: KingDesignTokens.Spacing.sm) {
             // 타이틀
             if !title.isEmpty {
                 Text(title)
-                    .kingStyle(.cardTitle)
-                    .padding(.horizontal, DesignTokens.Spacing.md)
-                    .padding(.top, DesignTokens.Spacing.sm)
+                    .font(KingDesignTokens.Typography.heading)
+                    .foregroundColor(KingDesignTokens.Colors.primary)
+                    .padding(.horizontal, KingDesignTokens.Spacing.md)
+                    .padding(.top, KingDesignTokens.Spacing.sm)
             }
             
             // 컨텐츠
@@ -27,12 +28,21 @@ public struct SettingsGroup<Content: View>: View {
                 content
             }
         }
-        .background(KingGradients.card)
-        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg))
-        .overlay(
-            RoundedRectangle(cornerRadius: DesignTokens.CornerRadius.lg)
-                .stroke(KingColors.cardBorder, lineWidth: DesignTokens.BorderWidth.normal)
+        .background(
+            LinearGradient(
+                colors: [KingDesignTokens.Colors.accent.opacity(0.1),
+                         KingDesignTokens.Colors.surface],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
         )
-        .shadow(color: KingColors.cardShadow, radius: 6, x: 0, y: 3)
+        .clipShape(RoundedRectangle(cornerRadius: KingDesignTokens.Radius.lg))
+        .overlay(
+            RoundedRectangle(
+                cornerRadius: KingDesignTokens.Radius.lg
+            )
+                .stroke(KingDesignTokens.Colors.border, lineWidth: 1)
+        )
+        .shadow(color: KingDesignTokens.Shadow.md.color, radius: 6, x: 0, y: 3)
     }
 }

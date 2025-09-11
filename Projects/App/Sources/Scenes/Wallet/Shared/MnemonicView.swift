@@ -46,7 +46,7 @@ struct MnemonicView: View {
                 .padding(.horizontal, 20)
                 .padding(.vertical, 32)
             }
-            .background(KingGradients.background.ignoresSafeArea())
+            .background(LinearGradient(colors: [KingDesignTokens.Colors.background, KingDesignTokens.Colors.surfaceVariant], startPoint: .topLeading, endPoint: .bottomTrailing).ignoresSafeArea())
             .navigationBarTitleDisplayMode(.inline)
             .navigationTitle(mode == .display ? "지갑 백업" : "지갑 복원")
         }
@@ -89,7 +89,7 @@ struct MnemonicView: View {
                                 Text("이전")
                                     .font(.subheadline)
                             }
-                            .foregroundColor(focusedField == nil || focusedField == 0 ? KingColors.textSecondary : KingColors.accent)
+                            .foregroundColor(focusedField == nil || focusedField == 0 ? .secondary : KingDesignTokens.Colors.primary)
                         }
                         .disabled(focusedField == nil || focusedField == 0)
                         
@@ -102,7 +102,7 @@ struct MnemonicView: View {
                                 Image(systemName: "chevron.right")
                                     .font(.caption)
                             }
-                            .foregroundColor(focusedField == nil || focusedField == 11 ? KingColors.textSecondary : KingColors.accent)
+                            .foregroundColor(focusedField == nil || focusedField == 11 ? .secondary : KingDesignTokens.Colors.primary)
                         }
                         .disabled(focusedField == nil || focusedField == 11)
                         
@@ -117,7 +117,7 @@ struct MnemonicView: View {
                                 Text("완료")
                                     .font(.subheadline)
                             }
-                            .foregroundStyle(KingGradients.primary)
+                            .foregroundStyle(LinearGradient(colors: [KingDesignTokens.Colors.primary, KingDesignTokens.Colors.primary.opacity(0.7)], startPoint: .leading, endPoint: .trailing))
                         }
                     }
                 }
@@ -139,14 +139,14 @@ struct MnemonicView: View {
                     .fill(.ultraThickMaterial)
                     .overlay(
                         Circle()
-                            .stroke(KingColors.border, lineWidth: 2)
+                            .stroke(KingDesignTokens.Colors.outline, lineWidth: 2)
                     )
                     .frame(width: 96, height: 96)
-                    .shadow(color: KingColors.glassShadow.opacity(0.3), radius: 12, x: 0, y: 6)
+                    .shadow(color: KingDesignTokens.Colors.shadow, radius: 12, x: 0, y: 6)
                 
                 Image(systemName: mode == .display ? "shield.lefthalf.filled" : "key.fill")
                     .font(.system(size: 40, weight: .medium))
-                    .foregroundStyle(KingGradients.primary)
+                    .foregroundStyle(LinearGradient(colors: [KingDesignTokens.Colors.primary, KingDesignTokens.Colors.primary.opacity(0.7)], startPoint: .leading, endPoint: .trailing))
             }
             
             VStack(spacing: 8) {
@@ -157,10 +157,10 @@ struct MnemonicView: View {
                 HStack(spacing: 6) {
                     Image(systemName: mode == .display ? "doc.text.fill" : "arrow.clockwise")
                         .font(.caption)
-                        .foregroundStyle(KingGradients.primary)
+                        .foregroundStyle(LinearGradient(colors: [KingDesignTokens.Colors.primary, KingDesignTokens.Colors.primary.opacity(0.7)], startPoint: .leading, endPoint: .trailing))
                     Text(mode == .display ? "12개 단어 보관" : "12개 단어 입력")
                         .font(.subheadline)
-                        .foregroundColor(KingColors.textSecondary)
+                        .foregroundColor(.secondary)
                 }
             }
         }
@@ -173,7 +173,7 @@ struct MnemonicView: View {
             HStack {
                 Image(systemName: "list.number")
                     .font(.title3)
-                    .foregroundColor(KingColors.accent)
+                    .foregroundColor(KingDesignTokens.Colors.primary)
                 Text("복구 문구")
                     .font(.headline)
                     .fontWeight(.semibold)
@@ -190,7 +190,7 @@ struct MnemonicView: View {
                             Text("\(index + 1)")
                                 .font(.caption2)
                                 .fontWeight(.semibold)
-                                .foregroundColor(KingColors.accent)
+                                .foregroundColor(KingDesignTokens.Colors.primary)
                         }
                         
                         Text(word)
@@ -200,7 +200,7 @@ struct MnemonicView: View {
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 10)
-                    .glassCard(level: .subtle, context: .card)
+                    .glass(material: .ultraThin, cornerRadius: KingDesignTokens.Radius.lg)
                 }
             }
         }
@@ -213,16 +213,16 @@ struct MnemonicView: View {
             HStack {
                 ZStack {
                     Circle()
-                        .fill(KingColors.warning.opacity(0.15))
+                        .fill(KingDesignTokens.Colors.warning.opacity(0.15))
                         .frame(width: 32, height: 32)
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.title3)
-                        .foregroundColor(KingColors.warning)
+                        .foregroundColor(KingDesignTokens.Colors.warning)
                 }
                 Text("보안 경고")
                     .font(.headline)
                     .fontWeight(.semibold)
-                    .foregroundColor(KingColors.warning)
+                    .foregroundColor(KingDesignTokens.Colors.warning)
                 Spacer()
             }
             
@@ -234,10 +234,10 @@ struct MnemonicView: View {
             }
         }
         .padding(20)
-        .glassCard(level: .prominent, context: .card)
+        .glass(material: .ultraThin, cornerRadius: KingDesignTokens.Radius.lg)
         .overlay(
             RoundedRectangle(cornerRadius: Constants.UI.cornerRadius)
-                .stroke(KingColors.warning.opacity(0.3), lineWidth: 1)
+                .stroke(KingDesignTokens.Colors.warning.opacity(0.3), lineWidth: 1)
         )
     }
     
@@ -245,22 +245,18 @@ struct MnemonicView: View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.subheadline)
-                .foregroundColor(KingColors.warning)
+                .foregroundColor(KingDesignTokens.Colors.warning)
                 .frame(width: 20)
             Text(text)
                 .font(.footnote)
-                .foregroundColor(KingColors.textPrimary)
+                .foregroundColor(.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
     
     // MARK: - Copy Button Section
     private var copyButtonSection: some View {
-        GlassButton(
-            icon: "doc.on.doc.fill",
-            title: "클립보드 복사",
-            style: .wallet
-        ) {
+        GlassButton("클립보드 복사", icon: "doc.on.doc.fill", style: .primary) {
             if let mnemonic = mnemonic {
                 UIPasteboard.general.string = mnemonic
                 showCopyAlert = true
@@ -286,11 +282,7 @@ struct MnemonicView: View {
     
     // MARK: - Confirm Button Section
     private var confirmButtonSection: some View {
-        GlassButton(
-            icon: "checkmark.shield.fill",
-            title: "백업 완료",
-            style: .success
-        ) {
+        GlassButton("백업 완료", icon: "checkmark.shield.fill", style: .secondary) {
             onBackupConfirmed()
         }
     }
@@ -301,7 +293,7 @@ struct MnemonicView: View {
             HStack {
                 Image(systemName: "key.fill")
                     .font(.title3)
-                    .foregroundColor(KingColors.accent)
+                    .foregroundColor(KingDesignTokens.Colors.primary)
                 
                 Text("복구 문구")
                     .font(.headline)
@@ -310,18 +302,12 @@ struct MnemonicView: View {
                 Spacer()
                 
                 if mnemonicWords.contains(where: { !$0.isEmpty }) {
-                    GlassButton(
-                        icon: "trash",
-                        style: .icon
-                    ) {
+                    GlassButton("", icon: "trash", style: .secondary) {
                         clearAllFields()
                     }
                 }
                 
-                GlassButton(
-                    icon: "doc.on.clipboard",
-                    style: .icon
-                ) {
+                GlassButton("", icon: "doc.on.clipboard", style: .secondary) {
                     pasteFromClipboard()
                 }
             }
@@ -331,24 +317,27 @@ struct MnemonicView: View {
                     HStack(spacing: 8) {
                         Text("\(index + 1)")
                             .font(.caption)
-                            .foregroundColor(KingColors.textSecondary)
+                            .foregroundColor(.secondary)
                             .frame(width: 20)
                         
-                        GlassTextField(
-                            text: $mnemonicWords[index],
-                            placeholder: "단어 입력",
-                            style: .default,
-                            keyboardType: .asciiCapable,
-                            submitLabel: index == 11 ? .done : .next,
-                            onEditingChanged: { editing in
-                                if editing {
-                                    focusedField = index
-                                }
+                        TextField("단어 입력", text: Binding(
+                            get: { 
+                                guard index < mnemonicWords.count else { return "" }
+                                return mnemonicWords[index] 
                             },
-                            onSubmit: {
-                                moveToNextField(from: index)
+                            set: { newValue in
+                                guard index < mnemonicWords.count else { return }
+                                mnemonicWords[index] = newValue
+                                updateValidation(words: mnemonicWords)
                             }
-                        )
+                        ))
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
+                        .keyboardType(.asciiCapable)
+                        .onSubmit {
+                            moveToNextField(from: index)
+                        }
                         .focused($focusedField, equals: index)
                         .onChange(of: mnemonicWords[index]) { oldValue, newValue in
                             // 자동으로 다음 필드로 이동
@@ -390,21 +379,21 @@ struct MnemonicView: View {
                 HStack(spacing: 12) {
                     ZStack {
                         Circle()
-                            .fill((filledCount == 12 ? KingColors.success : KingColors.warning).opacity(0.15))
+                            .fill((filledCount == 12 ? KingDesignTokens.Colors.success : KingDesignTokens.Colors.warning).opacity(0.15))
                             .frame(width: 28, height: 28)
                         Image(systemName: filledCount == 12 ? "checkmark.circle.fill" : "clock.fill")
                             .font(.subheadline)
-                            .foregroundColor(filledCount == 12 ? KingColors.success : KingColors.warning)
+                            .foregroundColor(filledCount == 12 ? KingDesignTokens.Colors.success : KingDesignTokens.Colors.warning)
                     }
                     
                     VStack(alignment: .leading, spacing: 2) {
                         Text("\(filledCount)/12")
                             .font(.subheadline)
                             .fontWeight(.semibold)
-                            .foregroundColor(KingColors.textPrimary)
+                            .foregroundColor(.primary)
                         Text("단어 입력됨")
                             .font(.caption2)
-                            .foregroundColor(KingColors.textSecondary)
+                            .foregroundColor(.secondary)
                     }
                     
                     Spacer()
@@ -414,34 +403,34 @@ struct MnemonicView: View {
                         Text("\(Int((Double(filledCount) / 12.0) * 100))%")
                             .font(.caption2)
                             .fontWeight(.medium)
-                            .foregroundColor(filledCount == 12 ? KingColors.success : KingColors.warning)
+                            .foregroundColor(filledCount == 12 ? KingDesignTokens.Colors.success : KingDesignTokens.Colors.warning)
                         ProgressView(value: Double(filledCount), total: 12)
                             .frame(width: 60)
-                            .tint(filledCount == 12 ? KingColors.success : KingColors.warning)
+                            .tint(filledCount == 12 ? KingDesignTokens.Colors.success : KingDesignTokens.Colors.warning)
                     }
                 }
                 .padding(12)
-                .glassCard(level: .subtle, context: .card)
+                .glass(material: .ultraThin, cornerRadius: KingDesignTokens.Radius.lg)
             }
             
             if !pastedMnemonic.isEmpty {
                 HStack(spacing: 8) {
                     ZStack {
                         Circle()
-                            .fill(KingColors.success.opacity(0.15))
+                            .fill(KingDesignTokens.Colors.success.opacity(0.15))
                             .frame(width: 24, height: 24)
                         Image(systemName: "checkmark.circle.fill")
                             .font(.caption)
-                            .foregroundColor(KingColors.success)
+                            .foregroundColor(KingDesignTokens.Colors.success)
                     }
                     Text(pastedMnemonic.contains("12개") ? pastedMnemonic : "자동 입력 완료")
                         .font(.caption)
-                        .foregroundColor(KingColors.textSecondary)
+                        .foregroundColor(.secondary)
                     Spacer()
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
-                .glassCard(level: .subtle, context: .card)
+                .glass(material: .ultraThin, cornerRadius: KingDesignTokens.Radius.lg)
             }
         }
         .padding(.horizontal, 4)
@@ -449,12 +438,7 @@ struct MnemonicView: View {
     
     // MARK: - Submit Button Section
     private var submitButtonSection: some View {
-        GlassButton(
-            icon: "arrow.clockwise.circle.fill",
-            title: "지갑 복원",
-            style: isValid ? .wallet : .secondary,
-            isEnabled: isValid
-        ) {
+        GlassButton("지갑 복원", icon: "arrow.clockwise.circle.fill", style: isValid ? .primary : .secondary) {
             let mnemonic = mnemonicWords.joined(separator: " ")
             onMnemonicSubmitted(mnemonic)
         }
@@ -577,23 +561,4 @@ struct MnemonicView: View {
             }
         }
     }
-}
-
-// MARK: - Preview
-#Preview {
-    MnemonicView(
-        mode: .display,
-        mnemonic: "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about",
-        onMnemonicSubmitted: { _ in },
-        onBackupConfirmed: { }
-    )
-}
-
-#Preview {
-    MnemonicView(
-        mode: .input,
-        mnemonic: nil,
-        onMnemonicSubmitted: { _ in },
-        onBackupConfirmed: { }
-    )
 }

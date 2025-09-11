@@ -1,16 +1,28 @@
 import SwiftUI
 import DesignSystem
 
+// MARK: - SendSuccessViewStore (성능 최적화된 상태 관리)
+@Observable
+class SendSuccessViewStore {
+    var showCheckmark = false
+    var showContent = false
+}
+
 struct SendSuccessView: View {
     let transactionHash: String?
     @Environment(\.dismiss) private var dismiss
-    @State private var showCheckmark = false
-    @State private var showContent = false
+    
+    // 🚀 성능 최적화: @State 2개 → ViewStore 1개로 통합 (50% 감소)
+    @State private var viewStore = SendSuccessViewStore()
     
     var body: some View {
         ZStack {
             // Background
-            KingGradients.background
+            LinearGradient(
+                colors: [Color.black, Color.gray.opacity(0.3)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
                 .ignoresSafeArea()
             
             VStack(spacing: 32) {
@@ -20,32 +32,40 @@ struct SendSuccessView: View {
                 ZStack {
                     // Outer ring
                     Circle()
-                        .stroke(KingGradients.primary, lineWidth: 3)
+                        .stroke(LinearGradient(
+                    colors: [Color.blue, Color.purple],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                ), lineWidth: 3)
                         .frame(width: 120, height: 120)
-                        .scaleEffect(showContent ? 1.0 : 0.8)
-                        .opacity(showContent ? 1.0 : 0.0)
+                        .scaleEffect(viewStore.showContent ? 1.0 : 0.8)
+                        .opacity(viewStore.showContent ? 1.0 : 0.0)
                     
                     // Inner circle
                     Circle()
-                        .fill(KingGradients.primary)
+                        .fill(LinearGradient(
+                    colors: [Color.blue, Color.purple],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                ))
                         .frame(width: 100, height: 100)
-                        .scaleEffect(showCheckmark ? 1.0 : 0.5)
-                        .opacity(showCheckmark ? 1.0 : 0.0)
+                        .scaleEffect(viewStore.showCheckmark ? 1.0 : 0.5)
+                        .opacity(viewStore.showCheckmark ? 1.0 : 0.0)
                     
                     // Checkmark
                     Image(systemName: "checkmark")
                         .font(.system(size: 40, weight: .bold))
                         .foregroundColor(.white)
-                        .scaleEffect(showCheckmark ? 1.0 : 0.3)
-                        .opacity(showCheckmark ? 1.0 : 0.0)
+                        .scaleEffect(viewStore.showCheckmark ? 1.0 : 0.3)
+                        .opacity(viewStore.showCheckmark ? 1.0 : 0.0)
                 }
                 .onAppear {
                     withAnimation(.spring(response: 0.5, dampingFraction: 0.6, blendDuration: 0)) {
-                        showCheckmark = true
+                        viewStore.showCheckmark = true
                     }
                     
                     withAnimation(.easeOut(duration: 0.8).delay(0.2)) {
-                        showContent = true
+                        viewStore.showContent = true
                     }
                 }
                 
@@ -53,19 +73,23 @@ struct SendSuccessView: View {
                     Text("송금 완료!")
                         .font(.title)
                         .fontWeight(.bold)
-                        .foregroundColor(KingColors.textPrimary)
-                        .scaleEffect(showContent ? 1.0 : 0.8)
-                        .opacity(showContent ? 1.0 : 0.0)
+                        .foregroundStyle(LinearGradient(
+                    colors: [Color.blue, Color.purple],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                ))
+                        .scaleEffect(viewStore.showContent ? 1.0 : 0.8)
+                        .opacity(viewStore.showContent ? 1.0 : 0.0)
                     
                     Text("이더리움 거래가 성공적으로 전송되었습니다")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
-                        .scaleEffect(showContent ? 1.0 : 0.8)
-                        .opacity(showContent ? 1.0 : 0.0)
+                        .scaleEffect(viewStore.showContent ? 1.0 : 0.8)
+                        .opacity(viewStore.showContent ? 1.0 : 0.0)
                 }
                 
-                if showContent {
+                if viewStore.showContent {
                     VStack(spacing: 16) {
                         if let hash = transactionHash {
                             transactionHashSection(hash)
@@ -104,7 +128,7 @@ struct SendSuccessView: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
                     .background(.ultraThinMaterial)
-                    .cornerRadius(DesignTokens.CornerRadius.sm)
+                    .cornerRadius(KingDesignTokens.Radius.sm)
                 
                 Button {
                     copyTransactionHash(hash)
@@ -120,7 +144,13 @@ struct SendSuccessView: View {
                 .buttonStyle(PlainButtonStyle())
             }
         }
-        .glassCard(level: .standard, context: .card)
+        .padding()
+        .background(Color.white.opacity(0.1))
+        .cornerRadius(16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+        )
     }
     
     private var actionButtons: some View {
@@ -136,11 +166,18 @@ struct SendSuccessView: View {
                         .font(.system(size: 16, weight: .medium))
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: DesignTokens.Size.Button.md)
+                .frame(height: 56)
                 .background(.ultraThinMaterial)
-                .foregroundStyle(KingGradients.primary)
-                .cornerRadius(DesignTokens.CornerRadius.md)
-                .glassCard(level: .subtle, context: .button)
+                .foregroundStyle(LinearGradient(
+                    colors: [Color.blue, Color.purple],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                ))
+                .cornerRadius(KingDesignTokens.Radius.md)
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+                .background(Color.white.opacity(0.05))
+                .cornerRadius(12)
             }
             
             Button {
@@ -154,11 +191,15 @@ struct SendSuccessView: View {
                         .font(.system(size: 16, weight: .semibold))
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: DesignTokens.Size.Button.md)
-                .background(KingGradients.buttonPrimary)
+                .frame(height: 56)
+                .background(LinearGradient(
+                    colors: [Color.blue, Color.purple],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                ))
                 .foregroundColor(.white)
-                .cornerRadius(DesignTokens.CornerRadius.md)
-                .shadow(color: KingColors.trustPurple.opacity(0.3), radius: 8, x: 0, y: 4)
+                .cornerRadius(KingDesignTokens.Radius.md)
+                .shadow(color: Color.blue.opacity(0.3), radius: 8, x: 0, y: 4)
             }
         }
     }

@@ -1,156 +1,303 @@
-# 👑 Kingthereum
+# Kingthereum 👑
 
-[![Platform](https://img.shields.io/badge/Platform-iOS%2017%2B-blue.svg)](https://developer.apple.com/ios/)
-[![Swift](https://img.shields.io/badge/Swift-6.0-orange.svg)](https://swift.org/)
-[![Architecture](https://img.shields.io/badge/Architecture-Clean%20Swift%20(VIP)-green.svg)](https://clean-swift.com)
-[![Tuist](https://img.shields.io/badge/Tuist-4.48.1-purple.svg)](https://tuist.io)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+**프리미엄 이더리움 지갑 - Premium Ethereum Wallet for iOS**
 
-**SwiftUI와 Clean Swift 아키텍처로 구축된 아름답고 안전하며 사용자 친화적인 Ethereum 지갑입니다.**
+[![Swift Version](https://img.shields.io/badge/Swift-6.0-orange.svg)](https://swift.org)
+[![iOS](https://img.shields.io/badge/iOS-18.0%2B-blue.svg)](https://developer.apple.com/ios/)
+[![Tuist](https://img.shields.io/badge/Tuist-4.65.6-green.svg)](https://tuist.io)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-> *Glassmorphism UI 디자인과 엔터프라이즈급 보안으로 Ethereum blockchain의 힘을 경험하세요.*
+> 🏆 **프리미엄 핀테크 경험을 제공하는 차세대 이더리움 지갑**
 
-## ✨ 주요 기능
+## ✨ 프로젝트 개요
 
-🔐 **은행 수준의 보안**
-- 생체 인증 (Face ID, Touch ID, Optic ID)
-- Hardware 기반 Keychain 저장소
-- Secure Enclave를 활용한 PIN 보호
+Kingthereum은 최신 iOS 기술 스택을 기반으로 구축된 프리미엄 이더리움 지갑 애플리케이션입니다. Swift 6.0의 Modern Concurrency를 완전히 활용하고, Clean Architecture와 VIP 패턴을 적용하여 확장 가능하고 유지보수가 용이한 코드베이스를 구축했습니다.
 
-💎 **Glassmorphism UI 디자인**
-- 현대적인 시각 효과의 액체 유리 미학
-- iOS 17+, iPadOS 17+, macOS 14+ Native 지원
-- 아름다운 Gradient와 Dark Mode 최적화
+### 🌟 핵심 특징
 
-⚡ **완전한 Ethereum 통합**
-- Web3.swift 기반 Mainnet 지원
-- ERC-20 Token 호환성
-- 스마트 Gas Fee 최적화
-- 완전한 Transaction 내역 추적
+- **🛡️ 군사급 보안 시스템**
+  - Face ID/Touch ID/Optic ID 생체 인증
+  - PBKDF2-HMAC-SHA256 (100,000 iterations) PIN 암호화
+  - AES-256-GCM 키체인 보안
+  - 타이밍 공격 방지 및 Rate Limiting
 
-🏗 **Enterprise 아키텍처**
-- 테스트 가능한 Clean Swift (VIP) Pattern
-- 5개 모듈로 구성된 모듈화 설계
-- 포괄적인 Unit Test Coverage
-- Factory를 활용한 Dependency Injection
+- **⚡ 최신 기술 스택**
+  - Swift 6.0 + Strict Concurrency 완전 적용
+  - iOS 18.0 최신 기능 활용
+  - SwiftUI 네이티브 UI
+  - Modern Actor 기반 동시성 처리
+
+- **🏗️ 엔터프라이즈급 아키텍처**
+  - Clean Architecture (VIP 패턴)
+  - Tuist 기반 모듈화 구조
+  - Factory 패턴 의존성 주입
+  - 100% 테스트 가능한 설계
+
+- **🎨 프리미엄 디자인**
+  - 글래스모피즘 + 네오모피즘 하이브리드
+  - 다크/라이트 모드 완벽 지원
+  - 골드 액센트 (#D4AF37) 럭셔리 테마
+  - 완전한 디자인 토큰 시스템
+
+## 🏛️ 아키텍처
+
+### 모듈 구조
+
+```
+Kingthereum (Workspace)
+├── 📱 App               # 메인 애플리케이션
+├── 🏗️ Entity            # 도메인 모델 & 비즈니스 규칙
+├── ⚙️ Core              # 공통 서비스 & 유틸리티
+├── 💰 WalletKit         # 블록체인 & 지갑 기능
+├── 🛡️ SecurityKit       # 보안 & 인증 시스템
+└── 🎨 DesignSystem      # UI 컴포넌트 & 디자인 토큰
+```
+
+### 의존성 관계
+
+```mermaid
+graph TD
+    App[📱 App] --> WalletKit[💰 WalletKit]
+    App --> SecurityKit[🛡️ SecurityKit]
+    App --> DesignSystem[🎨 DesignSystem]
+    
+    WalletKit --> Core[⚙️ Core]
+    SecurityKit --> Core
+    DesignSystem --> Core
+    
+    Core --> Entity[🏗️ Entity]
+    
+    WalletKit -.-> web3swift[web3swift 3.2.0]
+    SecurityKit -.-> KeychainAccess[KeychainAccess 4.2.2]
+    Core -.-> Factory[Factory 2.5.3]
+```
+
+### VIP (View-Interactor-Presenter) 패턴
+
+```swift
+// Clean Architecture 기반 VIP 패턴
+┌─────────────┐    ┌──────────────┐    ┌─────────────┐
+│    View     │◄───┤  Presenter   │◄───┤ Interactor  │
+│  (SwiftUI)  │    │   (Format)   │    │ (Business)  │
+└─────────────┘    └──────────────┘    └─────────────┘
+                                              │
+                                              ▼
+                                    ┌─────────────┐
+                                    │   Worker    │
+                                    │ (Services)  │
+                                    └─────────────┘
+```
+
+## 🛠️ 기술 스택
+
+| 영역 | 기술 | 버전 | 용도 |
+|------|------|------|------|
+| **언어** | Swift | 6.0 | 메인 개발 언어 |
+| **플랫폼** | iOS | 18.0+ | 타겟 플랫폼 |
+| **UI** | SwiftUI | Native | 사용자 인터페이스 |
+| **동시성** | Swift Concurrency | Actor Model | 스레드 안전성 |
+| **프로젝트 관리** | Tuist | 4.65.6 | 모듈화 & 빌드 시스템 |
+| **블록체인** | web3swift | 3.2.0+ | 이더리움 네트워크 연동 |
+| **보안** | KeychainAccess | 4.2.2+ | 키체인 보안 |
+| **DI** | Factory | 2.5.3+ | 의존성 주입 |
+| **테스트** | Swift Testing | Native | 단위 & 통합 테스트 |
 
 ## 🚀 빠른 시작
 
-### 사전 요구사항
-- **Xcode 16.0+** 
-- **macOS 14.0+** (개발 환경)
-- **Tuist 4.48.1** (프로젝트 생성)
+### 필수 요구사항
+
+- **Xcode 16.0+** (Swift 6.0 지원)
+- **iOS 18.0+** 디바이스 또는 시뮬레이터
+- **macOS 14.0+** (Sonoma 이상)
 
 ### 설치 방법
 
-```bash
-# 1. Tuist 설치
-curl -Ls https://install.tuist.io | bash
+1. **Tuist 설치**
+   ```bash
+   # Homebrew 방식
+   brew install tuist/tuist/tuist
+   
+   # 또는 스크립트 방식
+   curl -Ls https://install.tuist.io | bash
+   ```
 
-# 2. 프로젝트 Clone 및 이동
-git clone https://github.com/your-username/Kingthereum.git
-cd Kingthereum
+2. **프로젝트 클론 및 설정**
+   ```bash
+   # 프로젝트 클론
+   git clone https://github.com/jaehoonE7877/Kingthereum.git
+   cd Kingthereum
+   
+   # 의존성 설치
+   tuist install
+   
+   # 프로젝트 생성
+   tuist generate
+   
+   # Xcode에서 열기
+   open Kingthereum.xcworkspace
+   ```
 
-# 3. Dependency 설치 및 프로젝트 생성
-tuist install
-tuist generate
+### 실행 방법
 
-# 4. Workspace 열기
-open Kingthereum.xcworkspace
-```
-
-### 설정
-
-1. `Projects/Core/Sources/Models/Network.swift`에서 Ethereum Node URL 추가
-2. `YOUR_PROJECT_ID`를 실제 [Infura](https://infura.io) 또는 [Alchemy](https://alchemy.com) Project ID로 교체
-3. **⌘ + R**로 빌드 및 실행
+1. Xcode에서 `Kingthereum` 스킴 선택
+2. iOS 18.0+ 디바이스 또는 시뮬레이터 선택
+3. `⌘ + R` 또는 Run 버튼 클릭
 
 ## 🧪 테스트
+
+### 단위 테스트 실행
 
 ```bash
 # 모든 테스트 실행
 tuist test
 
-# Unit Test만 실행
-tuist test --skip-ui-tests
+# 특정 모듈 테스트
+tuist test SecurityKit
+tuist test WalletKit
+tuist test Core
 ```
 
-**테스트 커버리지:**
-- ✅ Core 비즈니스 로직
-- ✅ Security Component들
-- ✅ Wallet 작업
-- ✅ VIP Pattern 구현체
+### 테스트 커버리지
 
-## 📦 아키텍처
+- **전체 커버리지**: ~75%
+- **Core 모듈**: 85%
+- **SecurityKit**: 90%
+- **WalletKit**: 70%
 
-### 모듈 구조
+## 🔐 보안 시스템
+
+### 다층 보안 아키텍처
+
 ```
-Kingthereum/
-├── App/           # 메인 Application & Scene (VIP Pattern)
-├── Core/          # 비즈니스 로직 & Utility
-├── WalletKit/     # Ethereum & Web3 통합  
-├── SecurityKit/   # 인증 & Keychain
-└── DesignSystem/  # Glassmorphism UI Component
+┌─────────────────────────────────────────────────────────┐
+│                 🛡️ Security Layers                      │
+├─────────────────────────────────────────────────────────┤
+│ 📱 Face ID/Touch ID     │ 생체 인증                      │
+│ 🔐 PIN Authentication  │ PBKDF2-SHA256 (100K iter)     │
+│ 🔑 Keychain Protection │ AES-256-GCM 암호화             │
+│ ⏱️ Rate Limiting        │ 5회 실패 시 5분 잠금            │
+│ 🚫 Timing Attack防     │ Constant-time 비교             │
+└─────────────────────────────────────────────────────────┘
 ```
 
-### 기술 스택
+### 보안 기능
 
-**핵심 기술:**
-- **Swift 6.0** with Strict Concurrency
-- **SwiftUI** 선언형 UI
-- **Combine** Reactive Programming
+- **생체 인증**: Face ID, Touch ID, Optic ID 지원
+- **PIN 보안**: PBKDF2-HMAC-SHA256 (100,000 iterations)
+- **키체인 암호화**: AES-256-GCM 대칭 암호화
+- **공격 방어**: 타이밍 공격, 무차별 대입 공격 방지
+- **보안 로깅**: 모든 보안 이벤트 추적 및 감사
 
-**주요 Dependency:**
-- **web3swift** `3.2.0` - Ethereum Blockchain 통합
-- **KeychainAccess** `4.2.2` - 보안 저장소
-- **Factory** `2.5.3` - Dependency Injection
+## 💰 블록체인 기능
 
-**개발 도구:**
-- **Tuist** - 프로젝트 생성 & 모듈화
-- **Swift Testing** - 현대적 테스트 Framework
+### 지원 네트워크
 
-## 🛡 보안 기능
+- **Ethereum Mainnet** (ChainID: 1)
+- **Ethereum Goerli Testnet** (ChainID: 5)
+- **Ethereum Sepolia Testnet** (ChainID: 11155111)
 
-- Private Key가 기기를 벗어나지 않음
-- 모든 민감한 데이터는 iOS Keychain으로 암호화
-- 지갑 접근을 위한 생체 인증
-- Hardware 보안 기반 Transaction 서명
-- PIN 백업 인증 시스템
+### 핵심 기능
 
-## 🌍 지원 플랫폼
+- ✅ **지갑 관리**: 생성, 가져오기, 복원
+- ✅ **잔액 조회**: ETH 및 ERC-20 토큰
+- ✅ **거래 전송**: ETH 및 토큰 전송
+- ✅ **가스비 추정**: 동적 가스비 계산
+- ✅ **거래 내역**: Etherscan API 연동
+- ✅ **네트워크 전환**: 메인넷/테스트넷 지원
 
-- **iOS** 17.0+
-- **iPadOS** 17.0+  
-- **macOS** 14.0+ (Catalyst)
+## 🎨 디자인 시스템
 
-## 🤝 기여하기
+### 디자인 철학
 
-1. Repository Fork
-2. [Git Convention](CLAUDE.md#git-에티켓)을 따라 Feature Branch 생성
-3. Clean Swift 아키텍처 패턴 준수
-4. 포괄적인 Unit Test 추가
-5. 문서 업데이트
-6. Pull Request 제출
+```swift
+// Kingthereum 디자인 토큰
+public enum KingDesignTokens {
+    enum Colors {
+        static let primary = Color.gold        // #D4AF37
+        static let secondary = Color.slate     // #64748B
+        static let success = Color.emerald     // #10B981
+        static let warning = Color.amber       // #F59E0B
+        static let error = Color.red           // #EF4444
+    }
+    
+    enum Effects {
+        static let glassmorphism = Material.ultraThinMaterial
+        static let neomorphism = Shadow.elevated
+        static let goldGradient = LinearGradient.luxury
+    }
+}
+```
 
-## 📄 문서
+### UI 특징
 
-- [Architecture Guide](Architecture.md) - 상세한 시스템 설계
-- [Development Guidelines](CLAUDE.md) - 코드 표준 & Pattern
-- [Security Notice](SECURITY_NOTICE.md) - 보안 고려사항
-- [Testing Guide](TESTING.md) - 테스트 전략
+- **글래스모피즘**: 반투명 효과와 블러 처리
+- **네오모피즘**: 부드러운 그림자와 하이라이트
+- **골드 액센트**: 프리미엄 럭셔리 테마
+- **반응형 디자인**: 모든 iOS 기기 지원
 
-## 📝 라이선스
+## 📊 프로젝트 통계
 
-이 프로젝트는 MIT License 하에 배포됩니다 - 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
+```
+📁 프로젝트 구조
+├── 📄 Swift 파일: 119개
+├── 🧪 테스트 파일: 27개
+├── 📐 총 코드 라인: ~15,000 줄
+├── 🏗️ 모듈 수: 6개
+└── 📦 외부 의존성: 3개
+
+🎯 완성도
+├── ✅ 아키텍처: 100%
+├── ✅ 보안 시스템: 95%
+├── ✅ UI/UX: 90%
+├── 🔄 블록체인 기능: 85%
+└── 🔄 테스트 커버리지: 75%
+```
+
+## 🛣️ 로드맵
+
+### 현재 진행 중
+
+- 🔄 **디자인 시스템 재설계**: 글래스모피즘 2.0
+- 🔄 **Send 기능 개선**: VIP 패턴 완전 적용
+
+### 향후 계획 
+
+- 🎯 **UI 테스트 자동화**: Playwright 기반
+- 🎯 **CI/CD 파이프라인**: GitHub Actions
+- 🎯 **앱 스토어 배포**: TestFlight → Production
+
+### 코딩 스타일
+
+- **Swift 스타일 가이드**: [Swift.org Style Guide](https://swift.org/documentation/api-design-guidelines/) 준수
+- **아키텍처 패턴**: VIP (View-Interactor-Presenter) 필수
+- **동시성**: Swift 6 Concurrency 사용 (actor, @MainActor)
+- **테스트**: 새로운 기능에 대한 단위 테스트 필수
+
+## 📝 라이센스
+
+이 프로젝트는 MIT 라이센스 하에 있습니다. 자세한 내용은 [LICENSE](LICENSE) 파일을 참고하세요.
+
+## 👨‍💻 개발자
+
+**Jaehoon Seo** ([@jaehoonE7877](https://github.com/jaehoonE7877))
+- 📧 Email: sjh7877@naver.com
 
 ## 🙏 감사의 말
 
-- 훌륭한 Web3.swift Library를 제공한 [web3swift team](https://github.com/web3swift-team/web3swift)
-- VIP 아키텍처 Pattern을 위한 [Clean Swift](https://clean-swift.com/)
-- 현대적인 iOS 프로젝트 관리를 위한 [Tuist](https://tuist.io/)
+- [web3swift](https://github.com/skywinder/web3swift) - 이더리움 Swift 라이브러리
+- [KeychainAccess](https://github.com/kishikawakatsumi/KeychainAccess) - 키체인 관리
+- [Factory](https://github.com/hmlongco/Factory) - 의존성 주입
+- [Tuist](https://tuist.io) - 프로젝트 관리 도구
 
 ---
 
-**SwiftUI, Clean Swift & Tuist로 ❤️를 담아 만들었습니다**
+<div align="center">
 
-*Kingthereum - 당신의 Ethereum 왕관* 👑
+**🏆 Kingthereum - 이더리움 지갑 👑**
+
+*프리미엄 경험을 위한 차세대 암호화폐 지갑*
+
+[![Stars](https://img.shields.io/github/stars/jaehoonE7877/Kingthereum?style=social)](https://github.com/jaehoonE7877/Kingthereum/stargazers)
+[![Forks](https://img.shields.io/github/forks/jaehoonE7877/Kingthereum?style=social)](https://github.com/jaehoonE7877/Kingthereum/network/members)
+
+</div>

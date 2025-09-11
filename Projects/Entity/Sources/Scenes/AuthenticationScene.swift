@@ -45,10 +45,10 @@ public enum AuthenticationScene {
         
         public struct Response: Sendable {
             public let success: Bool
-            public let biometricType: BiometricType
+            public let biometricType: SecurityError.BiometricType
             public let error: Error?
             
-            public init(success: Bool, biometricType: BiometricType, error: Error? = nil) {
+            public init(success: Bool, biometricType: SecurityError.BiometricType, error: Error? = nil) {
                 self.success = success
                 self.biometricType = biometricType
                 self.error = error
@@ -105,9 +105,9 @@ public enum AuthenticationScene {
         
         public struct Response: Sendable {
             public let isAvailable: Bool
-            public let biometricType: BiometricType
+            public let biometricType: SecurityError.BiometricType
             
-            public init(isAvailable: Bool, biometricType: BiometricType) {
+            public init(isAvailable: Bool, biometricType: SecurityError.BiometricType) {
                 self.isAvailable = isAvailable
                 self.biometricType = biometricType
             }

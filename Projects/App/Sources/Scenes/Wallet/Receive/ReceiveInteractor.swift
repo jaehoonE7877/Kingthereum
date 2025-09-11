@@ -1,11 +1,11 @@
 import Foundation
 import Entity
 import UIKit
-import WalletKit
+import Factory
 
 @MainActor
 protocol ReceiveBusinessLogic {
-    func loadWalletAddress(request: ReceiveScene.LoadWalletAddress.Request)
+    func loadWalletAddress(request: ReceiveScene.LoadWalletAddress.Request) async
     func copyAddress(request: ReceiveScene.CopyAddress.Request)
     func shareAddress(request: ReceiveScene.ShareAddress.Request)
     func generateQRCode(request: ReceiveScene.GenerateQRCode.Request)
@@ -21,34 +21,23 @@ final class ReceiveInteractor: ReceiveBusinessLogic, ReceiveDataStore {
     var presenter: ReceivePresentationLogic?
     var worker: ReceiveWorker?
     
-    private let walletService: WalletService
+    @Injected(\.walletService) private var walletService
     
     // MARK: - Data Store
     var walletAddress: String?
     
-    // MARK: - Initialization
-    init(
-        presenter: ReceivePresentationLogic? = nil,
-        worker: ReceiveWorker? = nil,
-        walletService: WalletService
-    ) {
-        self.presenter = presenter
-        self.worker = worker
-        self.walletService = walletService
-    }
-    
     // MARK: - Business Logic
     
-    func loadWalletAddress(request: ReceiveScene.LoadWalletAddress.Request) {
+    func loadWalletAddress(request: ReceiveScene.LoadWalletAddress.Request) async {
         let worker: ReceiveWorker
         if let existingWorker = self.worker {
             worker = existingWorker
         } else {
-            worker = ReceiveWorker(walletService: walletService)
+            worker = ReceiveWorker()
         }
         
-        let address = worker.getWalletAddress()
-        let formattedAddress = worker.formatAddress(address)
+        let address = await worker.getWalletAddress()
+        let formattedAddress = await worker.formatAddress(address)
         
         // 데이터 스토어에 저장
         self.walletAddress = address
@@ -78,13 +67,11 @@ final class ReceiveInteractor: ReceiveBusinessLogic, ReceiveDataStore {
     }
     
     func generateQRCode(request: ReceiveScene.GenerateQRCode.Request) {
-        print("🔄 ReceiveInteractor: QR code refresh requested for address: \(request.address)")
-        
         let worker: ReceiveWorker
         if let existingWorker = self.worker {
             worker = existingWorker
         } else {
-            worker = ReceiveWorker(walletService: walletService)
+            worker = ReceiveWorker()
         }
         
         let qrCodeData = worker.generateQRCode(from: request.address)
@@ -94,7 +81,6 @@ final class ReceiveInteractor: ReceiveBusinessLogic, ReceiveDataStore {
             isRefresh: true // 수동 새로고침
         )
         
-        print("📤 ReceiveInteractor: Sending QR response to presenter (isRefresh: \(response.isRefresh))")
         presenter?.presentQRCode(response: response)
     }
 }

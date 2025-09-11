@@ -23,7 +23,6 @@ public final class AuthenticationRouter {
     
     /// 메인 앱으로 이동 (인증 완료)
     public func routeToMain() {
-        Logger.debug("🔐 Authentication completed, navigating to main app")
         appRouter.enterMainApp()
     }
     
@@ -122,14 +121,14 @@ public final class AuthenticationRouter {
 public struct AuthenticationContext: Sendable {
     public let isSetupMode: Bool
     public let hasExistingWallet: Bool
-    public let availableBiometricTypes: [BiometricType]
+    public let availableBiometricTypes: [Entity.SecurityError.BiometricType]
     public let recommendedSecurityMethod: SecurityMethod?
     public let walletAddress: String?
     
     public init(
         isSetupMode: Bool = false,
         hasExistingWallet: Bool = false,
-        availableBiometricTypes: [BiometricType] = [],
+        availableBiometricTypes: [Entity.SecurityError.BiometricType] = [],
         recommendedSecurityMethod: SecurityMethod? = nil,
         walletAddress: String? = nil
     ) {

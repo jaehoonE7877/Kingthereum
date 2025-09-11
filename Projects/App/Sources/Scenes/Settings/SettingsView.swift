@@ -151,9 +151,9 @@ struct SettingsView: View {
                 // 프리미엄 피나테크 배경 - 다크모드 가독성 개선 그라데이션
                 LinearGradient(
                     colors: [
-                        KingColors.backgroundPrimary,
-                        KingColors.backgroundSecondary,
-                        KingColors.trustPurple.opacity(0.85)
+                        KingDesignTokens.Colors.background,
+                        KingDesignTokens.Colors.secondary,
+                        KingDesignTokens.Colors.secondary.opacity(0.85)
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
@@ -164,11 +164,11 @@ struct SettingsView: View {
                     VStack(spacing: 16) {
                         ProgressView()
                             .scaleEffect(1.4)
-                            .tint(KingColors.exclusiveGold)
+                            .tint(KingDesignTokens.Colors.accent)
                         
                         Text("설정 로드 중...")
-                            .font(KingTypography.bodyMedium)
-                            .foregroundColor(KingColors.textSecondary)
+                            .font(KingDesignTokens.Typography.body)
+                            .foregroundColor(KingDesignTokens.Colors.secondary)
                     }
                     .padding(32)
                     .trustGlassCard(level: .standard, cornerRadius: 20)
@@ -215,8 +215,8 @@ struct SettingsView: View {
             } message: {
                 if let message = viewStore.alertMessage {
                     Text(message)
-                        .font(KingTypography.bodyMedium)
-                        .foregroundColor(KingColors.textSecondary)
+                        .font(KingDesignTokens.Typography.body)
+                        .foregroundColor(KingDesignTokens.Colors.secondary)
                 }
             }
         }
@@ -298,8 +298,8 @@ extension SettingsView {
                             .fill(
                                 RadialGradient(
                                     colors: [
-                                        KingColors.exclusiveGold.opacity(0.3),
-                                        KingColors.exclusiveGold.opacity(0.1),
+                                        KingDesignTokens.Colors.accent.opacity(0.3),
+                                        KingDesignTokens.Colors.accent.opacity(0.1),
                                         Color.clear
                                     ],
                                     center: .center,
@@ -318,8 +318,8 @@ extension SettingsView {
                                         .fill(
                                             LinearGradient(
                                                 colors: [
-                                                    KingColors.exclusiveGold.opacity(0.6),
-                                                    KingColors.exclusiveGold.opacity(0.3)
+                                                    KingDesignTokens.Colors.accent.opacity(0.6),
+                                                    KingDesignTokens.Colors.accent.opacity(0.3)
                                                 ],
                                                 startPoint: .topLeading,
                                                 endPoint: .bottomTrailing
@@ -333,11 +333,11 @@ extension SettingsView {
                                 .stroke(
                                     AngularGradient(
                                         colors: [
-                                            KingColors.exclusiveGold,
-                                            KingColors.exclusiveGold.opacity(0.3),
-                                            KingColors.exclusiveGold,
-                                            KingColors.exclusiveGold.opacity(0.6),
-                                            KingColors.exclusiveGold
+                                            KingDesignTokens.Colors.accent,
+                                            KingDesignTokens.Colors.accent.opacity(0.3),
+                                            KingDesignTokens.Colors.accent,
+                                            KingDesignTokens.Colors.accent.opacity(0.6),
+                                            KingDesignTokens.Colors.accent
                                         ],
                                         center: .center
                                     ),
@@ -347,38 +347,38 @@ extension SettingsView {
                             
                             // 아바타 텍스트
                             Text(viewStore.profileData.avatarInitials)
-                                .font(KingTypography.displaySmall)
+                                .font(KingDesignTokens.Typography.body)
                                 .fontWeight(.bold)
                                 .foregroundStyle(
                                     LinearGradient(
                                         colors: [
                                             Color.white,
-                                            KingColors.exclusiveGold.opacity(0.8)
+                                            KingDesignTokens.Colors.accent.opacity(0.8)
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     )
                                 )
                         }
-                        .shadow(color: KingColors.exclusiveGold.opacity(0.3), radius: 20, x: 0, y: 8)
+                        .shadow(color: KingDesignTokens.Colors.accent.opacity(0.3), radius: 20, x: 0, y: 8)
                     }
                     
                     // 프리미엄 프로필 정보
                     VStack(spacing: 8) {
                         Text(viewStore.profileData.displayName)
-                            .font(KingTypography.displaySmall)
+                            .font(KingDesignTokens.Typography.body)
                             .fontWeight(.semibold)
-                            .foregroundColor(KingColors.textPrimary)
+                            .foregroundColor(KingDesignTokens.Colors.onSurface)
                         
                         // 이더리움 주소 캡슐
                         HStack(spacing: 8) {
                             Image(systemName: "link.circle.fill")
                                 .font(.body)
-                                .foregroundColor(KingColors.trustPurple)
+                                .foregroundColor(KingDesignTokens.Colors.secondary)
                             
                             Text(viewStore.profileData.formattedAddress)
-                                .font(KingTypography.ethereumAddress)
-                                .foregroundColor(KingColors.textSecondary)
+                                .font(KingDesignTokens.Typography.body)
+                                .foregroundColor(KingDesignTokens.Colors.secondary)
                         }
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
@@ -387,12 +387,12 @@ extension SettingsView {
                                 .fill(.ultraThinMaterial)
                                 .background(
                                     Capsule()
-                                        .fill(KingColors.trustPurple.opacity(0.1))
+                                        .fill(KingDesignTokens.Colors.secondary.opacity(0.1))
                                 )
                         )
                         .overlay(
                             Capsule()
-                                .stroke(KingColors.trustPurple.opacity(0.2), lineWidth: 1)
+                                .stroke(KingDesignTokens.Colors.secondary.opacity(0.2), lineWidth: 1)
                         )
                     }
                 }
@@ -401,7 +401,7 @@ extension SettingsView {
         }
         .padding(32)
         .trustGlassCard(level: .prominent, cornerRadius: 24)
-        .shadow(color: KingColors.trustPurple.opacity(0.1), radius: 20, x: 0, y: 10)
+        .shadow(color: KingDesignTokens.Colors.secondary.opacity(0.1), radius: 20, x: 0, y: 10)
     }
     
     // MARK: - 2. 핵심 보안 설정 섹션
@@ -412,9 +412,9 @@ extension SettingsView {
             // 섹션 헤더 - 가독성 강화
             HStack {
                 Text("보안 및 인증")
-                    .font(KingTypography.headlineSmall)
+                    .font(KingDesignTokens.Typography.body)
                     .fontWeight(.bold)
-                    .foregroundColor(KingColors.textPrimary)
+                    .foregroundColor(KingDesignTokens.Colors.onSurface)
                     .shadow(color: Color.black.opacity(0.3), radius: 1, x: 0, y: 1)
                 Spacer()
             }
@@ -425,7 +425,7 @@ extension SettingsView {
                     .fill(.ultraThinMaterial)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(KingColors.glassBorder.opacity(0.1))
+                            .fill(KingDesignTokens.Colors.surfaceVariant.opacity(0.1))
                     )
             )
             
@@ -446,7 +446,7 @@ extension SettingsView {
                     icon: "bell.circle.fill",
                     title: "알림",
                     value: viewStore.notificationStatus,
-                    accentColor: KingColors.info,
+                    accentColor: KingDesignTokens.Colors.secondary,
                     isPrimary: false
                 ) {
                     toggleNotification()
@@ -457,7 +457,7 @@ extension SettingsView {
                     icon: "network",
                     title: "네트워크",
                     value: viewStore.network,
-                    accentColor: KingColors.trustPurple,
+                    accentColor: KingDesignTokens.Colors.secondary,
                     isPrimary: false
                 ) {
                     selectNetwork()
@@ -468,7 +468,7 @@ extension SettingsView {
                     icon: "moon.circle.fill",
                     title: "화면 모드",
                     value: viewStore.displayMode,
-                    accentColor: KingColors.trustPurple,
+                    accentColor: KingDesignTokens.Colors.secondary,
                     isPrimary: false
                 ) {
                     viewStore.showDisplayModeSelector = true
@@ -485,9 +485,9 @@ extension SettingsView {
             // 섹션 헤더 - 가독성 강화
             HStack {
                 Text("개인화")
-                    .font(KingTypography.headlineSmall)
+                    .font(KingDesignTokens.Typography.body)
                     .fontWeight(.bold)
-                    .foregroundColor(KingColors.textPrimary)
+                    .foregroundColor(KingDesignTokens.Colors.onSurface)
                     .shadow(color: Color.black.opacity(0.3), radius: 1, x: 0, y: 1)
                 Spacer()
             }
@@ -498,7 +498,7 @@ extension SettingsView {
                     .fill(.ultraThinMaterial)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(KingColors.glassBorder.opacity(0.1))
+                            .fill(KingDesignTokens.Colors.surfaceVariant.opacity(0.1))
                     )
             )
             
@@ -509,7 +509,7 @@ extension SettingsView {
                     icon: "globe",
                     title: "언어",
                     value: viewStore.language,
-                    accentColor: KingColors.trustPurple
+                    accentColor: KingDesignTokens.Colors.secondary
                 ) {
                     selectLanguage()
                 }
@@ -519,7 +519,7 @@ extension SettingsView {
                     icon: "dollarsign.circle.fill",
                     title: "통화",
                     value: viewStore.currency,
-                    accentColor: KingColors.exclusiveGold
+                    accentColor: KingDesignTokens.Colors.accent
                 ) {
                     selectCurrency()
                 }
@@ -535,9 +535,9 @@ extension SettingsView {
             // 섹션 헤더 - 가독성 강화
             HStack {
                 Text("지원 및 정보")
-                    .font(KingTypography.headlineSmall)
+                    .font(KingDesignTokens.Typography.body)
                     .fontWeight(.bold)
-                    .foregroundColor(KingColors.textPrimary)
+                    .foregroundColor(KingDesignTokens.Colors.onSurface)
                     .shadow(color: Color.black.opacity(0.3), radius: 1, x: 0, y: 1)
                 Spacer()
             }
@@ -548,7 +548,7 @@ extension SettingsView {
                     .fill(.ultraThinMaterial)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(KingColors.glassBorder.opacity(0.1))
+                            .fill(KingDesignTokens.Colors.surfaceVariant.opacity(0.1))
                     )
             )
             
@@ -557,7 +557,7 @@ extension SettingsView {
                     icon: "questionmark.circle.fill",
                     title: "도움말 및 지원",
                     subtitle: "24/7 프리미엄 지원",
-                    iconColor: KingColors.info
+                    iconColor: KingDesignTokens.Colors.secondary
                 ) {
                     selectHelp()
                 }
@@ -566,7 +566,7 @@ extension SettingsView {
                     icon: "doc.text.fill",
                     title: "이용약관",
                     subtitle: "서비스 약관 및 정책",
-                    iconColor: KingColors.trustPurple
+                    iconColor: KingDesignTokens.Colors.secondary
                 ) {
                     selectTermsOfService()
                 }
@@ -575,7 +575,7 @@ extension SettingsView {
                     icon: "hand.raised.fill",
                     title: "개인정보 처리방침",
                     subtitle: "데이터 보호 정책",
-                    iconColor: KingColors.warning
+                    iconColor: KingDesignTokens.Colors.secondary
                 ) {
                     selectPrivacyPolicy()
                 }
@@ -597,8 +597,8 @@ extension SettingsView {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    KingColors.exclusiveGold,
-                                    KingColors.exclusiveGold.opacity(0.8)
+                                    KingDesignTokens.Colors.accent,
+                                    KingDesignTokens.Colors.accent.opacity(0.8)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -613,20 +613,20 @@ extension SettingsView {
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Kingthereum")
-                        .font(KingTypography.bodyLarge)
+                        .font(KingDesignTokens.Typography.body)
                         .fontWeight(.semibold)
-                        .foregroundColor(KingColors.textPrimary)
+                        .foregroundColor(KingDesignTokens.Colors.onSurface)
                     
                     Text("v\(viewStore.version)")
-                        .font(KingTypography.bodySmall)
-                        .foregroundColor(KingColors.textSecondary)
+                        .font(KingDesignTokens.Typography.body)
+                        .foregroundColor(KingDesignTokens.Colors.secondary)
                 }
                 
                 Spacer()
                 
                 Text("프리미엄 이더리움 지갑")
-                    .font(KingTypography.caption)
-                    .foregroundColor(KingColors.exclusiveGold)
+                    .font(KingDesignTokens.Typography.body)
+                    .foregroundColor(KingDesignTokens.Colors.accent)
             }
             .padding(24)
             .ultraMinimalGlass(level: .subtle)
@@ -673,13 +673,13 @@ extension SettingsView {
                 // 텍스트 정보
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
-                        .font(KingTypography.bodyLarge)
+                        .font(KingDesignTokens.Typography.body)
                         .fontWeight(.semibold)
-                        .foregroundColor(KingColors.textPrimary)
+                        .foregroundColor(KingDesignTokens.Colors.onSurface)
                         .shadow(color: Color.black.opacity(0.2), radius: 0.5, x: 0, y: 0.5)
                     
                     Text(value)
-                        .font(KingTypography.bodySmall)
+                        .font(KingDesignTokens.Typography.body)
                         .foregroundColor(accentColor)
                 }
                 
@@ -689,7 +689,7 @@ extension SettingsView {
                 Image(systemName: "chevron.right")
                     .font(.caption)
                     .fontWeight(.semibold)
-                    .foregroundColor(KingColors.textTertiary)
+                    .foregroundColor(KingDesignTokens.Colors.secondary)
             }
             .padding(24)
         }
@@ -752,13 +752,13 @@ extension SettingsView {
                 // 텍스트 정보
                 VStack(spacing: 4) {
                     Text(title)
-                        .font(KingTypography.bodyMedium)
+                        .font(KingDesignTokens.Typography.body)
                         .fontWeight(.semibold)
-                        .foregroundColor(KingColors.textPrimary)
+                        .foregroundColor(KingDesignTokens.Colors.onSurface)
                         .shadow(color: Color.black.opacity(0.2), radius: 0.5, x: 0, y: 0.5)
                     
                     Text(value)
-                        .font(KingTypography.bodySmall)
+                        .font(KingDesignTokens.Typography.body)
                         .foregroundColor(accentColor)
                 }
             }
@@ -776,7 +776,7 @@ extension SettingsView {
         icon: String,
         title: String,
         subtitle: String,
-        iconColor: Color = KingColors.textSecondary,
+        iconColor: Color = KingDesignTokens.Colors.secondary,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
@@ -791,14 +791,14 @@ extension SettingsView {
                 // 텍스트 정보
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .font(KingTypography.bodyMedium)
+                        .font(KingDesignTokens.Typography.body)
                         .fontWeight(.semibold)
-                        .foregroundColor(KingColors.textPrimary)
+                        .foregroundColor(KingDesignTokens.Colors.onSurface)
                         .shadow(color: Color.black.opacity(0.2), radius: 0.5, x: 0, y: 0.5)
                     
                     Text(subtitle)
-                        .font(KingTypography.bodySmall)
-                        .foregroundColor(KingColors.textTertiary)
+                        .font(KingDesignTokens.Typography.body)
+                        .foregroundColor(KingDesignTokens.Colors.secondary)
                 }
                 
                 Spacer()
@@ -806,7 +806,7 @@ extension SettingsView {
                 // 화살표
                 Image(systemName: "chevron.right")
                     .font(.caption)
-                    .foregroundColor(KingColors.textTertiary)
+                    .foregroundColor(KingDesignTokens.Colors.secondary)
             }
             .padding(.horizontal, 24)
             .padding(.vertical, 20)

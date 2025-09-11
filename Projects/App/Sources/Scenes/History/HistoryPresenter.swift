@@ -4,10 +4,12 @@ import Core
 import SecurityKit
 
 @MainActor
-protocol HistoryPresentationLogic {
+protocol HistoryPresentationLogic: AnyObject {
     func presentTransactionHistory(response: HistoryScene.LoadTransactionHistory.Response)
-    func presentRefreshResult(response: HistoryScene.RefreshTransactions.Response)
+    func presentMoreTransactions(response: HistoryScene.LoadMoreTransactions.Response) // NEW
+    func presentRefreshedHistory(response: HistoryScene.RefreshTransactionHistory.Response) // NEW
     func presentFilteredTransactions(response: HistoryScene.FilterTransactions.Response)
+    func presentSearchResults(response: HistoryScene.SearchTransactions.Response) // NEW
     func presentExportResult(response: HistoryScene.ExportTransactions.Response)
 }
 
@@ -34,125 +36,137 @@ final class HistoryPresenter: HistoryPresentationLogic {
     
     func presentTransactionHistory(response: HistoryScene.LoadTransactionHistory.Response) {
         if let error = response.error {
-            let displayModel = HistoryScene.LoadTransactionHistory.ViewModel(
+            let viewModel = HistoryScene.LoadTransactionHistory.ViewModel(
                 transactionViewModels: [],
                 hasMoreTransactions: false,
                 isEmpty: true,
-                errorMessage: formatErrorMessage(error)
+                errorMessage: formatErrorMessage(error),
+                isRealTimeEnabled: false
             )
-            viewController?.displayTransactionHistory(viewModel: displayModel)
+            viewController?.displayTransactionHistory(viewModel: viewModel)
             return
         }
         
-        let transactionViewModels = response.transactions.map { transaction in
-            createTransactionViewModel(from: transaction)
-        }
+        let transactionViewModels = response.transactions.map { createTransactionViewModel(from: $0) }
         
-        let displayModel = HistoryScene.LoadTransactionHistory.ViewModel(
+        let viewModel = HistoryScene.LoadTransactionHistory.ViewModel(
             transactionViewModels: transactionViewModels,
             hasMoreTransactions: response.hasMore,
             isEmpty: response.transactions.isEmpty,
-            errorMessage: nil
+            errorMessage: nil,
+            isRealTimeEnabled: response.isRealTimeEnabled
         )
         
-        viewController?.displayTransactionHistory(viewModel: displayModel)
+        viewController?.displayTransactionHistory(viewModel: viewModel)
     }
-    
-    func presentRefreshResult(response: HistoryScene.RefreshTransactions.Response) {
+
+    func presentMoreTransactions(response: HistoryScene.LoadMoreTransactions.Response) {
         if let error = response.error {
-            let displayModel = HistoryScene.RefreshTransactions.ViewModel(
-                transactionViewModels: [],
-                refreshMessage: nil,
+            let viewModel = HistoryScene.LoadMoreTransactions.ViewModel(
+                newTransactionViewModels: [],
+                hasMoreTransactions: false,
                 errorMessage: formatErrorMessage(error)
             )
-            viewController?.displayRefreshResult(viewModel: displayModel)
+            viewController?.displayMoreTransactions(viewModel: viewModel)
             return
         }
-        
-        let transactionViewModels = response.transactions.map { transaction in
-            createTransactionViewModel(from: transaction)
-        }
-        
-        let refreshMessage: String?
-        if response.newTransactionsCount > 0 {
-            refreshMessage = "\(response.newTransactionsCount)개의 새로운 거래가 있습니다"
-        } else {
-            refreshMessage = "최신 상태입니다"
-        }
-        
-        let displayModel = HistoryScene.RefreshTransactions.ViewModel(
-            transactionViewModels: transactionViewModels,
-            refreshMessage: refreshMessage,
+
+        let newViewModels = response.newTransactions.map { createTransactionViewModel(from: $0) }
+        let viewModel = HistoryScene.LoadMoreTransactions.ViewModel(
+            newTransactionViewModels: newViewModels,
+            hasMoreTransactions: response.hasMore,
             errorMessage: nil
         )
-        
-        viewController?.displayRefreshResult(viewModel: displayModel)
+        viewController?.displayMoreTransactions(viewModel: viewModel)
+    }
+
+    func presentRefreshedHistory(response: HistoryScene.RefreshTransactionHistory.Response) {
+        if let error = response.error {
+            let viewModel = HistoryScene.RefreshTransactionHistory.ViewModel(
+                transactionViewModels: [],
+                hasMore: false,
+                errorMessage: formatErrorMessage(error)
+            )
+            viewController?.displayRefreshedHistory(viewModel: viewModel)
+            return
+        }
+
+        let viewModels = response.transactions.map { createTransactionViewModel(from: $0) }
+        let viewModel = HistoryScene.RefreshTransactionHistory.ViewModel(
+            transactionViewModels: viewModels,
+            hasMore: response.hasMore,
+            errorMessage: nil
+        )
+        viewController?.displayRefreshedHistory(viewModel: viewModel)
     }
     
     func presentFilteredTransactions(response: HistoryScene.FilterTransactions.Response) {
-        let transactionViewModels = response.filteredTransactions.map { transaction in
-            createTransactionViewModel(from: transaction)
-        }
+        let transactionViewModels = response.filteredTransactions.map { createTransactionViewModel(from: $0) }
         
         let filterTitle = response.filterType.rawValue
         let resultCount = "\(response.filteredTransactions.count) / \(response.totalCount)"
         
-        let displayModel = HistoryScene.FilterTransactions.ViewModel(
+        let viewModel = HistoryScene.FilterTransactions.ViewModel(
             transactionViewModels: transactionViewModels,
             filterTitle: filterTitle,
             resultCount: resultCount,
             isEmpty: response.filteredTransactions.isEmpty
         )
         
-        viewController?.displayFilteredTransactions(viewModel: displayModel)
+        viewController?.displayFilteredTransactions(viewModel: viewModel)
+    }
+
+    func presentSearchResults(response: HistoryScene.SearchTransactions.Response) {
+        if let error = response.error {
+            let viewModel = HistoryScene.SearchTransactions.ViewModel(
+                transactionViewModels: [],
+                query: response.query,
+                errorMessage: formatErrorMessage(error)
+            )
+            viewController?.displaySearchResults(viewModel: viewModel)
+            return
+        }
+
+        let viewModels = response.results.map { createTransactionViewModel(from: $0) }
+        let viewModel = HistoryScene.SearchTransactions.ViewModel(
+            transactionViewModels: viewModels,
+            query: response.query,
+            errorMessage: nil
+        )
+        viewController?.displaySearchResults(viewModel: viewModel)
     }
     
     func presentExportResult(response: HistoryScene.ExportTransactions.Response) {
         if let error = response.error {
-            let displayModel = HistoryScene.ExportTransactions.ViewModel(
+            let viewModel = HistoryScene.ExportTransactions.ViewModel(
                 shareItems: [],
                 successMessage: nil,
                 errorMessage: formatErrorMessage(error)
             )
-            viewController?.displayExportResult(viewModel: displayModel)
+            viewController?.displayExportResult(viewModel: viewModel)
             return
         }
         
-        guard let exportData = response.exportData else {
-            let displayModel = HistoryScene.ExportTransactions.ViewModel(
+        guard let exportURL = response.exportURL else {
+            let viewModel = HistoryScene.ExportTransactions.ViewModel(
                 shareItems: [],
                 successMessage: nil,
                 errorMessage: "내보내기 데이터를 생성할 수 없습니다"
             )
-            viewController?.displayExportResult(viewModel: displayModel)
+            viewController?.displayExportResult(viewModel: viewModel)
             return
         }
         
-        // 임시 파일 생성
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let fileURL = documentsPath.appendingPathComponent(response.fileName)
+        let shareItems: [Any] = [exportURL]
+        let successMessage = "\(response.format.rawValue) 파일이 생성되었습니다"
         
-        do {
-            try exportData.write(to: fileURL)
-            
-            let shareItems: [Any] = [fileURL]
-            let successMessage = "\(response.format.rawValue) 파일이 생성되었습니다"
-            
-            let displayModel = HistoryScene.ExportTransactions.ViewModel(
-                shareItems: shareItems,
-                successMessage: successMessage,
-                errorMessage: nil
-            )
-            
-            viewController?.displayExportResult(viewModel: displayModel)
-        } catch {
-            let displayModel = HistoryScene.ExportTransactions.ViewModel(
-                shareItems: [],
-                successMessage: nil,
-                errorMessage: "파일 저장에 실패했습니다: \(error.localizedDescription)"
-            )
-            viewController?.displayExportResult(viewModel: displayModel)
-        }
+        let viewModel = HistoryScene.ExportTransactions.ViewModel(
+            shareItems: shareItems,
+            successMessage: successMessage,
+            errorMessage: nil
+        )
+        
+        viewController?.displayExportResult(viewModel: viewModel)
     }
     
     // MARK: - Private Methods

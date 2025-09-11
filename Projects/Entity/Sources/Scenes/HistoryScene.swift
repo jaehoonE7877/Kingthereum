@@ -1,9 +1,10 @@
 import Foundation
 
-/// 거래 내역 Scene의 VIP 모델들
+/// 거래 내역 Scene의 VIP 모델들 (Swift 6 Concurrency 준수)
 public enum HistoryScene {
     
     // MARK: - Use Cases
+    
     public enum LoadTransactionHistory {
         public struct Request {
             public let walletAddress: String
@@ -21,11 +22,13 @@ public enum HistoryScene {
             public let transactions: [Transaction]
             public let hasMore: Bool
             public let error: Error?
+            public let isRealTimeEnabled: Bool // OPTIMIZED
             
-            public init(transactions: [Transaction], hasMore: Bool = false, error: Error? = nil) {
+            public init(transactions: [Transaction], hasMore: Bool, error: Error? = nil, isRealTimeEnabled: Bool = false) {
                 self.transactions = transactions
                 self.hasMore = hasMore
                 self.error = error
+                self.isRealTimeEnabled = isRealTimeEnabled
             }
         }
         
@@ -34,16 +37,86 @@ public enum HistoryScene {
             public let hasMoreTransactions: Bool
             public let isEmpty: Bool
             public let errorMessage: String?
+            public let isRealTimeEnabled: Bool
             
-            public init(transactionViewModels: [TransactionViewModel], hasMoreTransactions: Bool, isEmpty: Bool, errorMessage: String? = nil) {
+            public init(transactionViewModels: [TransactionViewModel], hasMoreTransactions: Bool, isEmpty: Bool, errorMessage: String? = nil, isRealTimeEnabled: Bool = false) {
                 self.transactionViewModels = transactionViewModels
                 self.hasMoreTransactions = hasMoreTransactions
                 self.isEmpty = isEmpty
+                self.errorMessage = errorMessage
+                self.isRealTimeEnabled = isRealTimeEnabled
+            }
+        }
+    }
+    
+    public enum LoadMoreTransactions { // OPTIMIZED
+        public struct Request {
+            public let walletAddress: String
+            
+            public init(walletAddress: String) {
+                self.walletAddress = walletAddress
+            }
+        }
+        
+        public struct Response: Sendable {
+            public let newTransactions: [Transaction]
+            public let hasMore: Bool
+            public let error: Error?
+            
+            public init(newTransactions: [Transaction], hasMore: Bool, error: Error? = nil) {
+                self.newTransactions = newTransactions
+                self.hasMore = hasMore
+                self.error = error
+            }
+        }
+        
+        public struct ViewModel {
+            public let newTransactionViewModels: [TransactionViewModel]
+            public let hasMoreTransactions: Bool
+            public let errorMessage: String?
+            
+            public init(newTransactionViewModels: [TransactionViewModel], hasMoreTransactions: Bool, errorMessage: String? = nil) {
+                self.newTransactionViewModels = newTransactionViewModels
+                self.hasMoreTransactions = hasMoreTransactions
                 self.errorMessage = errorMessage
             }
         }
     }
     
+    public enum RefreshTransactionHistory { // OPTIMIZED (Replaces RefreshTransactions)
+        public struct Request {
+            public let walletAddress: String
+            
+            public init(walletAddress: String) {
+                self.walletAddress = walletAddress
+            }
+        }
+        
+        public struct Response: Sendable {
+            public let transactions: [Transaction]
+            public let hasMore: Bool
+            public let error: Error?
+            
+            public init(transactions: [Transaction], hasMore: Bool, error: Error? = nil) {
+                self.transactions = transactions
+                self.hasMore = hasMore
+                self.error = error
+            }
+        }
+        
+        public struct ViewModel {
+            public let transactionViewModels: [TransactionViewModel]
+            public let hasMore: Bool
+            public let errorMessage: String?
+            
+            public init(transactionViewModels: [TransactionViewModel], hasMore: Bool, errorMessage: String? = nil) {
+                self.transactionViewModels = transactionViewModels
+                self.hasMore = hasMore
+                self.errorMessage = errorMessage
+            }
+        }
+    }
+
     public enum FilterTransactions {
         public struct Request {
             public let filterType: TransactionFilterType
@@ -84,26 +157,62 @@ public enum HistoryScene {
         }
     }
     
-    public enum ExportTransactions {
+    public enum SearchTransactions { // OPTIMIZED
         public struct Request {
-            public let transactions: [Transaction]
-            public let format: ExportFormat
+            public let walletAddress: String
+            public let query: String
             
-            public init(transactions: [Transaction], format: ExportFormat) {
-                self.transactions = transactions
-                self.format = format
+            public init(walletAddress: String, query: String) {
+                self.walletAddress = walletAddress
+                self.query = query
             }
         }
         
         public struct Response: Sendable {
-            public let exportData: Data?
-            public let fileName: String
+            public let results: [Transaction]
+            public let query: String
+            public let error: Error?
+            
+            public init(results: [Transaction], query: String, error: Error? = nil) {
+                self.results = results
+                self.query = query
+                self.error = error
+            }
+        }
+        
+        public struct ViewModel {
+            public let transactionViewModels: [TransactionViewModel]
+            public let query: String
+            public let errorMessage: String?
+            
+            public init(transactionViewModels: [TransactionViewModel], query: String, errorMessage: String? = nil) {
+                self.transactionViewModels = transactionViewModels
+                self.query = query
+                self.errorMessage = errorMessage
+            }
+        }
+    }
+    
+    public enum ExportTransactions { // OPTIMIZED (Replaces old one)
+        public struct Request {
+            public let transactions: [Transaction]
+            public let format: ExportFormat
+            public let dateRange: DateRange?
+
+            public init(transactions: [Transaction], format: ExportFormat, dateRange: DateRange? = nil) {
+                self.transactions = transactions
+                self.format = format
+                self.dateRange = dateRange
+            }
+        }
+        
+        public struct Response: Sendable {
+            public let exportURL: URL?
             public let format: ExportFormat
             public let error: Error?
             
-            public init(exportData: Data?, fileName: String, format: ExportFormat, error: Error? = nil) {
-                self.exportData = exportData
-                self.fileName = fileName
+            public init(exportURL: URL?, format: ExportFormat, error: Error? = nil) {
+                self.exportURL = exportURL
                 self.format = format
                 self.error = error
             }
@@ -117,40 +226,6 @@ public enum HistoryScene {
             public init(shareItems: [Any] = [], successMessage: String? = nil, errorMessage: String? = nil) {
                 self.shareItems = shareItems
                 self.successMessage = successMessage
-                self.errorMessage = errorMessage
-            }
-        }
-    }
-    
-    public enum RefreshTransactions {
-        public struct Request {
-            public let walletAddress: String
-            
-            public init(walletAddress: String) {
-                self.walletAddress = walletAddress
-            }
-        }
-        
-        public struct Response: Sendable {
-            public let transactions: [Transaction]
-            public let newTransactionsCount: Int
-            public let error: Error?
-            
-            public init(transactions: [Transaction], newTransactionsCount: Int = 0, error: Error? = nil) {
-                self.transactions = transactions
-                self.newTransactionsCount = newTransactionsCount
-                self.error = error
-            }
-        }
-        
-        public struct ViewModel {
-            public let transactionViewModels: [TransactionViewModel]
-            public let refreshMessage: String?
-            public let errorMessage: String?
-            
-            public init(transactionViewModels: [TransactionViewModel], refreshMessage: String? = nil, errorMessage: String? = nil) {
-                self.transactionViewModels = transactionViewModels
-                self.refreshMessage = refreshMessage
                 self.errorMessage = errorMessage
             }
         }
@@ -177,7 +252,7 @@ public enum TransactionFilterType: String, CaseIterable, Sendable {
     }
 }
 
-public struct DateRange: Sendable {
+public struct DateRange: Sendable, Hashable {
     public let startDate: Date
     public let endDate: Date
     
@@ -187,7 +262,7 @@ public struct DateRange: Sendable {
     }
 }
 
-public struct AmountRange: Sendable {
+public struct AmountRange: Sendable, Hashable {
     public let minAmount: Decimal
     public let maxAmount: Decimal
     
@@ -201,12 +276,14 @@ public enum ExportFormat: String, CaseIterable, Sendable {
     case csv = "CSV"
     case json = "JSON"
     case pdf = "PDF"
+    case xlsx = "XLSX"
     
     public var fileExtension: String {
         switch self {
         case .csv: return "csv"
         case .json: return "json"
         case .pdf: return "pdf"
+        case .xlsx: return "xlsx"
         }
     }
     
@@ -215,11 +292,12 @@ public enum ExportFormat: String, CaseIterable, Sendable {
         case .csv: return "text/csv"
         case .json: return "application/json"
         case .pdf: return "application/pdf"
+        case .xlsx: return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         }
     }
 }
 
-public struct TransactionViewModel: Identifiable, Sendable {
+public struct TransactionViewModel: Identifiable, Sendable, Hashable {
     public let id: String
     public let title: String
     public let subtitle: String

@@ -324,15 +324,12 @@ public extension RouterCoordinator {
     static func handleDeepLink(_ url: URL) {
         guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
               let host = components.host else {
-            print("❌ Invalid deep link URL: \(url.absoluteString)")
             return
         }
         
         let pathComponents = components.path.components(separatedBy: "/").filter { !$0.isEmpty }
         let queryItems = components.queryItems
-        
-        print("🔗 Handling deep link: \(host), path: \(pathComponents)")
-        
+                
         switch host {
         case "send":
             if let walletAddress = queryItems?.first(where: { $0.name == "address" })?.value {
@@ -363,7 +360,7 @@ public extension RouterCoordinator {
             shared.startAuthenticationFlow()
             
         default:
-            print("❌ Unhandled deep link host: \(host)")
+            Logger.error("❌ Unhandled deep link host: \(host)")
         }
     }
 }

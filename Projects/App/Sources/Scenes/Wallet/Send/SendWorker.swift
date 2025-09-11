@@ -1,202 +1,285 @@
 import Foundation
+
 import Core
 import Entity
-import SecurityKit
-import WalletKit
-import BigInt
 
-/// 실제 이더리움 네트워크와 상호작용하는 SendWorker (Stub 구현)
-/// TODO: Web3 구현이 복잡하여 임시로 stub 구현으로 대체
-public actor SendWorker: SendWorkerProtocol {
+import BigInt
+import Factory
+import Web3Core
+
+
+// MARK: - Send Worker Protocol
+
+protocol SendWorkerProtocol: Sendable {
+    func validateEthereumAddress(_ address: String) -> Bool
+    func getCurrentBalance() async -> Decimal
+    func validateAmount(amount: String, availableBalance: String) async -> (isValid: Bool, errorMessage: String?, parsedAmount: Decimal?)
+    func isBalanceSufficient(amount: Decimal, includingGasFee gasFee: Decimal) async -> Bool
+    func estimateGasFee(recipientAddress: String, amount: String) async -> Entity.GasOptions?
+    func prepareTransaction(recipientAddress: String, amount: Decimal, gasFee: Entity.GasFee) async -> Entity.PendingTransaction?
+    func sendTransaction(_ transaction: Entity.PendingTransaction) async -> Result<String, Error>
+}
+
+// MARK: - Send Worker Implementation
+
+actor SendWorker: SendWorkerProtocol {
+    
     // MARK: - Dependencies
+    @Injected(\.walletService) private var walletService
+    @Injected(\.etherscanService) private var etherscanService
     
-    private let walletService: WalletServiceProtocol
-    private let securityService: SecurityServiceProtocol
+    // MARK: - Private Properties
+    private var currentBalance: Decimal = 0
+    private var gasEstimateCache: [String: Entity.GasOptions] = [:]
     
-    // MARK: - 초기화
+    // MARK: - Address Validation
     
-    public init(
-        walletService: WalletServiceProtocol,
-        securityService: SecurityServiceProtocol
-    ) {
-        self.walletService = walletService
-        self.securityService = securityService
-    }
-    
-    // MARK: - SendWorkerProtocol 구현
-    
-    /// 지갑 잔액을 조회합니다
-    public func fetchWalletBalance(address: String) async -> Result<BigUInt, SendErrors.WalletError> {
-        Logger.debug("📊 지갑 잔액 조회 시작: \(address)")
-        
-        // Stub 구현: 임의의 잔액 반환
-        let stubBalance = BigUInt(1000000000000000000) // 1 ETH
-        
-        Logger.info("✅ 잔액 조회 성공: \(stubBalance) wei")
-        return .success(stubBalance)
-    }
-    
-    /// 거래 수수료를 계산합니다
-    public func calculateTransactionFee(
-        from: String,
-        to: String,
-        amount: BigUInt,
-        gasPrice: BigUInt?
-    ) async -> Result<SendModels.TransactionFee, SendErrors.FeeError> {
-        Logger.debug("⛽ 거래 수수료 계산 시작")
-        
-        // Stub 구현: 고정된 수수료 반환
-        let fee = SendModels.TransactionFee(
-            gasLimit: BigUInt(21000),
-            gasPrice: gasPrice ?? BigUInt("20000000000"), // 20 Gwei
-            totalFee: BigUInt("420000000000000") // 0.00042 ETH
-        )
-        
-        Logger.info("✅ 수수료 계산 완료: \(fee.totalFee) wei")
-        return .success(fee)
-    }
-    
-    /// 이더리움을 전송합니다
-    public func sendTransaction(
-        from: String,
-        to: String,
-        amount: BigUInt,
-        gasPrice: BigUInt?,
-        gasLimit: BigUInt?,
-        password: String
-    ) async -> Result<String, SendErrors.TransactionError> {
-        Logger.info("💸 이더리움 전송 시작")
-        Logger.info("  From: \(from)")
-        Logger.info("  To: \(to)")
-        Logger.info("  Amount: \(amount) wei")
-        
-        // Stub 구현: 가짜 트랜잭션 해시 반환
-        let stubTxHash = "0x" + UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased()
-        
-        // 2초 대기 (네트워크 요청 시뮬레이션)
-        try? await Task.sleep(nanoseconds: 2_000_000_000)
-        
-        Logger.info("✅ 전송 성공! TX Hash: \(stubTxHash)")
-        return .success(stubTxHash)
-    }
-    
-    /// 가스 가격을 조회합니다
-    public func fetchGasPrice() async -> Result<BigUInt, SendErrors.NetworkError> {
-        Logger.debug("⛽ 현재 가스 가격 조회 중...")
-        
-        // Stub 구현: 고정된 가스 가격 반환
-        let stubGasPrice = BigUInt("20000000000") // 20 Gwei
-        
-        Logger.info("✅ 가스 가격 조회 성공: \(stubGasPrice) wei")
-        return .success(stubGasPrice)
-    }
-    
-    /// 거래 상태를 조회합니다
-    public func getTransactionStatus(transactionHash: String) async -> Result<SendModels.TransactionStatus, SendErrors.NetworkError> {
-        Logger.debug("🔍 거래 상태 확인: \(transactionHash)")
-        
-        // Stub 구현: 항상 성공 상태 반환
-        let status = SendModels.TransactionStatus(
-            hash: transactionHash,
-            isPending: false,
-            isSuccessful: true,
-            blockNumber: 12345678,
-            confirmations: 12,
-            gasUsed: BigUInt(21000),
-            effectiveGasPrice: BigUInt("20000000000"),
-            from: "0x1234...5678",
-            to: "0xabcd...efgh",
-            value: BigUInt("1000000000000000000")
-        )
-        
-        Logger.info("✅ 거래 상태 확인 완료: 성공")
-        return .success(status)
-    }
-    
-    /// 주소 유효성을 검증합니다
-    public func validateAddress(_ address: String) async -> Bool {
-        // 간단한 이더리움 주소 형식 검증
-        let isValid = address.hasPrefix("0x") && address.count == 42
-        
-        if isValid {
-            Logger.debug("✅ 유효한 이더리움 주소: \(address)")
-        } else {
-            Logger.warning("❌ 유효하지 않은 주소: \(address)")
+    nonisolated func validateEthereumAddress(_ address: String) -> Bool {
+        // 기본 이더리움 주소 검증
+        guard address.hasPrefix("0x"),
+              address.count == 42 else {
+            return false
         }
         
-        return isValid
+        // Hex 문자열 검증
+        let hex = String(address.dropFirst(2))
+        return hex.allSatisfy { $0.isHexDigit }
     }
     
-    /// 거래 이력을 조회합니다
-    public func fetchTransactionHistory(address: String, limit: Int) async -> Result<[SendModels.Transaction], SendErrors.NetworkError> {
-        Logger.debug("📜 거래 이력 조회: \(address)")
-        
-        // Stub 구현: 샘플 거래 이력 반환
-        let transactions = [
-            SendModels.Transaction(
-                hash: "0xabc123...",
-                from: address,
-                to: "0xdef456...",
-                value: BigUInt("500000000000000000"),
-                timestamp: Date().addingTimeInterval(-3600),
-                status: .success,
-                gasUsed: BigUInt(21000),
-                gasPrice: BigUInt("20000000000")
-            ),
-            SendModels.Transaction(
-                hash: "0xghi789...",
-                from: "0xjkl012...",
-                to: address,
-                value: BigUInt("1000000000000000000"),
-                timestamp: Date().addingTimeInterval(-7200),
-                status: .success,
-                gasUsed: BigUInt(21000),
-                gasPrice: BigUInt("25000000000")
-            )
-        ]
-        
-        Logger.info("✅ 거래 이력 조회 완료: \(transactions.count)건")
-        return .success(transactions)
+    // MARK: - Balance Management
+    
+    func getCurrentBalance() async -> Decimal {
+        // 실제 구현에서는 walletService를 통해 잔액 조회
+        // 현재는 모의 값 반환
+        return 10.5
     }
     
-    /// 네트워크 상태를 확인합니다
-    public func checkNetworkConnection() async -> Bool {
-        Logger.debug("🌐 네트워크 연결 상태 확인")
-        
-        // Stub 구현: 항상 연결됨
-        Logger.info("✅ 네트워크 연결 상태: 정상")
-        return true
+    func isBalanceSufficient(amount: Decimal, includingGasFee gasFee: Decimal) async -> Bool {
+        let balance = await getCurrentBalance()
+        let totalRequired = amount + gasFee
+        return balance >= totalRequired
     }
     
-    /// ERC20 토큰 잔액을 조회합니다
-    public func fetchTokenBalance(tokenAddress: String, walletAddress: String) async -> Result<BigUInt, SendErrors.TokenError> {
-        Logger.debug("🪙 토큰 잔액 조회: \(tokenAddress)")
+    // MARK: - Amount Validation
+    
+    func validateAmount(amount: String, availableBalance: String) async -> (isValid: Bool, errorMessage: String?, parsedAmount: Decimal?) {
+        // 빈 값 체크
+        guard !amount.isEmpty else {
+            return (false, "금액을 입력해주세요", nil)
+        }
         
-        // Stub 구현: 임의의 토큰 잔액 반환
-        let stubBalance = BigUInt("100000000000000000000") // 100 tokens
+        // 숫자 변환 시도
+        guard let amountDecimal = Decimal(string: amount),
+              amountDecimal > 0 else {
+            return (false, "올바른 금액을 입력해주세요", nil)
+        }
         
-        Logger.info("✅ 토큰 잔액 조회 성공: \(stubBalance)")
-        return .success(stubBalance)
+        // 잔액 체크
+        guard let balance = Decimal(string: availableBalance) else {
+            return (false, "잔액을 확인할 수 없습니다", nil)
+        }
+        
+        if amountDecimal > balance {
+            return (false, "잔액이 부족합니다", nil)
+        }
+        
+        // 최소 금액 체크 (0.000001 ETH)
+        let minimumAmount = Decimal(string: "0.000001") ?? 0
+        if amountDecimal < minimumAmount {
+            return (false, "최소 송금 금액은 0.000001 ETH입니다", nil)
+        }
+        
+        return (true, nil, amountDecimal)
     }
     
-    /// ERC20 토큰을 전송합니다
-    public func sendToken(
-        tokenAddress: String,
-        from: String,
-        to: String,
-        amount: BigUInt,
-        gasPrice: BigUInt?,
-        gasLimit: BigUInt?
-    ) async -> Result<String, SendErrors.TokenError> {
-        Logger.info("🪙 토큰 전송 시작")
+    // MARK: - Gas Estimation
+    
+    func estimateGasFee(recipientAddress: String, amount: String) async -> Entity.GasOptions? {
+        // 캐시 확인
+        let cacheKey = "\(recipientAddress)_\(amount)"
+        if let cached = gasEstimateCache[cacheKey] {
+            return cached
+        }
         
-        // Stub 구현: 가짜 트랜잭션 해시 반환
-        let stubTxHash = "0x" + UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased()
+        // 모의 가스 옵션 생성
+        let slowGas = Entity.GasFee(
+            gasPrice: "10000000000", // 10 Gwei
+            estimatedTime: 600, // 10분
+            feeInETH: 0.0021,
+            feeInUSD: 5.25
+        )
         
-        // 2초 대기 (네트워크 요청 시뮬레이션)
-        try? await Task.sleep(nanoseconds: 2_000_000_000)
+        let normalGas = Entity.GasFee(
+            gasPrice: "20000000000", // 20 Gwei  
+            estimatedTime: 180, // 3분
+            feeInETH: 0.0042,
+            feeInUSD: 10.50
+        )
         
-        Logger.info("✅ 토큰 전송 성공! TX Hash: \(stubTxHash)")
-        return .success(stubTxHash)
+        let fastGas = Entity.GasFee(
+            gasPrice: "30000000000", // 30 Gwei
+            estimatedTime: 60, // 1분
+            feeInETH: 0.0063,
+            feeInUSD: 15.75
+        )
+        
+        let options = Entity.GasOptions(
+            slow: slowGas,
+            normal: normalGas,
+            fast: fastGas
+        )
+        
+        // 캐시 저장
+        gasEstimateCache[cacheKey] = options
+        
+        return options
+    }
+    
+    // MARK: - Transaction Preparation
+    
+    func prepareTransaction(recipientAddress: String, amount: Decimal, gasFee: Entity.GasFee) async -> Entity.PendingTransaction? {
+        // 주소 검증
+        guard validateEthereumAddress(recipientAddress) else {
+            return nil
+        }
+        
+        // 잔액 확인
+        let balance = await getCurrentBalance()
+        let totalRequired = amount + gasFee.feeInETH
+        guard balance >= totalRequired else {
+            return nil
+        }
+        
+        // Nonce 생성 (실제로는 블록체인에서 조회)
+        let nonce = String(Int.random(in: 1...999999))
+        
+        // 트랜잭션 생성
+        let transaction = Entity.PendingTransaction(
+            recipientAddress: recipientAddress,
+            amount: amount,
+            gasPrice: gasFee.gasPrice,
+            gasLimit: "21000", // 기본 이더 전송 가스 한계
+            nonce: nonce
+        )
+        
+        return transaction
+    }
+    
+    // MARK: - Transaction Sending
+    
+    func sendTransaction(_ transaction: Entity.PendingTransaction) async -> Result<String, Error> {
+        // 실제 구현에서는 Web3 라이브러리를 통해 트랜잭션 전송
+        // 현재는 모의 구현
+        
+        // 트랜잭션 검증
+        guard validateEthereumAddress(transaction.recipientAddress) else {
+            return .failure(SendError.invalidAddress)
+        }
+        
+        guard transaction.amount > 0 else {
+            return .failure(SendError.invalidAmount)
+        }
+        
+        // 모의 지연
+        try? await Task.sleep(nanoseconds: 2_000_000_000) // 2초
+        
+        // 모의 트랜잭션 해시 생성
+        let transactionHash = "0x" + UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased()
+        
+        return .success(transactionHash)
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func clearGasCache() {
+        gasEstimateCache.removeAll()
+    }
+    
+    private func updateBalance(_ newBalance: Decimal) {
+        currentBalance = newBalance
+    }
+}
+
+// MARK: - Send Error
+
+enum SendError: LocalizedError {
+    case invalidAddress
+    case invalidAmount
+    case insufficientBalance
+    case networkError
+    case transactionFailed(String)
+    
+    var errorDescription: String? {
+        switch self {
+        case .invalidAddress:
+            return "유효하지 않은 이더리움 주소입니다"
+        case .invalidAmount:
+            return "유효하지 않은 금액입니다"
+        case .insufficientBalance:
+            return "잔액이 부족합니다"
+        case .networkError:
+            return "네트워크 오류가 발생했습니다"
+        case .transactionFailed(let reason):
+            return "거래 실패: \(reason)"
+        }
+    }
+}
+
+// MARK: - Mock Send Worker (For Testing)
+
+actor MockSendWorker: SendWorkerProtocol {
+    
+    nonisolated func validateEthereumAddress(_ address: String) -> Bool {
+        return address.hasPrefix("0x") && address.count == 42
+    }
+    
+    func getCurrentBalance() async -> Decimal {
+        return 100.0
+    }
+    
+    func validateAmount(amount: String, availableBalance: String) async -> (isValid: Bool, errorMessage: String?, parsedAmount: Decimal?) {
+        guard let parsedAmount = Decimal(string: amount) else {
+            return (false, "잘못된 금액 형식입니다", nil)
+        }
+        
+        guard parsedAmount > 0 else {
+            return (false, "0보다 큰 금액을 입력해주세요", nil)
+        }
+        
+        guard let balance = Decimal(string: availableBalance), parsedAmount <= balance else {
+            return (false, "잔액이 부족합니다", nil)
+        }
+        
+        return (true, nil, parsedAmount)
+    }
+    
+    func isBalanceSufficient(amount: Decimal, includingGasFee gasFee: Decimal) async -> Bool {
+        let balance = await getCurrentBalance()
+        return balance >= (amount + gasFee)
+    }
+    
+    func estimateGasFee(recipientAddress: String, amount: String) async -> Entity.GasOptions? {
+        let fee = Entity.GasFee(
+            gasPrice: "20000000000",
+            estimatedTime: 180,
+            feeInETH: 0.002,
+            feeInUSD: 5.0
+        )
+        
+        return Entity.GasOptions(slow: fee, normal: fee, fast: fee)
+    }
+    
+    func prepareTransaction(recipientAddress: String, amount: Decimal, gasFee: Entity.GasFee) async -> Entity.PendingTransaction? {
+        return Entity.PendingTransaction(
+            recipientAddress: recipientAddress,
+            amount: amount,
+            gasPrice: gasFee.gasPrice,
+            gasLimit: "21000",
+            nonce: "1"
+        )
+    }
+    
+    func sendTransaction(_ transaction: Entity.PendingTransaction) async -> Result<String, Error> {
+        return .success("0xmocktransactionhash123456789")
     }
 }

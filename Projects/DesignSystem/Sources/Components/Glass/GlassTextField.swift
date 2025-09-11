@@ -1,289 +1,400 @@
 import SwiftUI
 
-import Core
-
-/// 검증 상태를 나타내는 열거형
-public enum ValidationState {
-    case none
-    case valid
-    case invalid(String)
-    
-    public var isValid: Bool {
-        switch self {
-        case .none, .valid: return true
-        case .invalid: return false
-        }
-    }
-    
-    var errorMessage: String? {
-        switch self {
-        case .none, .valid: return nil
-        case .invalid(let message): return message
-        }
-    }
-}
-
+// MARK: - Glass TextField (Minimalist Revolut Style)
 public struct GlassTextField: View {
     @Binding var text: String
     let placeholder: String
-    let style: GlassTextFieldStyle
+    let icon: String?
     let isSecure: Bool
     let keyboardType: UIKeyboardType
-    let textContentType: UITextContentType?
-    let submitLabel: SubmitLabel
-    let validation: ValidationState
-    let onEditingChanged: (Bool) -> Void
-    let onSubmit: () -> Void
+    let validation: ValidationState?
     
     @State private var isEditing = false
-    @State private var showSecureText = false
+    @State private var showPassword = false
+    
+    public enum ValidationState {
+        case valid
+        case invalid(String)
+        
+        var color: Color {
+            switch self {
+            case .valid: return KingDesignTokens.Colors.success
+            case .invalid: return KingDesignTokens.Colors.error
+            }
+        }
+        
+        var icon: String {
+            switch self {
+            case .valid: return "checkmark.circle"
+            case .invalid: return "xmark.circle"
+            }
+        }
+    }
     
     public init(
         text: Binding<String>,
         placeholder: String,
-        style: GlassTextFieldStyle = .default,
+        icon: String? = nil,
         isSecure: Bool = false,
         keyboardType: UIKeyboardType = .default,
-        textContentType: UITextContentType? = nil,
-        submitLabel: SubmitLabel = .return,
-        validation: ValidationState = .none,
-        onEditingChanged: @escaping (Bool) -> Void = { _ in },
-        onSubmit: @escaping () -> Void = {}
+        validation: ValidationState? = nil
     ) {
         self._text = text
         self.placeholder = placeholder
-        self.style = style
+        self.icon = icon
         self.isSecure = isSecure
         self.keyboardType = keyboardType
-        self.textContentType = textContentType
-        self.submitLabel = submitLabel
         self.validation = validation
-        self.onEditingChanged = onEditingChanged
-        self.onSubmit = onSubmit
     }
     
     public var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
+        VStack(alignment: .leading, spacing: KingDesignTokens.Spacing.xs) {
+            // Input Field
+            HStack(spacing: KingDesignTokens.Spacing.sm) {
+                // Leading Icon
+                if let icon = icon {
+                    Image(systemName: icon)
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(
+                            isEditing
+                            ? KingDesignTokens.Colors.primary
+                            : KingDesignTokens.Colors.secondaryText
+                        )
+                        .frame(width: 20)
+                }
+                
+                // Text Field
                 Group {
-                    if isSecure && !showSecureText {
+                    if isSecure && !showPassword {
                         SecureField(placeholder, text: $text)
-                            .submitLabel(submitLabel)
-                            .onSubmit {
-                                onSubmit()
-                            }
                     } else {
                         TextField(placeholder, text: $text, onEditingChanged: { editing in
-                            withAnimation(.easeInOut(duration: 0.2)) {
+                            withAnimation(KingDesignTokens.Animation.fast) {
                                 isEditing = editing
                             }
-                            onEditingChanged(editing)
                         })
-                        .submitLabel(submitLabel)
-                        .onSubmit {
-                            onSubmit()
+                    }
+                }
+                .font(KingDesignTokens.Typography.body)
+                .foregroundColor(KingDesignTokens.Colors.primary)
+                .keyboardType(keyboardType)
+                .textFieldStyle(PlainTextFieldStyle())
+                
+                // Trailing Actions
+                HStack(spacing: KingDesignTokens.Spacing.xs) {
+                    // Validation Icon
+                    if let validation = validation, !text.isEmpty {
+                        Image(systemName: validation.icon)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(validation.color)
+                    }
+                    
+                    // Password Toggle
+                    if isSecure {
+                        Button(action: { showPassword.toggle() }) {
+                            Image(systemName: showPassword ? "eye.slash" : "eye")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(KingDesignTokens.Colors.secondaryText)
+                        }
+                    }
+                    
+                    // Clear Button
+                    if !text.isEmpty && !isSecure {
+                        Button(action: { text = "" }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(KingDesignTokens.Colors.tertiaryText)
                         }
                     }
                 }
-                .font(style.font)
-                .foregroundColor(style.textColor)
-                .keyboardType(keyboardType)
-                .textContentType(textContentType)
-                .autocapitalization(.none)
-                .disableAutocorrection(true)
-                
-                // Validation Icon
-                if !text.isEmpty {
-                    Image(systemName: validation.isValid ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .foregroundColor(validation.isValid ? KingColors.success : KingColors.error)
-                        .font(.system(size: 16))
-                }
-                
-                if isSecure {
-                    Button(action: {
-                        showSecureText.toggle()
-                    }) {
-                        Image(systemName: showSecureText ? "eye.slash" : "eye")
-                            .foregroundColor(style.iconColor)
-                            .font(.system(size: 16))
-                    }
-                }
             }
-            .padding(.horizontal, style.horizontalPadding)
-            .padding(.vertical, style.verticalPadding)
-            .background(style.backgroundColor, in: RoundedRectangle(cornerRadius: style.cornerRadius))
+            .padding(KingDesignTokens.Spacing.md)
+            .background(KingDesignTokens.Glass.ultraThin)
+            .cornerRadius(KingDesignTokens.Radius.md)
             .overlay(
-                RoundedRectangle(cornerRadius: style.cornerRadius)
-                    .stroke(
-                        !validation.isValid ? KingColors.error :
-                        isEditing ? style.focusedBorderColor : style.borderColor,
-                        lineWidth: style.borderWidth
+                RoundedRectangle(cornerRadius: KingDesignTokens.Radius.md)
+                    .strokeBorder(
+                        isEditing ? KingDesignTokens.Colors.accent : KingDesignTokens.Colors.border,
+                        lineWidth: isEditing ? 1.5 : 1
                     )
-            )
-            .shadow(
-                color: style.shadowColor,
-                radius: style.shadowRadius,
-                x: 0,
-                y: style.shadowOffset
             )
             
             // Error Message
-            if let errorMessage = validation.errorMessage, !text.isEmpty {
-                Text(errorMessage)
-                    .font(.caption)
-                    .foregroundColor(KingColors.error)
-                    .padding(.horizontal, 4)
-                    .transition(.opacity.combined(with: .move(edge: .top)))
+            if case .invalid(let message) = validation {
+                Text(message)
+                    .font(KingDesignTokens.Typography.caption)
+                    .foregroundColor(KingDesignTokens.Colors.error)
+                    .padding(.horizontal, KingDesignTokens.Spacing.xs)
             }
         }
     }
 }
 
-public struct GlassTextFieldStyle: Sendable {
-    let backgroundColor: Material
-    let textColor: Color
-    let borderColor: Color
-    let focusedBorderColor: Color
-    let borderWidth: CGFloat
-    let cornerRadius: CGFloat
-    let shadowColor: Color
-    let shadowRadius: CGFloat
-    let shadowOffset: CGFloat
-    let font: Font
-    let horizontalPadding: CGFloat
-    let verticalPadding: CGFloat
-    let iconColor: Color
-    
-    public init(
-        backgroundColor: Material = .ultraThinMaterial,
-        textColor: Color = KingColors.textPrimary,
-        borderColor: Color = KingColors.glassBorder.opacity(0.6),
-        focusedBorderColor: Color = KingColors.glassBorder,
-        borderWidth: CGFloat = 1,
-        cornerRadius: CGFloat = Constants.UI.cornerRadius,
-        shadowColor: Color = KingColors.glassShadow,
-        shadowRadius: CGFloat = 5,
-        shadowOffset: CGFloat = 2,
-        font: Font = KingTypography.bodyMedium,
-        horizontalPadding: CGFloat = Constants.UI.padding,
-        verticalPadding: CGFloat = Constants.UI.smallPadding,
-        iconColor: Color = KingColors.textSecondary
-    ) {
-        self.backgroundColor = backgroundColor
-        self.textColor = textColor
-        self.borderColor = borderColor
-        self.focusedBorderColor = focusedBorderColor
-        self.borderWidth = borderWidth
-        self.cornerRadius = cornerRadius
-        self.shadowColor = shadowColor
-        self.shadowRadius = shadowRadius
-        self.shadowOffset = shadowOffset
-        self.font = font
-        self.horizontalPadding = horizontalPadding
-        self.verticalPadding = verticalPadding
-        self.iconColor = iconColor
-    }
-    
-    public static let `default` = GlassTextFieldStyle()
-    
-    public static let prominent = GlassTextFieldStyle(
-        backgroundColor: .thickMaterial,
-        borderColor: KingColors.glassBorder,
-        focusedBorderColor: KingColors.trustPurple,
-        shadowColor: KingColors.glassShadow,
-        shadowRadius: 8,
-        shadowOffset: 4
-    )
-}
-
-public struct GlassTextEditor: View {
+// MARK: - Glass Search Field
+public struct GlassSearchField: View {
     @Binding var text: String
     let placeholder: String
-    let style: GlassTextFieldStyle
-    let minHeight: CGFloat
+    let onSearch: () -> Void
     
     @State private var isEditing = false
     
     public init(
         text: Binding<String>,
-        placeholder: String,
-        style: GlassTextFieldStyle = .default,
-        minHeight: CGFloat = 100
+        placeholder: String = "Search",
+        onSearch: @escaping () -> Void = {}
     ) {
         self._text = text
         self.placeholder = placeholder
-        self.style = style
+        self.onSearch = onSearch
+    }
+    
+    public var body: some View {
+        HStack(spacing: KingDesignTokens.Spacing.sm) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(KingDesignTokens.Colors.secondaryText)
+            
+            TextField(placeholder, text: $text, onEditingChanged: { editing in
+                withAnimation(KingDesignTokens.Animation.fast) {
+                    isEditing = editing
+                }
+            })
+            .font(KingDesignTokens.Typography.body)
+            .foregroundColor(KingDesignTokens.Colors.primary)
+            .textFieldStyle(PlainTextFieldStyle())
+            .onSubmit(onSearch)
+            
+            if !text.isEmpty {
+                Button(action: { 
+                    text = ""
+                    onSearch()
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(KingDesignTokens.Colors.tertiaryText)
+                }
+            }
+        }
+        .padding(KingDesignTokens.Spacing.sm)
+        .background(KingDesignTokens.Glass.ultraThin)
+        .cornerRadius(KingDesignTokens.Radius.full)
+    }
+}
+
+// MARK: - Glass Text Area
+public struct GlassTextArea: View {
+    @Binding var text: String
+    let placeholder: String
+    let minHeight: CGFloat
+    let maxHeight: CGFloat
+    
+    @State private var isEditing = false
+    @State private var textHeight: CGFloat = 0
+    
+    public init(
+        text: Binding<String>,
+        placeholder: String,
+        minHeight: CGFloat = 100,
+        maxHeight: CGFloat = 200
+    ) {
+        self._text = text
+        self.placeholder = placeholder
         self.minHeight = minHeight
+        self.maxHeight = maxHeight
     }
     
     public var body: some View {
         ZStack(alignment: .topLeading) {
+            // Placeholder
             if text.isEmpty {
                 Text(placeholder)
-                    .foregroundColor(KingColors.textSecondary)
-                    .font(style.font)
-                    .padding(.horizontal, style.horizontalPadding)
-                    .padding(.vertical, style.verticalPadding + 8)
+                    .font(KingDesignTokens.Typography.body)
+                    .foregroundColor(KingDesignTokens.Colors.tertiaryText)
+                    .padding(KingDesignTokens.Spacing.md)
             }
             
+            // Text Editor
             TextEditor(text: $text)
-                .font(style.font)
-                .foregroundColor(style.textColor)
+                .font(KingDesignTokens.Typography.body)
+                .foregroundColor(KingDesignTokens.Colors.primary)
+                .scrollContentBackground(.hidden)
                 .background(Color.clear)
-                .padding(.horizontal, style.horizontalPadding - 4)
-                .padding(.vertical, style.verticalPadding)
+                .padding(KingDesignTokens.Spacing.sm)
                 .onTapGesture {
-                    isEditing = true
+                    withAnimation(KingDesignTokens.Animation.fast) {
+                        isEditing = true
+                    }
+                }
+                .onChange(of: text) {
+                    withAnimation(KingDesignTokens.Animation.fast) {
+                        isEditing = !text.isEmpty
+                    }
                 }
         }
-        .frame(minHeight: minHeight)
-        .background(style.backgroundColor, in: RoundedRectangle(cornerRadius: style.cornerRadius))
+        .frame(minHeight: minHeight, maxHeight: maxHeight)
+        .background(KingDesignTokens.Glass.ultraThin)
+        .cornerRadius(KingDesignTokens.Radius.md)
         .overlay(
-            RoundedRectangle(cornerRadius: style.cornerRadius)
-                .stroke(
-                    isEditing ? style.focusedBorderColor : style.borderColor,
-                    lineWidth: style.borderWidth
+            RoundedRectangle(cornerRadius: KingDesignTokens.Radius.md)
+                .strokeBorder(
+                    isEditing ? KingDesignTokens.Colors.accent : KingDesignTokens.Colors.border,
+                    lineWidth: isEditing ? 1.5 : 1
                 )
-        )
-        .shadow(
-            color: style.shadowColor,
-            radius: style.shadowRadius,
-            x: 0,
-            y: style.shadowOffset
         )
     }
 }
 
-#Preview {
-    VStack(spacing: 20) {
-        GlassTextField(
-            text: .constant(""),
-            placeholder: "Enter your email"
-        )
-        
-        GlassTextField(
-            text: .constant(""),
-            placeholder: "Enter your password",
-            isSecure: true
-        )
-        
-        GlassTextField(
-            text: .constant("Sample text"),
-            placeholder: "Prominent style",
-            style: .prominent
-        )
-        
-        GlassTextEditor(
-            text: .constant(""),
-            placeholder: "Enter your message"
-        )
+// MARK: - Glass PIN Field
+public struct GlassPINField: View {
+    @Binding var pin: String
+    let length: Int
+    let onComplete: (String) -> Void
+    
+    @State private var digits: [String] = []
+    @FocusState private var isFieldFocused: Bool
+    
+    public init(
+        pin: Binding<String>,
+        length: Int = 6,
+        onComplete: @escaping (String) -> Void
+    ) {
+        self._pin = pin
+        self.length = length
+        self.onComplete = onComplete
+        self._digits = State(initialValue: Array(repeating: "", count: length))
     }
-    .padding()
-    .background(
-        LinearGradient(
-            colors: [.blue, .purple],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
+    
+    public var body: some View {
+        HStack(spacing: KingDesignTokens.Spacing.sm) {
+            ForEach(0..<length, id: \.self) { index in
+                PINDigitView(
+                    digit: index < pin.count ? String(pin[pin.index(pin.startIndex, offsetBy: index)]) : "",
+                    isFocused: isFieldFocused && index == pin.count
+                )
+            }
+        }
+        .background(
+            TextField("", text: $pin)
+                .keyboardType(.numberPad)
+                .textFieldStyle(PlainTextFieldStyle())
+                .focused($isFieldFocused)
+                .opacity(0)
+                .onChange(of: pin) {
+                    if pin.count > length {
+                        pin = String(pin.prefix(length))
+                    }
+                    if pin.count == length {
+                        onComplete(pin)
+                    }
+                }
         )
-    )
+        .onTapGesture {
+            isFieldFocused = true
+        }
+    }
+}
+
+private struct PINDigitView: View {
+    let digit: String
+    let isFocused: Bool
+    
+    var body: some View {
+        Text(digit.isEmpty ? "" : "•")
+            .font(KingDesignTokens.Typography.heading)
+            .foregroundColor(KingDesignTokens.Colors.primary)
+            .frame(width: 44, height: 52)
+            .background(KingDesignTokens.Glass.ultraThin)
+            .cornerRadius(KingDesignTokens.Radius.sm)
+            .overlay(
+                RoundedRectangle(cornerRadius: KingDesignTokens.Radius.sm)
+                    .strokeBorder(
+                        isFocused ? KingDesignTokens.Colors.accent : KingDesignTokens.Colors.border,
+                        lineWidth: isFocused ? 1.5 : 1
+                    )
+            )
+            .animation(KingDesignTokens.Animation.fast, value: isFocused)
+    }
+}
+
+// MARK: - Preview
+#Preview("Glass Text Fields") {
+    ScrollView {
+        VStack(spacing: KingDesignTokens.Spacing.lg) {
+            // Standard Text Fields
+            Group {
+                Text("Text Fields")
+                    .font(KingDesignTokens.Typography.heading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                
+                GlassTextField(
+                    text: .constant(""),
+                    placeholder: "Email",
+                    icon: "envelope"
+                )
+                
+                GlassTextField(
+                    text: .constant(""),
+                    placeholder: "Password",
+                    icon: "lock",
+                    isSecure: true
+                )
+                
+                GlassTextField(
+                    text: .constant("john@example.com"),
+                    placeholder: "Email",
+                    icon: "envelope",
+                    validation: .valid
+                )
+                
+                GlassTextField(
+                    text: .constant("weak"),
+                    placeholder: "Password",
+                    icon: "lock",
+                    isSecure: true,
+                    validation: .invalid("Password must be at least 8 characters")
+                )
+            }
+            
+            Divider()
+            
+            // Search Field
+            Group {
+                Text("Search Field")
+                    .font(KingDesignTokens.Typography.heading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                
+                GlassSearchField(text: .constant(""))
+                GlassSearchField(text: .constant("Bitcoin"))
+            }
+            
+            Divider()
+            
+            // Text Area
+            Group {
+                Text("Text Area")
+                    .font(KingDesignTokens.Typography.heading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                
+                GlassTextArea(
+                    text: .constant(""),
+                    placeholder: "Enter your message..."
+                )
+            }
+            
+            Divider()
+            
+            // PIN Field
+            Group {
+                Text("PIN Field")
+                    .font(KingDesignTokens.Typography.heading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                
+                GlassPINField(pin: .constant("123")) { pin in
+                    print("PIN Complete: \(pin)")
+                }
+            }
+        }
+        .padding()
+    }
+    .background(KingDesignTokens.Colors.background)
 }

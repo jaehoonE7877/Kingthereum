@@ -1,325 +1,110 @@
 import SwiftUI
-import Core
 
-/// 글래스모피즘 효과를 가진 SwiftUI ButtonStyle
-/// 속이 비치는 유리 질감과 뉴모피즘 효과를 제공
-public struct GlassButtonStyle: ButtonStyle {
-    let styleConfig: GlassButtonStyleConfig
-    let isLoading: Bool
-    
-    public init(
-        config: GlassButtonStyleConfig = .primary,
-        isLoading: Bool = false
-    ) {
-        self.styleConfig = config
-        self.isLoading = isLoading
-    }
-    
-    public func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(styleConfig.font)
-            .fontWeight(styleConfig.fontWeight)
-            .foregroundStyle(
-                styleConfig.id == "wallet" ? 
-                AnyShapeStyle(KingGradients.primary) : 
-                AnyShapeStyle(styleConfig.foregroundColor)
-            )
-            .frame(maxWidth: .infinity)
-            .frame(height: Constants.UI.buttonHeight)
-            .background(styleConfig.backgroundColor, in: RoundedRectangle(cornerRadius: styleConfig.cornerRadius))
-            .overlay(
-                RoundedRectangle(cornerRadius: styleConfig.cornerRadius)
-                    .stroke(styleConfig.borderColor, lineWidth: styleConfig.borderWidth)
-            )
-            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-            .shadow(
-                color: styleConfig.shadowColor,
-                radius: styleConfig.shadowRadius,
-                x: 0,
-                y: styleConfig.shadowOffset
-            )
-            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
-            .opacity(isLoading ? 0.7 : 1.0)
-    }
-}
-
-/// 편의를 위한 래퍼 컴포넌트 (기존 API 호환성 유지)
+/// 프리미엄 Glass 버튼 컴포넌트
+/// Revolut/N26 스타일의 글래스모피즘 버튼
 public struct GlassButton: View {
-    let title: String?
-    let icon: String?
-    let action: () -> Void
-    let style: GlassButtonStyleConfig
-    let isEnabled: Bool
-    let isLoading: Bool
+    public enum Style {
+        case primary
+        case secondary
+        case text
+    }
     
-    /// 텍스트 버튼 초기화
+    private let title: String
+    private let icon: String?
+    private let style: Style
+    private let action: () -> Void
+    
     public init(
         _ title: String,
-        style: GlassButtonStyleConfig = .primary,
-        isEnabled: Bool = true,
-        isLoading: Bool = false,
-        action: @escaping () -> Void
-    ) {
-        self.title = title
-        self.icon = nil
-        self.action = action
-        self.style = style
-        self.isEnabled = isEnabled
-        self.isLoading = isLoading
-    }
-    
-    /// 아이콘 버튼 초기화
-    public init(
-        icon: String,
-        title: String? = nil,
-        style: GlassButtonStyleConfig = .icon,
-        isEnabled: Bool = true,
-        isLoading: Bool = false,
+        icon: String? = nil,
+        style: Style = .primary,
         action: @escaping () -> Void
     ) {
         self.title = title
         self.icon = icon
-        self.action = action
         self.style = style
-        self.isEnabled = isEnabled
-        self.isLoading = isLoading
+        self.action = action
     }
     
     public var body: some View {
         Button(action: action) {
-            HStack(spacing: 8) {
-                if isLoading {
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: style.foregroundColor))
-                        .scaleEffect(0.8)
-                } else {
-                    if let icon = icon {
-                        Image(systemName: icon)
-                    }
-                    
-                    if let title = title {
-                        Text(title)
-                    }
+            HStack(spacing: KingDesignTokens.Spacing.sm) {
+                if let icon = icon {
+                    Image(systemName: icon)
+                        .font(KingDesignTokens.Typography.body)
+                        .fontWeight(.medium)
                 }
+                
+                Text(title)
+                    .font(KingDesignTokens.Typography.body)
+                    .fontWeight(.medium)
             }
-            .frame(maxWidth: title != nil ? .infinity : nil)
-            .frame(minWidth: icon != nil && title == nil ? Constants.UI.buttonHeight : nil)
+            .foregroundColor(foregroundColor)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, KingDesignTokens.Spacing.md)
+            .padding(.horizontal, KingDesignTokens.Spacing.lg)
+            .background(backgroundView)
+            .overlay(overlayView)
+            .clipShape(RoundedRectangle(cornerRadius: KingDesignTokens.Radius.md))
         }
-        .buttonStyle(GlassButtonStyle(config: style, isLoading: isLoading))
-        .disabled(!isEnabled || isLoading)
-        .opacity(isEnabled ? 1.0 : 0.6)
+        .buttonStyle(ScaleButtonStyle())
+    }
+    
+    @ViewBuilder
+    private var backgroundView: some View {
+        switch style {
+        case .primary:
+            KingDesignTokens.Colors.accent
+        case .secondary:
+            Rectangle()
+                .fill(.clear)
+                .background(KingDesignTokens.Glass.ultraThin)
+        case .text:
+            Color.clear
+        }
+    }
+    
+    @ViewBuilder
+    private var overlayView: some View {
+        switch style {
+        case .primary:
+            RoundedRectangle(cornerRadius: KingDesignTokens.Radius.md)
+                .stroke(KingDesignTokens.Colors.accent.opacity(0.3), lineWidth: 1)
+        case .secondary:
+            RoundedRectangle(cornerRadius: KingDesignTokens.Radius.md)
+                .stroke(KingDesignTokens.Colors.border, lineWidth: 1)
+        case .text:
+            EmptyView()
+        }
+    }
+    
+    private var foregroundColor: Color {
+        switch style {
+        case .primary:
+            KingDesignTokens.Colors.onPrimary
+        case .secondary:
+            KingDesignTokens.Colors.primaryText
+        case .text:
+            KingDesignTokens.Colors.accent
+        }
     }
 }
 
-/// GlassButton의 시각적 스타일을 정의하는 구조체
-/// 배경, 텍스트, 음영, 그림자 등의 시각적 속성들을 설정
-public struct GlassButtonStyleConfig: Sendable {
-    let id: String
-    let backgroundColor: Material
-    let foregroundColor: Color
-    let borderColor: Color
-    let borderWidth: CGFloat
-    let cornerRadius: CGFloat
-    let shadowColor: Color
-    let shadowRadius: CGFloat
-    let shadowOffset: CGFloat
-    let font: Font
-    let fontWeight: Font.Weight
-    
-    /// GlassButtonStyle 초기화
-    /// - Parameters:
-    ///   - backgroundColor: 배경 색상 (기본값: .ultraThickMaterial)
-    ///   - foregroundColor: 텍스트 색상 (기본값: .primary)
-    ///   - borderColor: 테두리 색상 (기본값: 반투명 흰색)
-    ///   - borderWidth: 테두리 두께 (기본값: 1)
-    ///   - cornerRadius: 모서리 둘글기 (기본값: Constants.UI.cornerRadius)
-    ///   - shadowColor: 그림자 색상 (기본값: 반투명 검은색)
-    ///   - shadowRadius: 그림자 연화 반경 (기본값: 8)
-    ///   - shadowOffset: 그림자 오프셋 (기본값: 4)
-    ///   - font: 텍스트 폰트 (기본값: .headline)
-    ///   - fontWeight: 텍스트 굵기 (기본값: .medium)
-    public init(
-        id: String = "default",
-        backgroundColor: Material = .ultraThickMaterial,
-        foregroundColor: Color = KingColors.textPrimary,
-        borderColor: Color = KingColors.glassBorder,
-        borderWidth: CGFloat = 1,
-        cornerRadius: CGFloat = Constants.UI.cornerRadius,
-        shadowColor: Color = KingColors.glassShadow,
-        shadowRadius: CGFloat = 8,
-        shadowOffset: CGFloat = 4,
-        font: Font = KingTypography.labelLarge,
-        fontWeight: Font.Weight = .medium
-    ) {
-        self.id = id
-        self.backgroundColor = backgroundColor
-        self.foregroundColor = foregroundColor
-        self.borderColor = borderColor
-        self.borderWidth = borderWidth
-        self.cornerRadius = cornerRadius
-        self.shadowColor = shadowColor
-        self.shadowRadius = shadowRadius
-        self.shadowOffset = shadowOffset
-        self.font = font
-        self.fontWeight = fontWeight
+/// 버튼 스케일 애니메이션 스타일
+private struct ScaleButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
+            .animation(KingDesignTokens.Animation.fast, value: configuration.isPressed)
     }
-    
-    /// 주요 액션용 기본 스타일
-    public static let primary = GlassButtonStyleConfig(
-        id: "primary",
-        backgroundColor: .ultraThickMaterial,
-        foregroundColor: KingColors.textPrimary,
-        borderColor: KingColors.glassBorder,
-        shadowColor: KingColors.glassShadow,
-        shadowRadius: 10,
-        shadowOffset: 5
-    )
-    
-    /// 보조 액션용 보조 스타일
-    public static let secondary = GlassButtonStyleConfig(
-        id: "secondary",
-        backgroundColor: .thinMaterial,
-        foregroundColor: KingColors.textPrimary,
-        borderColor: KingColors.glassBorder,
-        shadowColor: KingColors.glassShadow,
-        shadowRadius: 6,
-        shadowOffset: 3
-    )
-    
-    /// 위험한 액션용 경고 스타일
-    public static let destructive = GlassButtonStyleConfig(
-        id: "destructive",
-        backgroundColor: .thickMaterial,
-        foregroundColor: KingColors.error,
-        borderColor: KingColors.error.opacity(0.3),
-        shadowColor: KingColors.glassShadow,
-        shadowRadius: 8,
-        shadowOffset: 4
-    )
-    
-    /// 지갑 관련 액션용 스타일 (그라데이션 효과)
-    public static let wallet = GlassButtonStyleConfig(
-        id: "wallet",
-        backgroundColor: .thickMaterial,
-        foregroundColor: KingColors.buttonTrust, // 그라데이션은 View에서 직접 적용
-        borderColor: KingColors.buttonTrust.opacity(0.25),
-        shadowColor: KingColors.glassShadow,
-        shadowRadius: 12,
-        shadowOffset: 6,
-        font: KingTypography.labelLarge,
-        fontWeight: .semibold
-    )
-    
-    /// 암호화폐 거래용 스타일
-    public static let crypto = GlassButtonStyleConfig(
-        id: "crypto",
-        backgroundColor: .regularMaterial,
-        foregroundColor: KingColors.buttonPrimary,
-        borderColor: KingColors.buttonPrimary.opacity(0.3),
-        shadowColor: KingColors.glassShadow,
-        shadowRadius: 10,
-        shadowOffset: 5,
-        font: KingTypography.bodyMedium,
-        fontWeight: .medium
-    )
-    
-    /// 아이콘 전용 버튼 스타일
-    public static let icon = GlassButtonStyleConfig(
-        id: "icon",
-        backgroundColor: .thinMaterial,
-        foregroundColor: KingColors.textPrimary,
-        borderColor: KingColors.glassBorder.opacity(0.7),
-        shadowColor: KingColors.glassShadow,
-        shadowRadius: 4,
-        shadowOffset: 2,
-        font: .title3,
-        fontWeight: .medium
-    )
-    
-    /// 플로팅 액션 버튼 스타일
-    public static let floating = GlassButtonStyleConfig(
-        id: "floating",
-        backgroundColor: .ultraThickMaterial,
-        foregroundColor: KingColors.textPrimary,
-        borderColor: KingColors.glassBorder,
-        shadowColor: KingColors.glassShadow,
-        shadowRadius: 16,
-        shadowOffset: 8,
-        font: .headline,
-        fontWeight: .semibold
-    )
-    
-    /// 성공 상태 스타일
-    public static let success = GlassButtonStyleConfig(
-        id: "success",
-        backgroundColor: .thickMaterial,
-        foregroundColor: KingColors.success,
-        borderColor: KingColors.success.opacity(0.3),
-        shadowColor: KingColors.glassShadow,
-        shadowRadius: 8,
-        shadowOffset: 4
-    )
-    
-    /// 경고 상태 스타일
-    public static let warning = GlassButtonStyleConfig(
-        id: "warning",
-        backgroundColor: .thickMaterial,
-        foregroundColor: KingColors.warning,
-        borderColor: KingColors.warning.opacity(0.3),
-        shadowColor: KingColors.glassShadow,
-        shadowRadius: 8,
-        shadowOffset: 4
-    )
-    
-    /// 에러 상태 스타일
-    public static let error = GlassButtonStyleConfig(
-        id: "error",
-        backgroundColor: .thickMaterial,
-        foregroundColor: KingColors.error,
-        borderColor: KingColors.error.opacity(0.3),
-        shadowColor: KingColors.glassShadow,
-        shadowRadius: 8,
-        shadowOffset: 4
-    )
 }
 
 #Preview {
-    ScrollView {
-        VStack(spacing: 20) {
-            Group {
-                GlassButton("기본 버튼", style: .primary) { }
-                GlassButton("지갑 버튼", style: .wallet) { }
-                GlassButton("암호화폐 버튼", style: .crypto) { }
-            }
-            
-            Group {
-                GlassButton(icon: "wallet.pass.fill", title: "지갑", style: .wallet) { }
-                GlassButton(icon: "arrow.up.circle.fill", title: "송금", style: .crypto) { }
-                GlassButton(icon: "arrow.down.circle.fill", title: "수신", style: .success) { }
-            }
-            
-            HStack(spacing: 16) {
-                GlassButton(icon: "qrcode", style: .icon) { }
-                GlassButton(icon: "doc.on.doc.fill", style: .icon) { }
-                GlassButton(icon: "gearshape.fill", style: .icon) { }
-            }
-            
-            Group {
-                GlassButton("플로팅 액션", style: .floating) { }
-                GlassButton("성공", style: .success) { }
-                GlassButton("경고", style: .warning) { }
-                GlassButton("에러", style: .error) { }
-            }
-            
-            GlassButton("로딩 버튼", isLoading: true) { }
-        }
-        .padding()
+    VStack(spacing: 16) {
+        GlassButton("Primary Button", icon: "star.fill", style: .primary) { }
+        GlassButton("Secondary Button", icon: "gear", style: .secondary) { }
+        GlassButton("Text Button", style: .text) { }
     }
-    .background(
-        LinearGradient(
-            colors: [KingColors.trustPurple, KingColors.exclusiveGold],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-    )
+    .padding()
+    .background(KingDesignTokens.Colors.background)
 }

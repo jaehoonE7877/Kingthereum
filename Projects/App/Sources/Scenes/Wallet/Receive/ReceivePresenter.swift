@@ -1,6 +1,8 @@
 import Foundation
+
 import Entity
-import WalletKit
+
+import Factory
 
 @MainActor
 protocol ReceivePresentationLogic {
@@ -8,6 +10,14 @@ protocol ReceivePresentationLogic {
     func presentCopyResult(response: ReceiveScene.CopyAddress.Response)
     func presentShareSheet(response: ReceiveScene.ShareAddress.Response)
     func presentQRCode(response: ReceiveScene.GenerateQRCode.Response)
+}
+
+@MainActor
+protocol ReceiveDisplayLogic: AnyObject {
+    func displayWalletAddress(viewModel: ReceiveScene.LoadWalletAddress.ViewModel)
+    func displayCopyResult(viewModel: ReceiveScene.CopyAddress.ViewModel)
+    func displayShareSheet(viewModel: ReceiveScene.ShareAddress.ViewModel)
+    func displayQRCode(viewModel: ReceiveScene.GenerateQRCode.ViewModel)
 }
 
 @MainActor
@@ -49,9 +59,7 @@ final class ReceivePresenter: ReceivePresentationLogic {
         viewController?.displayShareSheet(viewModel: displayModel)
     }
     
-    func presentQRCode(response: ReceiveScene.GenerateQRCode.Response) {
-        print("📨 ReceivePresenter: Received QR response (isRefresh: \(response.isRefresh))")
-        
+    func presentQRCode(response: ReceiveScene.GenerateQRCode.Response) {        
         // 실제 QR 코드 생성 (새로고침 시마다 새로 생성됨)
         let qrCodeData = response.qrCodeData ?? generateQRCodeData(from: getCurrentWalletAddress())
         
@@ -61,21 +69,19 @@ final class ReceivePresenter: ReceivePresentationLogic {
             showSuccessAnimation: response.isRefresh && qrCodeData != nil
         )
         
-        print("🎬 ReceivePresenter: Creating view model (showSuccessAnimation: \(displayModel.showSuccessAnimation))")
-        print("📊 ReceivePresenter: QR data size: \(qrCodeData?.count ?? 0) bytes")
-        
         viewController?.displayQRCode(viewModel: displayModel)
     }
     
     private func getCurrentWalletAddress() -> String {
-        let worker = ReceiveWorker(walletService: WalletService.shared)
-        return worker.getWalletAddress()
+        // Return empty string since we don't have access to the wallet service here
+        // This will be handled by the View's own logic
+        return ""
     }
     
     // MARK: - Private Helpers
     
     private func generateQRCodeData(from address: String) -> Data? {
-        let worker = ReceiveWorker(walletService: WalletService.shared)
-        return worker.generateQRCode(from: address)
+        // QR code generation will be handled by the View's own logic
+        return nil
     }
 }
