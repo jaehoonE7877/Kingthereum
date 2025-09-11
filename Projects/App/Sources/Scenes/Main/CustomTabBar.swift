@@ -48,24 +48,23 @@ struct CustomTabBar: View {
     // MARK: - Premium Glass Background
     private var premiumGlassBackground: some View {
         ZStack {
-            // Base glass morphism layer
+            // 강화된 글래스모피즘 효과
             RoundedRectangle(cornerRadius: 28)
-                .fill(KingDesignTokens.Glass.ultraThin)
+                .fill(.ultraThinMaterial)
                 .background(
-                    LinearGradient(
-                        colors: [Color.blue, Color.purple],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
+                    RoundedRectangle(cornerRadius: 28)
+                        .fill(
+                            KingDesignTokens.Gradients.pureGlassMorphism
+                        )
                 )
             
-            // Premium ambient gradient overlay
+            // 서브틀한 컬러 오버레이
             RoundedRectangle(cornerRadius: 28)
                 .fill(
                     LinearGradient(
                         colors: [
-                            KingDesignTokens.Colors.accent.opacity(0.05),
-                            KingDesignTokens.Colors.primaryText.opacity(0.02),
+                            KingDesignTokens.Colors.accent.opacity(0.03),
+                            Color.white.opacity(0.05),
                             Color.clear
                         ],
                         startPoint: .topLeading,
@@ -145,7 +144,6 @@ struct PremiumTabBarItem: View {
     let action: () -> Void
     
     @State private var isPressed = false
-    @State private var animationPhase: Double = 0
     
     var body: some View {
         Button(action: action) {
@@ -160,15 +158,12 @@ struct PremiumTabBarItem: View {
             .padding(.vertical, KingDesignTokens.Spacing.sm)
             .background(premiumItemBackground)
             .scaleEffect(pressedScale)
-            .rotationEffect(.degrees(animationPhase * 2))
             .accessibilityLabel(tab.title)
             .accessibilityHint("탭 \(tab.title)로 이동")
         }
         .buttonStyle(PlainButtonStyle())
         .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: handlePress) {}
-        .onAppear {
-            startContinuousAnimation()
-        }
+        // 무한 회전 애니메이션 제거
     }
     
     // MARK: - Premium Icon
@@ -314,12 +309,6 @@ struct PremiumTabBarItem: View {
         }
     }
     
-    private func startContinuousAnimation() {
-        guard isSelected else { return }
-        
-        withAnimation(.linear(duration: 8).repeatForever(autoreverses: false)) {
-            animationPhase = 360
-        }
-    }
+    // 무한 회전 애니메이션 메서드 제거
 }
 
