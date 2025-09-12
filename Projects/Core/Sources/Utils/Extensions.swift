@@ -27,16 +27,7 @@ public extension String {
         return self.count == 64 && self.allSatisfy { $0.isHexDigit }
     }
     
-    /// EIP-55 체크섬 주소로 변환
-    /// 
-    /// 현재는 단순히 소문자로 변환하지만, 향후 실제 EIP-55 체크섬 로직으로 개선 필요
-    /// 
-    /// - Returns: 체크섬이 적용된 주소 (현재는 lowercase)
-    /// - Note: 실제 체크섬 계산을 위해서는 Keccak-256 해시 함수 필요
-    func toChecksumAddress() -> String {
-        // TODO: 실제 EIP-55 체크섬 로직 구현
-        return self.lowercased()
-    }
+
 }
 
 // MARK: - Character Extensions

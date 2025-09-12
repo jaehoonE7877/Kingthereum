@@ -348,24 +348,14 @@ struct TabContentView: View {
         Group {
             switch tab {
             case .home:
-                WalletHomeView(
+                HomeView(
                     showTabBar: Binding(
                         get: { viewStore.showTabBar },
                         set: { viewStore.setTabBarVisible($0) }
-                    ),
-                    showReceiveView: Binding(
-                        get: { viewStore.showReceiveView },
-                        set: { _ in
-                            if viewStore.showReceiveView {
-                                viewStore.dismissReceiveView()
-                            } else {
-                                viewStore.presentReceiveView()
-                            }
-                        }
                     )
                 )
             case .wallet:
-                WalletHomeView(
+                WalletView(
                     showTabBar: Binding(
                         get: { viewStore.showTabBar },
                         set: { viewStore.setTabBarVisible($0) }

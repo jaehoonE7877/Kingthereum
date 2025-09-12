@@ -36,6 +36,9 @@ final class AuthenticationViewStore: AuthenticationDisplayLogic {
     var walletAddress: String?
     var mnemonic: String?
     
+    // KingToast Manager
+    let toastManager = KingToastManager.shared
+    
     // VIP Components
     var interactor: AuthenticationBusinessLogic?
     var presenter: AuthenticationPresentationLogic?
@@ -172,6 +175,9 @@ struct AuthenticationView: View {
                         viewStore.clearError()
                     }
                 }
+                
+                // KingToast Overlay
+                KingToastContainer(position: .top)
             }
             .animation(.easeInOut(duration: 0.3), value: viewStore.currentStep)
         }
@@ -475,8 +481,15 @@ struct AuthenticationView: View {
         let impactFeedback = UIImpactFeedbackGenerator(style: .light)
         impactFeedback.impactOccurred()
         
-        // TODO: 토스트 메시지 표시 (옵션)
-        // showToast("복구 구문이 클립보드에 복사되었습니다")
+        // KingToast로 복사 완료 메시지 표시
+        KingToastManager.shared.show(
+            KingToastItem(
+                type: .success,
+                title: "복사 완료",
+                message: "복구 구문이 클립보드에 복사되었습니다",
+                duration: 3.0
+            )
+        )
         
         // 보안: 30초 후 클립보드 자동 삭제
         DispatchQueue.main.asyncAfter(deadline: .now() + 30) {

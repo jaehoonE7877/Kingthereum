@@ -185,7 +185,16 @@ struct HistoryView: View {
     private var transactionListView: some View {
         ScrollView {
             LazyVStack(spacing: KingDesignTokens.Spacing.md) {
-                // TODO: Implement Filter Summary View
+                // Filter Summary View
+                FilterSummaryView(
+                    selectedFilter: viewStore.selectedFilter,
+                    transactionCount: viewStore.transactions.count,
+                    onClearFilter: {
+                        viewStore.selectedFilter = .all
+                        // TODO: 필터 클리어 시 데이터 다시 로드
+                    }
+                )
+                .padding(.horizontal, KingDesignTokens.Spacing.lg)
                 
                 ForEach(viewStore.transactions) { transaction in
                     PremiumTransactionRow(viewModel: transaction)
@@ -409,6 +418,71 @@ struct PremiumTransactionRow: View {
 }
 
 // MARK: - Supporting Components
+
+/// 필터 요약 뷰 - 현재 적용된 필터 상태 표시
+struct FilterSummaryView: View {
+    let selectedFilter: TransactionFilterType
+    let transactionCount: Int
+    let onClearFilter: () -> Void
+    
+    var body: some View {
+        if selectedFilter != .all {
+            HStack(spacing: KingDesignTokens.Spacing.md) {
+                // 필터 아이콘
+                Image(systemName: selectedFilter.systemIcon)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(KingDesignTokens.Colors.accent)
+                    .frame(width: 24, height: 24)
+                    .background(
+                        Circle()
+                            .fill(KingDesignTokens.Colors.accent.opacity(0.1))
+                    )
+                
+                // 필터 정보
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(selectedFilter.rawValue)
+                        .font(KingDesignTokens.Typography.body)
+                        .fontWeight(.semibold)
+                        .foregroundColor(KingDesignTokens.Colors.primaryText)
+                    
+                    Text("\(transactionCount)개 거래")
+                        .font(KingDesignTokens.Typography.caption)
+                        .foregroundColor(KingDesignTokens.Colors.secondaryText)
+                }
+                
+                Spacer()
+                
+                // 필터 클리어 버튼
+                Button(action: onClearFilter) {
+                    HStack(spacing: KingDesignTokens.Spacing.xs) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 12, weight: .medium))
+                        Text("전체 보기")
+                            .font(KingDesignTokens.Typography.caption)
+                            .fontWeight(.medium)
+                    }
+                    .foregroundColor(KingDesignTokens.Colors.accent)
+                    .padding(.horizontal, KingDesignTokens.Spacing.sm)
+                    .padding(.vertical, KingDesignTokens.Spacing.xs)
+                    .background(
+                        Capsule()
+                            .fill(KingDesignTokens.Colors.accent.opacity(0.1))
+                    )
+                }
+            }
+            .padding(KingDesignTokens.Spacing.md)
+            .background(
+                RoundedRectangle(cornerRadius: KingDesignTokens.Radius.lg)
+                    .fill(KingDesignTokens.Colors.surface)
+                    .shadow(KingDesignTokens.Shadow.sm)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: KingDesignTokens.Radius.lg)
+                    .stroke(KingDesignTokens.Colors.outline.opacity(0.08), lineWidth: 0.5)
+            )
+        }
+    }
+}
 
 /// 킹 프라이머리 버튼 스타일
 struct KingPrimaryButtonStyle: ButtonStyle {

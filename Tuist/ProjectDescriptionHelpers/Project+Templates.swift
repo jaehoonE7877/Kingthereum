@@ -188,7 +188,8 @@ public extension Project {
                 "CURRENT_PROJECT_VERSION": "1",
                 "INFURA_PROJECT_ID": "$(INFURA_PROJECT_ID)",
                 "INFURA_PROJECT_SECRET": "$(INFURA_PROJECT_SECRET)",
-                "ETHERSCAN_API_KEY": "$(ETHERSCAN_API_KEY)"
+                "ETHERSCAN_API_KEY": "$(ETHERSCAN_API_KEY)",
+                "COINGECKO_API_KEY": "$(COINGECKO_API_KEY)"
             ]),
             buildableFolders: [.folder("Sources"), .folder("Resources"), .folder("Derived")],
             dependencies: dependencies,

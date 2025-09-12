@@ -8,6 +8,7 @@ extension TargetDependency {
     public static let walletKit = TargetDependency.project(target: "WalletKit", path: "../WalletKit")
     public static let securityKit = TargetDependency.project(target: "SecurityKit", path: "../SecurityKit")
     public static let designSystem = TargetDependency.project(target: "DesignSystem", path: "../DesignSystem")
+    public static let priceKit = TargetDependency.project(target: "PriceKit", path: "../PriceKit")
     
     // MARK: - External Dependencies - Ethereum & Web3
     public static let web3swift = TargetDependency.external(name: "web3swift")

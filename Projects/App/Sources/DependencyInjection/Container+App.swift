@@ -4,6 +4,7 @@ import Core
 import Entity
 import SecurityKit
 import WalletKit
+import PriceKit
 
 import Factory
 
@@ -67,6 +68,44 @@ public extension Container {
         .singleton
     }
     
+    /// PriceService 구현체
+    /// 암호화폐 가격 정보 서비스 (CoinGecko API 연동)
+    var priceService: Factory<PriceServiceProtocol> {
+        self {
+            return PriceService(
+                networkService: self.priceNetworkService(),
+                cacheService: self.priceCacheService(),
+                configuration: self.priceConfiguration
+            )
+        }
+        .singleton
+    }
+    
+    // MARK: - Internal Price Services
+    
+    /// Price Network Service
+    var priceNetworkService: Factory<PriceNetworkProtocol> {
+        self { CoinGeckoPriceNetwork(configuration: self.priceConfiguration) }
+        .singleton
+    }
+    
+    /// Price Cache Service  
+    var priceCacheService: Factory<PriceCacheProtocol> {
+        self { InMemoryPriceCache() }
+        .singleton
+    }
+    
+    /// PriceConfiguration (xcconfig API 키 사용)
+    internal var priceConfiguration: PriceConfiguration {
+        let apiKey = Bundle.main.object(forInfoDictionaryKey: "COINGECKO_API_KEY") as? String
+        
+        return PriceConfiguration(
+            apiKey: apiKey,
+            cacheDuration: 300, // 5분 캐시
+            requestTimeout: 10   // 10초 타임아웃
+        )
+    }
+    
 }
 
 // MARK: - Thread-Safe Container Access
@@ -106,6 +145,11 @@ actor ContainerManager {
     /// EtherscanService 안전한 해결
     func resolveEtherscanService() -> EtherscanService {
         container.etherscanService()
+    }
+    
+    /// PriceService 안전한 해결
+    func resolvePriceService() -> PriceServiceProtocol {
+        container.priceService()
     }
 }
 

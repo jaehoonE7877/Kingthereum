@@ -6,7 +6,8 @@ let project = Project.app(
     dependencies: [
         .walletKit,
         .securityKit,
-        .designSystem
+        .designSystem,
+        .priceKit
     ],
     hasTests: true
 )
