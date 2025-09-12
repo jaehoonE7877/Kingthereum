@@ -94,7 +94,7 @@ struct DisplayModeSelectorView: View {
             } label: {
                 Text("Apply Mode")
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(KingDesignTokens.Colors.systemWhite)
                     .frame(maxWidth: .infinity)
                     .frame(height: 50)
                     .background(KingDesignTokens.Colors.accent)

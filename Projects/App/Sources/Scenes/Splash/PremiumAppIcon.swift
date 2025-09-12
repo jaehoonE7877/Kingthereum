@@ -207,7 +207,7 @@ struct EthereumDiamondIcon: View {
         VStack {
             Text("Light Mode")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(KingDesignTokens.Colors.secondaryText)
             
             PremiumAppIcon()
                 .frame(width: 120, height: 120)
@@ -218,7 +218,7 @@ struct EthereumDiamondIcon: View {
         VStack {
             Text("Dark Mode")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(KingDesignTokens.Colors.secondaryText)
             
             PremiumAppIcon()
                 .frame(width: 120, height: 120)
@@ -226,5 +226,5 @@ struct EthereumDiamondIcon: View {
         .environment(\.colorScheme, .dark)
     }
     .padding()
-    .background(Color.black)
+    .background(KingDesignTokens.Colors.systemBlack)
 }

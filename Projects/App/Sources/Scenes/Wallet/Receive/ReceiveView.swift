@@ -162,7 +162,7 @@ struct ReceiveView: View {
                             .resizable()
                             .aspectRatio(contentMode: .fit)
                             .frame(width: 200, height: 200)
-                            .background(Color.white)
+                            .background(KingDesignTokens.Colors.systemWhite)
                             .clipShape(RoundedRectangle(cornerRadius: KingDesignTokens.Radius.md))
                             .shadow(
                                 color: KingDesignTokens.Colors.primaryText.opacity(0.1),
@@ -536,7 +536,7 @@ struct PremiumShareSheet: View {
                         .interpolation(.none)
                         .resizable()
                         .frame(width: 200, height: 200)
-                        .background(Color.white)
+                        .background(KingDesignTokens.Colors.systemWhite)
                         .clipShape(RoundedRectangle(cornerRadius: KingDesignTokens.Radius.lg))
                         .shadow(
                             color: KingDesignTokens.Colors.primaryText.opacity(0.1),

@@ -216,7 +216,7 @@ struct AuthenticationView: View {
                         Spacer()
                         Image(systemName: "chevron.right")
                     }
-                    .foregroundColor(.white)
+                    .foregroundColor(KingDesignTokens.Colors.systemWhite)
                     .padding()
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
@@ -337,7 +337,7 @@ struct AuthenticationView: View {
                         Text("복구 구문 저장 완료")
                             .font(KingDesignTokens.Typography.body)
                             .fontWeight(.semibold)
-                            .foregroundColor(.white)
+                            .foregroundColor(KingDesignTokens.Colors.systemWhite)
                             .frame(maxWidth: .infinity)
                             .frame(height: 56)
                             .background(KingDesignTokens.Colors.accent)
@@ -382,7 +382,7 @@ struct AuthenticationView: View {
                 Text("시작하기")
                     .font(KingDesignTokens.Typography.body)
                     .fontWeight(.semibold)
-                    .foregroundColor(.white)
+                    .foregroundColor(KingDesignTokens.Colors.systemWhite)
                     .frame(maxWidth: .infinity)
                     .frame(height: 56)
                     .background(KingDesignTokens.Colors.accent)
@@ -406,10 +406,10 @@ struct AuthenticationView: View {
                 
                 Text("처리 중...")
                     .font(KingDesignTokens.Typography.body)
-                    .foregroundColor(.white)
+                    .foregroundColor(KingDesignTokens.Colors.systemWhite)
             }
             .padding()
-            .background(Color.black.opacity(0.8))
+            .background(KingDesignTokens.Colors.systemBlack.opacity(0.8))
             .cornerRadius(KingDesignTokens.Radius.lg)
         }
     }
@@ -437,7 +437,7 @@ struct AuthenticationView: View {
                 }
                 .font(KingDesignTokens.Typography.body)
                 .fontWeight(.semibold)
-                .foregroundColor(.white)
+                .foregroundColor(KingDesignTokens.Colors.systemWhite)
                 .padding(.horizontal, KingDesignTokens.Spacing.xl)
                 .padding(.vertical, KingDesignTokens.Spacing.md)
                 .background(KingDesignTokens.Colors.accent)

@@ -45,7 +45,7 @@ struct PremiumBiometricSetupView: View {
                 VStack(spacing: KingDesignTokens.Spacing.sm) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.system(size: 20))
-                        .foregroundColor(.orange)
+                        .foregroundColor(KingDesignTokens.Colors.warning)
                     
                     Text("Biometric authentication is not available")
                         .font(.system(size: 14, weight: .medium))
@@ -75,7 +75,7 @@ struct PremiumBiometricSetupView: View {
                         }
                         Text(buttonTitle)
                             .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(.white)
+                            .foregroundColor(KingDesignTokens.Colors.systemWhite)
                     }
                     .frame(maxWidth: .infinity)
                     .frame(height: 50)

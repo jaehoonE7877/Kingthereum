@@ -160,7 +160,7 @@ struct MnemonicView: View {
                         .foregroundStyle(LinearGradient(colors: [KingDesignTokens.Colors.primary, KingDesignTokens.Colors.primary.opacity(0.7)], startPoint: .leading, endPoint: .trailing))
                     Text(mode == .display ? "12개 단어 보관" : "12개 단어 입력")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(KingDesignTokens.Colors.secondaryText)
                 }
             }
         }
@@ -249,7 +249,7 @@ struct MnemonicView: View {
                 .frame(width: 20)
             Text(text)
                 .font(.footnote)
-                .foregroundColor(.primary)
+                .foregroundColor(KingDesignTokens.Colors.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
@@ -317,7 +317,7 @@ struct MnemonicView: View {
                     HStack(spacing: 8) {
                         Text("\(index + 1)")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(KingDesignTokens.Colors.secondaryText)
                             .frame(width: 20)
                         
                         TextField("단어 입력", text: Binding(
@@ -390,10 +390,10 @@ struct MnemonicView: View {
                         Text("\(filledCount)/12")
                             .font(.subheadline)
                             .fontWeight(.semibold)
-                            .foregroundColor(.primary)
+                            .foregroundColor(KingDesignTokens.Colors.primary)
                         Text("단어 입력됨")
                             .font(.caption2)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(KingDesignTokens.Colors.secondaryText)
                     }
                     
                     Spacer()
@@ -425,7 +425,7 @@ struct MnemonicView: View {
                     }
                     Text(pastedMnemonic.contains("12개") ? pastedMnemonic : "자동 입력 완료")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(KingDesignTokens.Colors.secondaryText)
                     Spacer()
                 }
                 .padding(.horizontal, 12)

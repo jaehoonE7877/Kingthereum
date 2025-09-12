@@ -55,7 +55,7 @@ struct SendSuccessView: View {
                     // Checkmark
                     Image(systemName: "checkmark")
                         .font(.system(size: 40, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundColor(KingDesignTokens.Colors.systemWhite)
                         .scaleEffect(viewStore.showCheckmark ? 1.0 : 0.3)
                         .opacity(viewStore.showCheckmark ? 1.0 : 0.0)
                 }
@@ -83,7 +83,7 @@ struct SendSuccessView: View {
                     
                     Text("이더리움 거래가 성공적으로 전송되었습니다")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(KingDesignTokens.Colors.secondaryText)
                         .multilineTextAlignment(.center)
                         .scaleEffect(viewStore.showContent ? 1.0 : 0.8)
                         .opacity(viewStore.showContent ? 1.0 : 0.0)
@@ -119,12 +119,12 @@ struct SendSuccessView: View {
             Text("거래 해시")
                 .font(.headline)
                 .fontWeight(.semibold)
-                .foregroundColor(.primary)
+                .foregroundColor(KingDesignTokens.Colors.primary)
             
             VStack(spacing: 8) {
                 Text(formatTransactionHash(hash))
                     .font(.system(.caption, design: .monospaced))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(KingDesignTokens.Colors.secondaryText)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
                     .background(.ultraThinMaterial)
@@ -139,17 +139,17 @@ struct SendSuccessView: View {
                         Text("복사")
                             .font(.caption)
                     }
-                    .foregroundColor(.secondary)
+                    .foregroundColor(KingDesignTokens.Colors.secondaryText)
                 }
                 .buttonStyle(PlainButtonStyle())
             }
         }
         .padding()
-        .background(Color.white.opacity(0.1))
+        .background(KingDesignTokens.Colors.systemWhite.opacity(0.1))
         .cornerRadius(16)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                .stroke(KingDesignTokens.Colors.outline.opacity(0.2), lineWidth: 1)
         )
     }
     
@@ -176,7 +176,7 @@ struct SendSuccessView: View {
                 .cornerRadius(KingDesignTokens.Radius.md)
                 .padding(.horizontal)
                 .padding(.vertical, 8)
-                .background(Color.white.opacity(0.05))
+                .background(KingDesignTokens.Colors.systemWhite.opacity(0.05))
                 .cornerRadius(12)
             }
             
@@ -197,7 +197,7 @@ struct SendSuccessView: View {
                     startPoint: .leading,
                     endPoint: .trailing
                 ))
-                .foregroundColor(.white)
+                .foregroundColor(KingDesignTokens.Colors.systemWhite)
                 .cornerRadius(KingDesignTokens.Radius.md)
                 .shadow(color: Color.blue.opacity(0.3), radius: 8, x: 0, y: 4)
             }

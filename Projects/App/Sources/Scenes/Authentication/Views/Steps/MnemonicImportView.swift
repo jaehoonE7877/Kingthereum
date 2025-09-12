@@ -55,7 +55,7 @@ struct MnemonicImportView: View {
                             .foregroundColor(KingDesignTokens.Colors.accent)
                             .frame(maxWidth: .infinity)
                             .frame(height: 44)
-                            .background(Color.clear)
+                            .background(KingDesignTokens.Colors.clear)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8)
                                     .stroke(KingDesignTokens.Colors.accent.opacity(0.3), lineWidth: 1)
@@ -138,7 +138,7 @@ struct MnemonicImportView: View {
                             Text(isValidating ? "Importing..." : "Import Wallet")
                                 .font(.system(size: 17, weight: .semibold))
                         }
-                        .foregroundColor(.white)
+                        .foregroundColor(KingDesignTokens.Colors.systemWhite)
                         .frame(maxWidth: .infinity)
                         .frame(height: 50)
                         .background(isImportEnabled ? KingDesignTokens.Colors.accent : KingDesignTokens.Colors.border)

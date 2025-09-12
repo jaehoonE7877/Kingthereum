@@ -300,7 +300,7 @@ extension SettingsView {
                         Text(viewStore.profileData.avatarInitials)
                             .font(KingDesignTokens.Typography.body)
                             .fontWeight(.bold)
-                            .foregroundColor(.white)
+                            .foregroundColor(KingDesignTokens.Colors.systemWhite)
                             .frame(width: 88, height: 88)
                             .background(.ultraThinMaterial)
                             .background(KingDesignTokens.Colors.accent.opacity(0.4))
@@ -543,7 +543,7 @@ extension SettingsView {
             HStack(spacing: 12) {
                 Image(systemName: "crown.fill")
                     .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundColor(KingDesignTokens.Colors.systemWhite)
                     .frame(width: 32, height: 32)
                     .background(KingDesignTokens.Colors.accent)
                     .clipShape(RoundedRectangle(cornerRadius: 8))

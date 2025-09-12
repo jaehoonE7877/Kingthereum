@@ -65,7 +65,7 @@ struct PremiumWelcomeView: View {
                         Text("Create Wallet")
                             .font(.system(size: 17, weight: .semibold))
                     }
-                    .foregroundColor(.white)
+                    .foregroundColor(KingDesignTokens.Colors.systemWhite)
                     .frame(maxWidth: .infinity)
                     .frame(height: 50)
                     .background(KingDesignTokens.Colors.accent)
@@ -85,7 +85,7 @@ struct PremiumWelcomeView: View {
                     .foregroundColor(KingDesignTokens.Colors.accent)
                     .frame(maxWidth: .infinity)
                     .frame(height: 50)
-                    .background(Color.clear)
+                    .background(KingDesignTokens.Colors.clear)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
                             .stroke(KingDesignTokens.Colors.accent, lineWidth: 1)
