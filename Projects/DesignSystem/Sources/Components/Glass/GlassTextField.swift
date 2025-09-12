@@ -218,7 +218,7 @@ public struct GlassTextArea: View {
                 .font(KingDesignTokens.Typography.body)
                 .foregroundColor(KingDesignTokens.Colors.primary)
                 .scrollContentBackground(.hidden)
-                .background(Color.clear)
+                .background(KingDesignTokens.Colors.clear)
                 .padding(KingDesignTokens.Spacing.sm)
                 .onTapGesture {
                     withAnimation(KingDesignTokens.Animation.fast) {

@@ -1,5 +1,4 @@
 import Foundation
-import SwiftUI
 
 // MARK: - String Extensions
 
@@ -79,65 +78,6 @@ public extension Double {
     func rounded(toPlaces places: Int) -> Double {
         let divisor = pow(10.0, Double(places))
         return (self * divisor).rounded() / divisor
-    }
-}
-
-// MARK: - View Extensions
-
-/// SwiftUI View에 사용자 경험 향상을 위한 기능들을 추가
-public extension View {
-    
-#if os(iOS)
-    /// 햅틱 피드백을 제공하는 뷰 수정자
-    /// 
-    /// 사용자의 터치에 대한 촉각적 피드백을 제공하여 앱의 반응성을 향상시킵니다.
-    /// 시뮬레이터에서는 동작하지 않으며, iPhone에서만 실제 햅틱이 발생합니다.
-    /// 
-    /// - Parameter style: 햅틱 피드백의 강도 (.light, .medium, .heavy, .soft, .rigid)
-    /// - Returns: 햅틱 피드백이 적용된 뷰
-    /// 
-    /// ## 사용 예시:
-    /// ```swift
-    /// Button("확인") { }
-    ///     .hapticFeedback(.medium)
-    /// ```
-    func hapticFeedback(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .medium) -> some View {
-        self.onTapGesture {
-            guard UIDevice.current.userInterfaceIdiom == .phone else { return }
-            
-            #if targetEnvironment(simulator)
-            // 시뮬레이터에서는 햅틱 피드백 비활성화
-            return
-            #else
-            let impactFeedback = UIImpactFeedbackGenerator(style: style)
-            impactFeedback.prepare()
-            impactFeedback.impactOccurred()
-            #endif
-        }
-    }
-#endif
-    
-    /// 글래스모피즘 디자인 효과를 적용하는 뷰 수정자
-    /// 
-    /// 반투명 배경과 블러 효과, 미세한 테두리를 조합하여 유리 같은 질감을 연출합니다.
-    /// 모던한 UI 디자인에서 카드나 오버레이 요소에 주로 사용됩니다.
-    /// 
-    /// - Returns: 글래스모피즘 스타일이 적용된 뷰
-    /// 
-    /// ## 디자인 특성:
-    /// - 반투명 배경 (.ultraThinMaterial)
-    /// - 둥근 모서리 (Constants.UI.cornerRadius)
-    /// - 미세한 흰색 테두리 (20% 투명도)
-    /// - 부드러운 그림자 효과
-    func glassMorphism() -> some View {
-        self
-            .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: Constants.UI.cornerRadius))
-            .overlay(
-                RoundedRectangle(cornerRadius: Constants.UI.cornerRadius)
-                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
-            )
-            .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
     }
 }
 

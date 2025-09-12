@@ -38,7 +38,7 @@ public struct SettingsRow: View {
                 // 타이틀
                 Text(title)
                     .font(.body)
-                    .foregroundColor(.primary)
+                    .foregroundColor(KingDesignTokens.Colors.primary)
                 
                 Spacer()
                 
@@ -46,7 +46,7 @@ public struct SettingsRow: View {
                 if let value = value {
                     Text(value)
                         .font(.body)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(KingDesignTokens.Colors.secondaryText)
                 }
                 
                 // 화살표

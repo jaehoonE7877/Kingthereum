@@ -204,3 +204,145 @@ public enum ShadowPreset {
         }
     }
 }
+
+// MARK: - iOS-specific UI Extensions
+#if os(iOS)
+public extension View {
+    
+    /// 햅틱 피드백을 제공하는 뷰 수정자
+    /// 
+    /// 사용자의 터치에 대한 촉각적 피드백을 제공하여 앱의 반응성을 향상시킵니다.
+    /// 시뮬레이터에서는 동작하지 않으며, iPhone에서만 실제 햅틱이 발생합니다.
+    /// 
+    /// - Parameter style: 햅틱 피드백의 강도 (.light, .medium, .heavy, .soft, .rigid)
+    /// - Returns: 햅틱 피드백이 적용된 뷰
+    /// 
+    /// ## 사용 예시:
+    /// ```swift
+    /// Button("확인") { }
+    ///     .hapticFeedback(.medium)
+    /// ```
+    func hapticFeedbackOnTap(_ style: UIImpactFeedbackGenerator.FeedbackStyle = .medium) -> some View {
+        self.onTapGesture {
+            guard UIDevice.current.userInterfaceIdiom == .phone else { return }
+            
+            #if targetEnvironment(simulator)
+            // 시뮬레이터에서는 햅틱 피드백 비활성화
+            return
+            #else
+            let impactFeedback = UIImpactFeedbackGenerator(style: style)
+            impactFeedback.prepare()
+            impactFeedback.impactOccurred()
+            #endif
+        }
+    }
+    
+    /// 키보드 숨기기 제스처
+    func dismissKeyboardOnTap() -> some View {
+        onTapGesture {
+            UIApplication.shared.sendAction(
+                #selector(UIResponder.resignFirstResponder), 
+                to: nil, 
+                from: nil, 
+                for: nil
+            )
+        }
+    }
+}
+#endif
+
+// MARK: - Enhanced Glass Morphism Effects
+
+public extension View {
+    
+    /// 프리미엄 글래스모피즘 효과 (KingDesignTokens 사용)
+    /// 
+    /// 반투명 배경과 블러 효과, 미세한 테두리를 조합하여 유리 같은 질감을 연출합니다.
+    /// 모던한 UI 디자인에서 카드나 오버레이 요소에 주로 사용됩니다.
+    /// 
+    /// - Parameter cornerRadius: 모서리 둥글기 (기본값: 12)
+    /// - Returns: 글래스모피즘 스타일이 적용된 뷰
+    /// 
+    /// ## 디자인 특성:
+    /// - 반투명 배경 (.ultraThinMaterial)
+    /// - 일관된 둥근 모서리
+    /// - KingDesignTokens 기반 테두리
+    /// - 부드러운 그림자 효과
+    func premiumGlassMorphism(cornerRadius: CGFloat = KingDesignTokens.Radius.md) -> some View {
+        self
+            .background(.ultraThinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .stroke(KingDesignTokens.Colors.outline, lineWidth: KingDesignTokens.BorderWidth.hairline)
+            )
+            .shadow(
+                color: KingDesignTokens.Colors.shadow,
+                radius: 12,
+                x: 0,
+                y: 4
+            )
+    }
+    
+    /// 인터랙티브 카드 효과
+    /// 
+    /// 터치와 호버 상태에 반응하는 인터랙티브한 카드 스타일을 적용합니다.
+    /// 
+    /// - Parameter isPressed: 눌림 상태
+    /// - Returns: 인터랙티브 효과가 적용된 뷰
+    func interactiveCard(isPressed: Bool = false) -> some View {
+        self
+            .scaleEffect(isPressed ? 0.98 : 1.0)
+            .animation(KingDesignTokens.Animation.fast, value: isPressed)
+            .background(
+                RoundedRectangle(cornerRadius: KingDesignTokens.Radius.md)
+                    .fill(isPressed ? KingDesignTokens.Colors.pressed : KingDesignTokens.Colors.surface)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: KingDesignTokens.Radius.md)
+                    .stroke(
+                        isPressed ? KingDesignTokens.Colors.primary : KingDesignTokens.Colors.border,
+                        lineWidth: KingDesignTokens.BorderWidth.thin
+                    )
+            )
+    }
+}
+
+// MARK: - Enhanced Error Handling
+
+public extension View {
+    
+    /// KingToast를 사용한 에러 표시
+    /// 
+    /// - Parameters:
+    ///   - error: 표시할 에러 메시지
+    ///   - isPresented: 에러 표시 상태
+    /// - Returns: 토스트 에러 표시가 가능한 뷰
+    func errorToast(error: String?, isPresented: Binding<Bool>) -> some View {
+        self.onChange(of: error) { _, newError in
+            if let error = newError, !error.isEmpty {
+                KingToastManager.shared.showError("오류", message: error)
+                isPresented.wrappedValue = true
+            }
+        }
+    }
+    
+    /// 통합 로딩 오버레이 (KingLoadingView 사용)
+    /// 
+    /// - Parameters:
+    ///   - isLoading: 로딩 상태
+    ///   - message: 로딩 메시지 (선택사항)
+    /// - Returns: 통합 로딩 오버레이가 적용된 뷰
+    func unifiedLoadingOverlay(isLoading: Bool, message: String? = nil) -> some View {
+        self.overlay {
+            if isLoading {
+                KingLoadingView(
+                    style: .fullScreen,
+                    message: message ?? "로딩 중..."
+                )
+                .transition(.opacity.combined(with: .scale))
+            }
+        }
+        .animation(KingDesignTokens.Animation.normal, value: isLoading)
+    }
+}

@@ -123,6 +123,10 @@ public final class AppRouter {
     /// 네비게이션 히스토리 (디버깅용)
     private var navigationHistory: [NavigationEvent] = []
     
+    public init() {
+        
+    }
+    
     // MARK: - Navigation Methods
     
     /// 새 화면으로 네비게이션

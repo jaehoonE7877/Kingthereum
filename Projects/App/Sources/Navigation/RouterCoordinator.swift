@@ -1,5 +1,8 @@
-import SwiftUI
 import Foundation
+import SwiftUI
+
+import Core
+import DesignSystem
 import Entity
 
 /// Router와 SwiftUI NavigationStack을 연결하는 코디네이터
@@ -215,73 +218,81 @@ public struct RouterCoordinator {
         private func modalView(for modal: ModalRoute) -> some View {
             switch modal {
             case .alert(let title, let message):
-                // CustomAlertView(title: title, message: message)
-                VStack(spacing: 20) {
-                    Text(title)
-                        .font(.headline)
-                    Text(message)
-                        .font(.body)
-                    Button("확인") {
-                        router.dismissModal()
-                    }
-                    .buttonStyle(.borderedProminent)
-                }
-                .padding()
-                .presentationDetents([.height(200)])
-                
-            case .confirmation(let title, let message, let action):
-                // ConfirmationView(title: title, message: message, action: action)
-                VStack(spacing: 20) {
-                    Text(title)
-                        .font(.headline)
-                    Text(message)
-                        .font(.body)
-                    HStack {
-                        Button("취소") {
+                KingCard(style: .glass) {
+                    VStack(spacing: KingDesignTokens.Spacing.lg) {
+                        Text(title)
+                            .font(KingDesignTokens.Typography.headlineLarge)
+                            .foregroundColor(KingDesignTokens.Colors.primaryText)
+                        Text(message)
+                            .font(KingDesignTokens.Typography.body)
+                            .foregroundColor(KingDesignTokens.Colors.secondaryText)
+                            .multilineTextAlignment(.center)
+                        KingButton("확인", style: .primary) {
                             router.dismissModal()
                         }
-                        .buttonStyle(.bordered)
-                        
-                        Button(action) {
-                            router.dismissModal()
-                            // 확인 액션 실행
-                        }
-                        .buttonStyle(.borderedProminent)
                     }
+                    .padding(KingDesignTokens.Spacing.lg)
                 }
-                .padding()
                 .presentationDetents([.height(250)])
                 
-            case .loading(let message):
-                // LoadingView(message: message)
-                VStack(spacing: 20) {
-                    ProgressView()
-                        .scaleEffect(1.5)
-                    Text(message)
-                        .font(.body)
+            case .confirmation(let title, let message, let action):
+                KingCard(style: .glass) {
+                    VStack(spacing: KingDesignTokens.Spacing.lg) {
+                        Text(title)
+                            .font(KingDesignTokens.Typography.headlineLarge)
+                            .foregroundColor(KingDesignTokens.Colors.primaryText)
+                        Text(message)
+                            .font(KingDesignTokens.Typography.body)
+                            .foregroundColor(KingDesignTokens.Colors.secondaryText)
+                            .multilineTextAlignment(.center)
+                        HStack(spacing: KingDesignTokens.Spacing.md) {
+                            KingButton("취소", style: .secondary) {
+                                router.dismissModal()
+                            }
+                            
+                            KingButton(action, style: .primary) {
+                                router.dismissModal()
+                                // 확인 액션 실행
+                            }
+                        }
+                    }
+                    .padding(KingDesignTokens.Spacing.lg)
                 }
-                .padding()
-                .presentationDetents([.height(150)])
+                .presentationDetents([.height(300)])
+                
+            case .loading(let message):
+                KingCard(style: .glass) {
+                    VStack(spacing: KingDesignTokens.Spacing.lg) {
+                        KingLoadingView(style: .spinner, size: .large)
+                        Text(message)
+                            .font(KingDesignTokens.Typography.body)
+                            .foregroundColor(KingDesignTokens.Colors.primaryText)
+                    }
+                    .padding(KingDesignTokens.Spacing.lg)
+                }
+                .presentationDetents([.height(200)])
                 .interactiveDismissDisabled()
                 
             case .error(let message):
-                // ErrorView(message: message)
-                VStack(spacing: 20) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundColor(.red)
-                        .font(.largeTitle)
-                    Text("오류")
-                        .font(.headline)
-                    Text(message)
-                        .font(.body)
-                        .multilineTextAlignment(.center)
-                    Button("확인") {
-                        router.dismissModal()
+                KingCard(style: .glass) {
+                    VStack(spacing: KingDesignTokens.Spacing.lg) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(KingDesignTokens.Colors.error)
+                            .font(.system(size: KingDesignTokens.Sizing.iconXL))
+                        Text("오류")
+                            .font(KingDesignTokens.Typography.headlineLarge)
+                            .foregroundColor(KingDesignTokens.Colors.primaryText)
+                        Text(message)
+                            .font(KingDesignTokens.Typography.body)
+                            .foregroundColor(KingDesignTokens.Colors.secondaryText)
+                            .multilineTextAlignment(.center)
+                        KingButton("확인", style: .primary) {
+                            router.dismissModal()
+                        }
                     }
-                    .buttonStyle(.borderedProminent)
+                    .padding(KingDesignTokens.Spacing.lg)
                 }
-                .padding()
-                .presentationDetents([.height(300)])
+                .presentationDetents([.height(350)])
             }
         }
     }
@@ -360,7 +371,7 @@ public extension RouterCoordinator {
             shared.startAuthenticationFlow()
             
         default:
-            Logger.error("❌ Unhandled deep link host: \(host)")
+            print("❌ Unhandled deep link host: \(host)")
         }
     }
 }
