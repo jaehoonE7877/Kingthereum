@@ -66,7 +66,17 @@ final class HistoryInteractor: ObservableObject, HistoryBusinessLogic, HistoryDa
     // MARK: - Business Logic Implementation
     
     func loadTransactionHistory(request: HistoryScene.LoadTransactionHistory.Request) {
-        guard !isLoading else { return }
+        print("🔍 [DEBUG] HistoryInteractor.loadTransactionHistory called")
+        print("🔍 [DEBUG] Request wallet address: \(request.walletAddress.prefix(6))...***")
+        
+        // 중복 로딩 방지 - 이미 로딩 중이면 스킵
+        guard !isLoading else { 
+            print("⚠️ [WARNING] Already loading transaction history, skipping...")
+            Logger.info("⚠️ Already loading transaction history, skipping...")
+            return 
+        }
+        
+        print("🔍 [DEBUG] Starting transaction history load...")
         
         isLoading = true
         walletAddress = request.walletAddress

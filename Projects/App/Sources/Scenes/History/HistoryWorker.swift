@@ -13,7 +13,7 @@ public actor HistoryService: HistoryServiceProtocol {
     
     // MARK: - Core Dependencies
     
-    private let etherscanService: EtherscanService
+    @Injected(\.etherscanService) private var etherscanService: EtherscanService
     
     // MARK: - Multi-Level Caching System
     
@@ -43,11 +43,6 @@ public actor HistoryService: HistoryServiceProtocol {
     }
     
     public init() {
-        self.etherscanService = MainActor.assumeIsolated {
-            EtherscanService()
-        }
-                
-        // Actor 초기화 완료 후 비동기 설정 시작
         Task {
             await self.initializeAsync()
         }
@@ -186,6 +181,12 @@ public actor HistoryService: HistoryServiceProtocol {
     // MARK: - Etherscan API Integration
     
     private func performEtherscanRequest(walletAddress: String, limit: Int, offset: Int) async throws -> ([Transaction], Bool) {
+        // API 키 확인
+        guard await EtherscanService.isAPIKeyConfigured else {
+            Logger.error("❌ Etherscan API key not configured")
+            throw EtherscanError.apiKeyInvalid
+        }
+        
         // Etherscan은 페이지 기반이므로 offset을 page로 변환
         let page = (offset / limit) + 1
         
@@ -204,26 +205,48 @@ public actor HistoryService: HistoryServiceProtocol {
         
         let (ethResponse, tokenResponse) = try await (ethTransactions, tokenTransactions)
         
-        guard ethResponse.isSuccess else {
+        // 응답 유효성 검사 - "No transactions found"는 정상 응답
+        if ethResponse.message.lowercased().contains("no transactions found") {
+            Logger.info("ℹ️ No ETH transactions found for address (this is normal)")
+            print("ℹ️ [INFO] No ETH transactions found for address (this is normal)")
+        } else if !ethResponse.isSuccess {
+            Logger.error("❌ ETH transaction API failed: \(ethResponse.message)")
+            print("❌ [ERROR] ETH transaction API failed: \(ethResponse.message)")
             throw EtherscanError.serverError(400)
         }
         
         var allTransactions: [Transaction] = []
         
-        // ETH 거래 추가
-        allTransactions.append(contentsOf: ethResponse.result.map { $0.toTransaction() })
+        // ETH 거래 추가 (안전한 결과만)
+        allTransactions.append(contentsOf: ethResponse.safeResult.map { $0.toTransaction() })
         
         // 토큰 거래 추가 (실패해도 ETH 거래는 반환)
-        if tokenResponse.isSuccess {
-            allTransactions.append(contentsOf: tokenResponse.result.map { $0.toTransaction() })
+        if tokenResponse.message.lowercased().contains("no transactions found") {
+            Logger.info("ℹ️ No token transactions found for address (this is normal)")
+            print("ℹ️ [INFO] No token transactions found for address (this is normal)")
+        } else if tokenResponse.isSuccess {
+            allTransactions.append(contentsOf: tokenResponse.safeResult.map { $0.toTransaction() })
+            Logger.info("✅ Loaded \(tokenResponse.safeResult.count) token transactions")
+            print("✅ [INFO] Loaded \(tokenResponse.safeResult.count) token transactions")
+        } else {
+            Logger.warning("⚠️ Token transaction API failed: \(tokenResponse.message)")
+            print("⚠️ [WARNING] Token transaction API failed: \(tokenResponse.message)")
         }
         
         // 타임스탬프로 정렬 (최신순)
         allTransactions.sort { $0.timestamp > $1.timestamp }
         
+        // 중복 제거 (같은 해시의 거래)
+        let uniqueTransactions = Dictionary(grouping: allTransactions, by: { $0.hash })
+            .compactMapValues { $0.first }
+            .values
+            .sorted { $0.timestamp > $1.timestamp }
+        
         // 요청한 limit만큼만 반환
-        let limitedTransactions = Array(allTransactions.prefix(limit))
-        let hasMore = allTransactions.count >= limit
+        let limitedTransactions = Array(uniqueTransactions.prefix(limit))
+        let hasMore = uniqueTransactions.count >= limit
+        
+        Logger.info("✅ Processed \(allTransactions.count) raw → \(uniqueTransactions.count) unique → \(limitedTransactions.count) final transactions")
         
         return (limitedTransactions, hasMore)
     }
@@ -489,6 +512,103 @@ public actor HistoryService: HistoryServiceProtocol {
             group.cancelAll()
             return result
         }
+    }
+}
+
+// MARK: - Mock Service (테스트용)
+
+/// 테스트 및 개발용 Mock Etherscan Service
+public actor MockHistoryService: HistoryServiceProtocol {
+    
+    private let sampleTransactions: [Transaction] = [
+        Transaction(
+            hash: "0x1234567890abcdef1234567890abcdef12345678",
+            from: "0xabcdef1234567890abcdef1234567890abcdef12",
+            to: "0x1234567890abcdef1234567890abcdef12345678",
+            value: "1000000000000000000", // 1 ETH in wei
+            gasUsed: "21000",
+            gasPrice: "20000000000", // 20 Gwei
+            status: .confirmed,
+            timestamp: Date().addingTimeInterval(-3600), // 1시간 전
+            blockNumber: 18500000,
+            tokenSymbol: nil,
+            tokenName: nil
+        ),
+        Transaction(
+            hash: "0xabcdef1234567890abcdef1234567890abcdef12",
+            from: "0x1234567890abcdef1234567890abcdef12345678",
+            to: "0xabcdef1234567890abcdef1234567890abcdef12",
+            value: "500000000000000000", // 0.5 ETH
+            gasUsed: "21000",
+            gasPrice: "25000000000", // 25 Gwei
+            status: .confirmed,
+            timestamp: Date().addingTimeInterval(-7200), // 2시간 전
+            blockNumber: 18499950,
+            tokenSymbol: nil,
+            tokenName: nil
+        ),
+        Transaction(
+            hash: "0x9876543210fedcba9876543210fedcba98765432",
+            from: "0xabcdef1234567890abcdef1234567890abcdef12",
+            to: "0x1234567890abcdef1234567890abcdef12345678",
+            value: "1000000000000000000000", // 1000 USDT (가정)
+            gasUsed: "65000",
+            gasPrice: "30000000000", // 30 Gwei
+            status: .confirmed,
+            timestamp: Date().addingTimeInterval(-10800), // 3시간 전
+            blockNumber: 18499900,
+            tokenSymbol: "USDT",
+            tokenName: "Tether USD"
+        )
+    ]
+    
+    public init() {}
+    
+    public func fetchTransactionHistory(walletAddress: String, limit: Int, offset: Int) async throws -> ([Transaction], Bool) {
+        // 실제 네트워크 지연 시뮬레이션
+        try await Task.sleep(for: .milliseconds(500))
+        
+        let startIndex = offset
+        let endIndex = min(startIndex + limit, sampleTransactions.count)
+        
+        guard startIndex < sampleTransactions.count else {
+            return ([], false)
+        }
+        
+        let batch = Array(sampleTransactions[startIndex..<endIndex])
+        let hasMore = endIndex < sampleTransactions.count
+        
+        Logger.info("🧪 Mock service returned \(batch.count) transactions (hasMore: \(hasMore))")
+        return (batch, hasMore)
+    }
+    
+    public func searchTransactions(walletAddress: String, query: String) async throws -> [Transaction] {
+        try await Task.sleep(for: .milliseconds(300))
+        
+        let filtered = sampleTransactions.filter { transaction in
+            transaction.hash.lowercased().contains(query.lowercased()) ||
+            transaction.from.lowercased().contains(query.lowercased()) ||
+            transaction.to.lowercased().contains(query.lowercased()) ||
+            (transaction.tokenSymbol?.lowercased().contains(query.lowercased()) ?? false)
+        }
+        
+        Logger.info("🔍 Mock search returned \(filtered.count) results for query: \(query)")
+        return filtered
+    }
+    
+    public func exportTransactions(transactions: [Transaction], format: ExportFormat) async throws -> (Data, String) {
+        try await Task.sleep(for: .milliseconds(200))
+        
+        let timestamp = ISO8601DateFormatter().string(from: Date())
+        let fileName = "mock_transactions_\(timestamp).\(format.fileExtension)"
+        let content = "Mock export data for \(transactions.count) transactions"
+        
+        guard let data = content.data(using: .utf8) else {
+            throw ExportError.dataConversionFailed
+        }
+        
+        Logger.info("📤 Mock export completed: \(fileName)")
+        return (data, fileName)
     }
 }
 

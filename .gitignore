@@ -116,3 +116,7 @@ DerivedData/
 
 # Serena MCP
 .serena
+
+# Temporary files
+*.tmp
+*.temp

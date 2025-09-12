@@ -26,7 +26,7 @@ protocol HistoryDisplayLogic: AnyObject {
 @Observable
 final class OptimizedHistoryViewStore: HistoryDisplayLogic {
     var transactions: [TransactionViewModel] = []
-    var isInitialLoading = true
+    var isInitialLoading = false  // false로 변경하여 초기 로드 허용
     var isLoadingMore = false
     var hasMoreTransactions = false
     var selectedFilter: TransactionFilterType = .all
@@ -142,8 +142,38 @@ struct HistoryView: View {
             }
         }
         .onAppear {
+            print("🔍 [DEBUG] HistoryView appeared")
+            print("🔍 [DEBUG] Transactions count: \(viewStore.transactions.count)")
+            print("🔍 [DEBUG] Is initial loading: \(viewStore.isInitialLoading)")
+            
             setupVIPComponents()
-            Task { await loadInitialTransactions() }
+            
+            // 백업 로직: 항상 초기 로드 시도
+            if viewStore.transactions.isEmpty {
+                print("🔍 [DEBUG] Backup load triggered from onAppear")
+                Task { await loadInitialTransactions() }
+            } else {
+                print("🔍 [DEBUG] Skipping onAppear load - data exists")
+            }
+        }
+        .onChange(of: selectedTab) { oldTab, newTab in
+            // 디버그 로그 추가
+            print("🔍 [DEBUG] Tab changed: \(oldTab) → \(newTab)")
+            
+            // 내역 탭으로 전환될 때만 로드
+            if newTab == .history {
+                print("🔍 [DEBUG] History tab selected")
+                print("🔍 [DEBUG] Transactions count: \(viewStore.transactions.count)")
+                print("🔍 [DEBUG] Is initial loading: \(viewStore.isInitialLoading)")
+                
+                // 데이터가 없으면 로드
+                if viewStore.transactions.isEmpty {
+                    print("🔍 [DEBUG] Starting transaction load from onChange...")
+                    Task { await loadInitialTransactions() }
+                } else {
+                    print("🔍 [DEBUG] Skipping onChange load - data already exists")
+                }
+            }
         }
         .onChange(of: prefetchTrigger) { _, _ in 
             Task { await loadMoreTransactions() }
@@ -248,7 +278,14 @@ struct HistoryView: View {
     // MARK: - Business Logic Methods
     
     private func loadInitialTransactions() async {
-        guard let walletAddress = getCurrentWalletAddress() else { return }
+        print("🔍 [DEBUG] loadInitialTransactions called")
+        
+        guard let walletAddress = getCurrentWalletAddress() else { 
+            print("❌ [ERROR] No wallet address found")
+            return 
+        }
+        
+        print("🔍 [DEBUG] Wallet address: \(walletAddress.prefix(6))...***")
         let request = HistoryScene.LoadTransactionHistory.Request(walletAddress: walletAddress, limit: 50)
         interactor.loadTransactionHistory(request: request)
     }

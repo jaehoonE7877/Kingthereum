@@ -167,8 +167,10 @@ final class AuthenticationInteractor: AuthenticationBusinessLogic, Authenticatio
         Task { [weak self] in
             guard let self = self else { return }
             do {
-                // 먼저 PIN 설정
-                try await self.worker.setupPIN(request.pin)
+                // PIN이 제공된 경우에만 PIN 설정
+                if !request.pin.isEmpty {
+                    try await self.worker.setupPIN(request.pin)
+                }
                 
                 // 니모닉으로 지갑 복원
                 let wallet = try await self.worker.importWalletFromMnemonic(

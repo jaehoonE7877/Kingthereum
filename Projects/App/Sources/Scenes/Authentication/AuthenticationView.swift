@@ -5,11 +5,10 @@ import Entity
 import Factory
 import SecurityKit
 
-/// 🔐 Revolut/N26 Level Premium Authentication 2024
-/// Military-grade Security + Premium Fintech Styling
-/// Biometric Authentication + Device Security + Rate Limiting
+/// 🔐 Premium Authentication View - Clean Version
+/// VIP 패턴을 따르는 인증 화면
 
-// MARK: - VIP Architecture Support
+// MARK: - Display Logic Protocol
 
 /// 인증 화면의 디스플레이 로직 프로토콜
 @MainActor
@@ -22,27 +21,51 @@ protocol AuthenticationDisplayLogic: AnyObject {
     func displayWalletImportResult(viewModel: AuthenticationScene.ImportWallet.ViewModel)
 }
 
-/// 인증 진행 단계
-enum AuthenticationStep: String, CaseIterable {
-    case welcome = "welcome"
-    case pinSetup = "pin_setup"
-    case biometricSetup = "biometric_setup"
-    case walletCreation = "wallet_creation"
-    case walletImport = "wallet_import"
-}
+// MARK: - View Store
 
-/// SwiftUI용 인증 ViewStore
 @MainActor
 @Observable
 final class AuthenticationViewStore: AuthenticationDisplayLogic {
+    // State
     weak var appCoordinator: AppCoordinator?
     var currentStep: AuthenticationStep = .welcome
     var errorMessage: String?
     var showMnemonicView = false
     var isLoading = false
     var biometricAvailable = false
+    var walletAddress: String?
+    var mnemonic: String?
+    
+    // VIP Components
+    var interactor: AuthenticationBusinessLogic?
+    var presenter: AuthenticationPresentationLogic?
+    var router: AuthenticationRoutingLogic?
+    
+    init() {
+        setupVIP()
+    }
+    
+    private func setupVIP() {
+        let interactor = AuthenticationInteractor()
+        let presenter = AuthenticationPresenter()
+        let router = AuthenticationRouter()
+        
+        self.interactor = interactor
+        self.presenter = presenter  
+        self.router = router
+        
+        interactor.presenter = presenter
+        presenter.viewController = self
+    }
+    
+    func clearError() {
+        errorMessage = nil
+    }
+    
+    // MARK: - AuthenticationDisplayLogic
     
     func displayPINSetupResult(viewModel: AuthenticationScene.SetupPIN.ViewModel) {
+        isLoading = false
         if viewModel.success {
             currentStep = .biometricSetup
         } else {
@@ -73,694 +96,393 @@ final class AuthenticationViewStore: AuthenticationDisplayLogic {
     }
     
     func displayWalletCreationResult(viewModel: AuthenticationScene.CreateWallet.ViewModel) {
+        isLoading = false
         if viewModel.success {
-            showMnemonicView = true
+            walletAddress = viewModel.walletAddress
+            mnemonic = viewModel.mnemonic
+            currentStep = .walletCreation
         } else {
             errorMessage = viewModel.errorMessage
         }
     }
     
     func displayWalletImportResult(viewModel: AuthenticationScene.ImportWallet.ViewModel) {
+        isLoading = false
         if viewModel.success {
+            walletAddress = viewModel.walletAddress
             currentStep = .pinSetup
         } else {
             errorMessage = viewModel.errorMessage
         }
     }
-    
-    func clearError() {
-        errorMessage = nil
-    }
 }
 
-/// 🔐 Kingthereum Premium Authentication
-/// Revolut/N26 수준의 프리미엄 핀테크 인증 화면
+// MARK: - Authentication Steps
+
+enum AuthenticationStep: String, CaseIterable {
+    case welcome = "welcome"
+    case methodSelection = "method_selection"
+    case pinSetup = "pin_setup"
+    case biometricSetup = "biometric_setup" 
+    case walletCreation = "wallet_creation"
+    case walletImport = "wallet_import"
+    case congratulations = "congratulations"
+}
+
+// MARK: - Main View
+
 struct AuthenticationView: View {
-    private let interactor: AuthenticationInteractor = .init()
     @State private var viewStore = AuthenticationViewStore()
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    
-    // 애니메이션 상태
-    @State private var contentOpacity: Double = 0
-    @State private var contentScale: Double = 0.95
-    @State private var cardOffset: Double = 30
     
     var body: some View {
-        ZStack {
-            // 🎨 프리미엄 배경
-            premiumBackground
-            
-            // 🔐 인증 콘텐츠
-            VStack(spacing: 0) {
-                switch viewStore.currentStep {
-                case .welcome:
-                    PremiumWelcomeView(viewStore: viewStore)
-                case .pinSetup:
-                    PremiumPINSetupView(viewStore: viewStore)
-                case .biometricSetup:
-                    PremiumBiometricSetupView(viewStore: viewStore)
-                case .walletCreation:
-                    PremiumWelcomeView(viewStore: viewStore)
-                case .walletImport:
-                    PremiumWelcomeView(viewStore: viewStore)
+        NavigationStack {
+            ZStack {
+                // Background
+                KingDesignTokens.Colors.background
+                    .ignoresSafeArea()
+                
+                // Content
+                Group {
+                    switch viewStore.currentStep {
+                    case .welcome:
+                        PremiumWelcomeView(viewStore: viewStore)
+                    case .methodSelection:
+                        MethodSelectionView()
+                    case .walletCreation:
+                        WalletCreationView()
+                    case .walletImport:
+                        MnemonicImportView(viewStore: viewStore)
+                    case .pinSetup:
+                        PremiumPINSetupView(viewStore: viewStore)
+                    case .biometricSetup:
+                        PremiumBiometricSetupView(viewStore: viewStore)
+                    case .congratulations:
+                        CongratulationsView()
+                    }
+                }
+                
+                // Loading Overlay
+                if viewStore.isLoading {
+                    LoadingOverlay()
+                }
+                
+                // Error Overlay
+                if let errorMessage = viewStore.errorMessage {
+                    ErrorOverlay(message: errorMessage) {
+                        viewStore.clearError()
+                    }
                 }
             }
-            .opacity(contentOpacity)
-            .scaleEffect(contentScale)
-            .offset(y: cardOffset)
-            
-            // 🚨 오류 오버레이
-            if let errorMessage = viewStore.errorMessage {
-                PremiumErrorOverlay(
-                    message: errorMessage,
-                    onDismiss: { viewStore.clearError() }
-                )
-            }
-            
-            // 🔄 로딩 오버레이
-            if viewStore.isLoading {
-                PremiumLoadingOverlay()
-            }
+            .animation(.easeInOut(duration: 0.3), value: viewStore.currentStep)
         }
         .onAppear {
-            Task {
-                await performSecurityValidation()
-                startPremiumEntryAnimation()
-            }
-        }
-        .sheet(isPresented: $viewStore.showMnemonicView) {
-            PremiumMnemonicView()
-        }
-    }
-    
-    // MARK: - 프리미엄 컴포넌트들
-    
-    @ViewBuilder
-    private var premiumBackground: some View {
-        ZStack {
-            // 베이스 그라데이션 배경
-            LinearGradient(
-                colors: [
-                    KingDesignTokens.Colors.background,
-                    KingDesignTokens.Colors.surface,
-                    KingDesignTokens.Colors.surfaceSecondary
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
-            
-            // 앰비언트 글로우 효과
-            RadialGradient(
-                colors: [
-                    KingDesignTokens.Colors.accent.opacity(0.03),
-                    Color.clear
-                ],
-                center: UnitPoint(x: 0.8, y: 0.2),
-                startRadius: 0,
-                endRadius: 400
-            )
-            .ignoresSafeArea()
-        }
-    }
-    
-    // MARK: - 액션 메서드들
-    
-    private func authenticateWithBiometrics() {
-        viewStore.isLoading = true
-        let request = AuthenticationScene.AuthenticateWithBiometrics.Request(
-            reason: "지갑에 접근하기 위해 생체 인증을 사용하세요"
-        )
-        interactor.authenticateWithBiometrics(request: request)
-    }
-    
-    private func authenticateWithPIN() {
-        print("PIN 인증 요청")
-    }
-    
-    private func checkBiometricAvailability() {
-        let request = AuthenticationScene.CheckBiometricAvailability.Request()
-        interactor.checkBiometricAvailability(request: request)
-    }
-    
-    private func createWallet() {
-        let request = AuthenticationScene.CreateWallet.Request(walletName: "My Wallet")
-        interactor.createWallet(request: request)
-    }
-    
-    private func performSecurityValidation() async {
-        // 보안 검증 로직
-        await MainActor.run {
             checkBiometricAvailability()
         }
     }
     
-    private func startPremiumEntryAnimation() {
-        withAnimation(KingDesignTokens.Animation.spring.delay(0.1)) {
-            contentOpacity = 1.0
-            contentScale = 1.0
-        }
-        
-        withAnimation(KingDesignTokens.Animation.spring.delay(0.2)) {
-            cardOffset = 0
-        }
-    }
-}
-// MARK: - 🔐 Premium Authentication Components
-
-/// 🔐 프리미엄 환영 화면 (Revolut/N26 스타일)
-struct PremiumWelcomeView: View {
-    @State var viewStore: AuthenticationViewStore
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    // MARK: - Child Views
     
-    var body: some View {
+    @ViewBuilder
+    private func MethodSelectionView() -> some View {
         VStack(spacing: KingDesignTokens.Spacing.xxxl) {
-            Spacer()
-            
-            // 🎨 프리미엄 브랜드 섹션
-            VStack(spacing: KingDesignTokens.Spacing.xl) {
-                // 프리미엄 로고 with 골드 글로우
-                ZStack {
-                    Circle()
-                        .fill(KingDesignTokens.Colors.accent.opacity(0.1))
-                        .frame(width: 140, height: 140)
-                        .overlay(
-                            Circle()
-                                .stroke(
-                                    LinearGradient(
-                                        colors: [
-                                            KingDesignTokens.Colors.accent,
-                                            KingDesignTokens.Colors.accent.opacity(0.3)
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 2
-                                )
-                        )
-                        .shadow(
-                            color: KingDesignTokens.Colors.accent.opacity(0.3),
-                            radius: 20,
-                            x: 0,
-                            y: 10
-                        )
-                    
-                    Image(systemName: "crown.fill")
-                        .font(.system(size: 56, weight: .medium))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [
-                                    KingDesignTokens.Colors.accent,
-                                    KingDesignTokens.Colors.accent.opacity(0.8)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                }
-                .scaleEffect(reduceMotion ? 1.0 : 1.02)
-                .animation(
-                    reduceMotion ? nil : 
-                    Animation.easeInOut(duration: 3.0).repeatForever(autoreverses: true),
-                    value: reduceMotion
-                )
-                
-                // 프리미엄 브랜딩 텍스트
-                VStack(spacing: KingDesignTokens.Spacing.md) {
-                    Text("Kingthereum")
-                        .font(KingDesignTokens.Typography.displayL)
-                        .fontWeight(.bold)
-                        .foregroundColor(KingDesignTokens.Colors.primaryText)
-                    
-                    Text("프리미엄 이더리움 지갑")
-                        .font(KingDesignTokens.Typography.body)
-                        .foregroundColor(KingDesignTokens.Colors.secondaryText)
-                }
-            }
-            
-            Spacer()
-            
-            // 🔐 인증 액션 버튼들
+            // Header
             VStack(spacing: KingDesignTokens.Spacing.lg) {
-                // 생체 인증 (가능할 때만)
-                if viewStore.biometricAvailable {
-                    GlassButton(
-                        "생체 인증으로 시작",
-                        icon: "faceid",
-                        style: .primary
-                    ) {
-                        Task { await authenticateWithBiometrics() }
-                    }
-                    .disabled(viewStore.isLoading)
-                }
+                Text("지갑 설정")
+                    .font(KingDesignTokens.Typography.displayL)
+                    .fontWeight(.bold)
+                    .foregroundColor(KingDesignTokens.Colors.primaryText)
                 
-                // PIN 인증
-                GlassButton(
-                    "PIN으로 잠금 해제",
-                    icon: "lock.fill",
-                    style: .secondary
-                ) {
-                    viewStore.currentStep = .pinSetup
-                }
-                
-                // 구분선
-                HStack {
-                    Rectangle()
-                        .fill(KingDesignTokens.Colors.border)
-                        .frame(height: 1)
-                    
-                    Text("또는")
-                        .font(KingDesignTokens.Typography.caption)
-                        .foregroundColor(KingDesignTokens.Colors.tertiaryText)
-                        .padding(.horizontal, KingDesignTokens.Spacing.md)
-                    
-                    Rectangle()
-                        .fill(KingDesignTokens.Colors.border)
-                        .frame(height: 1)
-                }
-                .padding(.vertical, KingDesignTokens.Spacing.sm)
-                
-                // 지갑 관리 버튼들
-                HStack(spacing: KingDesignTokens.Spacing.md) {
-                    // 새 지갑 생성
-                    Button {
-                        createWallet()
-                    } label: {
-                        VStack(spacing: KingDesignTokens.Spacing.sm) {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.title2)
-                                .foregroundColor(KingDesignTokens.Colors.accent)
-                            
-                            Text("새 지갑")
-                                .font(KingDesignTokens.Typography.caption)
-                                .foregroundColor(KingDesignTokens.Colors.secondaryText)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, KingDesignTokens.Spacing.lg)
-                    }
-                    .background(KingDesignTokens.Colors.surfaceSecondary)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: KingDesignTokens.Radius.md)
-                            .stroke(KingDesignTokens.Colors.border, lineWidth: 1)
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: KingDesignTokens.Radius.md))
-                    
-                    // 지갑 복원
-                    Button {
-                        viewStore.currentStep = .walletImport
-                    } label: {
-                        VStack(spacing: KingDesignTokens.Spacing.sm) {
-                            Image(systemName: "arrow.clockwise.circle.fill")
-                                .font(.title2)
-                                .foregroundColor(KingDesignTokens.Colors.accent)
-                            
-                            Text("복원")
-                                .font(KingDesignTokens.Typography.caption)
-                                .foregroundColor(KingDesignTokens.Colors.secondaryText)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, KingDesignTokens.Spacing.lg)
-                    }
-                    .background(KingDesignTokens.Colors.surfaceSecondary)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: KingDesignTokens.Radius.md)
-                            .stroke(KingDesignTokens.Colors.border, lineWidth: 1)
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: KingDesignTokens.Radius.md))
-                }
-                
-                // 보안 노티스
-                HStack(spacing: KingDesignTokens.Spacing.xs) {
-                    Image(systemName: "shield.checkered")
-                        .font(KingDesignTokens.Typography.caption)
-                        .foregroundColor(KingDesignTokens.Colors.success)
-                    
-                    Text("최고 수준 보안으로 자산 보호")
-                        .font(KingDesignTokens.Typography.caption)
-                        .foregroundColor(KingDesignTokens.Colors.tertiaryText)
-                }
-                .padding(.top, KingDesignTokens.Spacing.sm)
-            }
-            .padding(.horizontal, KingDesignTokens.Spacing.lg)
-            .padding(.bottom, KingDesignTokens.Spacing.xxxl)
-        }
-    }
-    
-    private func authenticateWithBiometrics() async {
-        await MainActor.run {
-            viewStore.isLoading = true
-        }
-        
-        _ = AuthenticationScene.AuthenticateWithBiometrics.Request(
-            reason: "지갑에 접근하기 위해 생체 인증을 사용하세요"
-        )
-        
-        // 실제 구현에서는 interactor를 통해 호출
-        await MainActor.run {
-            viewStore.isLoading = false
-        }
-    }
-    
-    private func createWallet() {
-        _ = AuthenticationScene.CreateWallet.Request(walletName: "My Wallet")
-        // interactor.createWallet(request: request)
-    }
-}
-
-/// 🔐 프리미엄 PIN 설정 화면
-struct PremiumPINSetupView: View {
-    @State var viewStore: AuthenticationViewStore
-
-    @State private var pinCode = ""
-    @State private var confirmPIN = ""
-    @State private var isConfirmingPIN = false
-    
-    var body: some View {
-        VStack(spacing: KingDesignTokens.Spacing.xxxl) {
-            // 헤더 섹션
-            VStack(spacing: KingDesignTokens.Spacing.lg) {
-                Image(systemName: "lock.shield.fill")
-                    .font(.system(size: 48, weight: .medium))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [
-                                KingDesignTokens.Colors.accent,
-                                KingDesignTokens.Colors.accent.opacity(0.8)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                
-                VStack(spacing: KingDesignTokens.Spacing.sm) {
-                    Text(isConfirmingPIN ? "PIN 확인" : "보안 PIN 설정")
-                        .font(KingDesignTokens.Typography.displayM)
-                        .fontWeight(.bold)
-                        .foregroundColor(KingDesignTokens.Colors.primaryText)
-                    
-                    Text(isConfirmingPIN ? "PIN을 다시 입력해주세요" : "6자리 보안 PIN을 설정해주세요")
-                        .font(KingDesignTokens.Typography.body)
-                        .foregroundColor(KingDesignTokens.Colors.secondaryText)
-                        .multilineTextAlignment(.center)
-                }
+                Text("새 지갑을 생성하거나 기존 지갑을 복구하세요")
+                    .font(KingDesignTokens.Typography.body)
+                    .foregroundColor(KingDesignTokens.Colors.secondaryText)
+                    .multilineTextAlignment(.center)
             }
             .padding(.top, KingDesignTokens.Spacing.xxxl)
             
             Spacer()
             
-            // PIN 입력 섹션
-            PremiumPINField(
-                pin: isConfirmingPIN ? $confirmPIN : $pinCode,
-                length: 6
-            ) { pin in
-                if isConfirmingPIN {
-                    handlePINConfirmation(pin)
-                } else {
-                    handlePINEntry(pin)
+            // Options
+            VStack(spacing: KingDesignTokens.Spacing.lg) {
+                // Create Wallet Button
+                Button {
+                    createWallet()
+                } label: {
+                    HStack {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.title2)
+                        Text("새 지갑 생성")
+                            .font(KingDesignTokens.Typography.body)
+                            .fontWeight(.semibold)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                    }
+                    .foregroundColor(.white)
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 56)
+                    .background(KingDesignTokens.Colors.accent)
+                    .cornerRadius(KingDesignTokens.Radius.lg)
+                }
+                .disabled(viewStore.isLoading)
+                
+                // Import Wallet Button  
+                Button {
+                    viewStore.currentStep = .walletImport
+                } label: {
+                    HStack {
+                        Image(systemName: "arrow.clockwise.circle.fill")
+                            .font(.title2)
+                        Text("지갑 복구")
+                            .font(KingDesignTokens.Typography.body)
+                            .fontWeight(.semibold)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                    }
+                    .foregroundColor(KingDesignTokens.Colors.accent)
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 56)
+                    .background(KingDesignTokens.Colors.accent.opacity(0.1))
+                    .cornerRadius(KingDesignTokens.Radius.lg)
+                }
+                .disabled(viewStore.isLoading)
+            }
+            .padding(.horizontal, KingDesignTokens.Spacing.lg)
+            
+            Spacer()
+        }
+    }
+    
+    @ViewBuilder
+    private func WalletCreationView() -> some View {
+        VStack(spacing: KingDesignTokens.Spacing.xl) {
+            // Header
+            VStack(spacing: KingDesignTokens.Spacing.md) {
+                Text("지갑 생성 완료")
+                    .font(KingDesignTokens.Typography.displayM)
+                    .fontWeight(.bold)
+                    .foregroundColor(KingDesignTokens.Colors.primaryText)
+                
+                Text("지갑이 성공적으로 생성되었습니다")
+                    .font(KingDesignTokens.Typography.body)
+                    .foregroundColor(KingDesignTokens.Colors.secondaryText)
+            }
+            .padding(.top, KingDesignTokens.Spacing.xxxl)
+            
+            Spacer()
+            
+            // Wallet Info
+            if let address = viewStore.walletAddress {
+                VStack(spacing: KingDesignTokens.Spacing.lg) {
+                    VStack(spacing: KingDesignTokens.Spacing.sm) {
+                        Text("지갑 주소")
+                            .font(KingDesignTokens.Typography.body)
+                            .fontWeight(.semibold)
+                            .foregroundColor(KingDesignTokens.Colors.primaryText)
+                        
+                        Text(address)
+                            .font(KingDesignTokens.Typography.caption)
+                            .foregroundColor(KingDesignTokens.Colors.secondaryText)
+                            .padding()
+                            .background(KingDesignTokens.Colors.surfaceSecondary)
+                            .cornerRadius(KingDesignTokens.Radius.md)
+                    }
+                }
+            }
+            
+            if let mnemonic = viewStore.mnemonic {
+                VStack(spacing: KingDesignTokens.Spacing.lg) {
+                    VStack(spacing: KingDesignTokens.Spacing.sm) {
+                        Text("복구 구문")
+                            .font(KingDesignTokens.Typography.body)
+                            .fontWeight(.semibold)
+                            .foregroundColor(KingDesignTokens.Colors.error)
+                        
+                        Text("이 구문을 안전한 곳에 보관하세요")
+                            .font(KingDesignTokens.Typography.caption)
+                            .foregroundColor(KingDesignTokens.Colors.secondaryText)
+                        
+                        // 복구 구문 표시
+                        VStack(spacing: KingDesignTokens.Spacing.sm) {
+                            Text(mnemonic)
+                                .font(KingDesignTokens.Typography.caption)
+                                .foregroundColor(KingDesignTokens.Colors.primaryText)
+                                .padding()
+                                .background(KingDesignTokens.Colors.surfaceSecondary)
+                                .cornerRadius(KingDesignTokens.Radius.md)
+                                .textSelection(.enabled) // iOS 15+ 텍스트 선택 가능
+                            
+                            // 복사 버튼
+                            Button {
+                                copyMnemonicToClipboard(mnemonic)
+                            } label: {
+                                HStack(spacing: KingDesignTokens.Spacing.sm) {
+                                    Image(systemName: "doc.on.clipboard")
+                                        .font(.system(size: 14, weight: .medium))
+                                    Text("복구 구문 복사")
+                                        .font(.system(size: 14, weight: .medium))
+                                }
+                                .foregroundColor(KingDesignTokens.Colors.accent)
+                                .padding(.vertical, KingDesignTokens.Spacing.xs)
+                                .padding(.horizontal, KingDesignTokens.Spacing.md)
+                                .background(KingDesignTokens.Colors.accent.opacity(0.1))
+                                .cornerRadius(KingDesignTokens.Radius.sm)
+                            }
+                        }
+                    }
+                    
+                    Button {
+                        viewStore.currentStep = .pinSetup
+                    } label: {
+                        Text("복구 구문 저장 완료")
+                            .font(KingDesignTokens.Typography.body)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 56)
+                            .background(KingDesignTokens.Colors.accent)
+                            .cornerRadius(KingDesignTokens.Radius.lg)
+                    }
                 }
             }
             
             Spacer()
-            
-            // 보안 가이드
-            PremiumSecurityGuide()
-                .padding(.horizontal, KingDesignTokens.Spacing.lg)
-                .padding(.bottom, KingDesignTokens.Spacing.xxxl)
         }
+        .padding(.horizontal, KingDesignTokens.Spacing.lg)
     }
     
-    private func handlePINEntry(_ pin: String) {
-        pinCode = pin
-        withAnimation(KingDesignTokens.Animation.normal) {
-            isConfirmingPIN = true
-        }
-    }
-    
-    private func handlePINConfirmation(_ pin: String) {
-        if pin == pinCode {
-            viewStore.currentStep = .biometricSetup
-        } else {
-            withAnimation(KingDesignTokens.Animation.normal) {
-                isConfirmingPIN = false
-                pinCode = ""
-                confirmPIN = ""
-            }
-            viewStore.errorMessage = "PIN이 일치하지 않습니다. 다시 설정해주세요."
-        }
-    }
-}
-
-/// 🔐 프리미엄 생체인증 설정 화면
-struct PremiumBiometricSetupView: View {
-    @State var viewStore: AuthenticationViewStore
-
-    var body: some View {
+    @ViewBuilder
+    private func CongratulationsView() -> some View {
         VStack(spacing: KingDesignTokens.Spacing.xxxl) {
             Spacer()
             
-            // 생체 인증 아이콘
             VStack(spacing: KingDesignTokens.Spacing.xl) {
-                ZStack {
-                    Circle()
-                        .fill(KingDesignTokens.Colors.accent.opacity(0.1))
-                        .frame(width: 120, height: 120)
-                        .overlay(
-                            Circle()
-                                .stroke(KingDesignTokens.Colors.accent.opacity(0.3), lineWidth: 2)
-                        )
-                    
-                    Image(systemName: "faceid")
-                        .font(.system(size: 48, weight: .medium))
-                        .foregroundColor(KingDesignTokens.Colors.accent)
-                }
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 80))
+                    .foregroundColor(KingDesignTokens.Colors.success)
                 
                 VStack(spacing: KingDesignTokens.Spacing.md) {
-                    Text("생체 인증 설정")
-                        .font(KingDesignTokens.Typography.displayM)
+                    Text("지갑 설정 완료!")
+                        .font(KingDesignTokens.Typography.displayL)
                         .fontWeight(.bold)
                         .foregroundColor(KingDesignTokens.Colors.primaryText)
                     
-                    Text("빠르고 안전한 접근을 위해\nFace ID 또는 Touch ID를 활성화하세요")
+                    Text("이제 Kingthereum 지갑을 사용할 수 있습니다")
                         .font(KingDesignTokens.Typography.body)
                         .foregroundColor(KingDesignTokens.Colors.secondaryText)
                         .multilineTextAlignment(.center)
-                        .lineSpacing(4)
                 }
             }
             
             Spacer()
             
-            // 액션 버튼들
-            VStack(spacing: KingDesignTokens.Spacing.md) {
-                GlassButton(
-                    "생체 인증 활성화",
-                    icon: "faceid",
-                    style: .primary
-                ) {
-                    Task { await setupBiometric() }
-                }
-                
-                GlassButton(
-                    "나중에 설정",
-                    style: .text
-                ) {
-                    completeSetup()
-                }
+            Button {
+                completeSetup()
+            } label: {
+                Text("시작하기")
+                    .font(KingDesignTokens.Typography.body)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 56)
+                    .background(KingDesignTokens.Colors.accent)
+                    .cornerRadius(KingDesignTokens.Radius.lg)
             }
             .padding(.horizontal, KingDesignTokens.Spacing.lg)
             .padding(.bottom, KingDesignTokens.Spacing.xxxl)
         }
     }
     
-    private func setupBiometric() async {
-        completeSetup()
-    }
-    
-    private func completeSetup() {
-        viewStore.appCoordinator?.completeAuthentication()
-    }
-}
-
-/// 🔐 프리미엄 PIN 입력 필드
-struct PremiumPINField: View {
-    @Binding var pin: String
-    let length: Int
-    let onComplete: (String) -> Void
-    
-    @FocusState private var isFocused: Bool
-    
-    var body: some View {
-        VStack(spacing: KingDesignTokens.Spacing.xl) {
-            // 숨겨진 입력 필드
-            TextField("", text: $pin)
-                .keyboardType(.numberPad)
-                .textContentType(.oneTimeCode)
-                .opacity(0)
-                .frame(height: 0)
-                .focused($isFocused)
-                .onChange(of: pin) { _, newValue in
-                    if newValue.count > length {
-                        pin = String(newValue.prefix(length))
-                    }
-                    
-                    if pin.count == length {
-                        onComplete(pin)
-                    }
-                }
+    @ViewBuilder
+    private func LoadingOverlay() -> some View {
+        ZStack {
+            Color.black.opacity(0.6)
+                .ignoresSafeArea()
             
-            // PIN 시각화
-            HStack(spacing: KingDesignTokens.Spacing.lg) {
-                ForEach(0..<length, id: \.self) { index in
-                    Circle()
-                        .fill(
-                            index < pin.count ?
-                            KingDesignTokens.Colors.accent :
-                            KingDesignTokens.Colors.border
-                        )
-                        .frame(width: 20, height: 20)
-                        .scaleEffect(index < pin.count ? 1.3 : 1.0)
-                        .shadow(
-                            color: index < pin.count ? 
-                            KingDesignTokens.Colors.accent.opacity(0.3) : 
-                            Color.clear,
-                            radius: 8
-                        )
-                        .animation(KingDesignTokens.Animation.spring, value: pin)
-                }
-            }
-            
-            Text("PIN 입력 (터치하여 키패드 열기)")
-                .font(KingDesignTokens.Typography.caption)
-                .foregroundColor(KingDesignTokens.Colors.tertiaryText)
-        }
-        .onTapGesture {
-            isFocused = true
-        }
-        .onAppear {
-            isFocused = true
-        }
-    }
-}
-
-/// 🔐 보안 가이드 컴포넌트
-struct PremiumSecurityGuide: View {
-    var body: some View {
-        GlassCard(level: .standard, padding: KingDesignTokens.Spacing.lg) {
-            VStack(alignment: .leading, spacing: KingDesignTokens.Spacing.md) {
-                HStack(spacing: KingDesignTokens.Spacing.sm) {
-                    Image(systemName: "shield.checkered.fill")
-                        .font(KingDesignTokens.Typography.body)
-                        .foregroundColor(KingDesignTokens.Colors.success)
-                    
-                    Text("보안 가이드")
-                        .font(KingDesignTokens.Typography.body)
-                        .fontWeight(.semibold)
-                        .foregroundColor(KingDesignTokens.Colors.primaryText)
-                }
+            VStack(spacing: KingDesignTokens.Spacing.lg) {
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle(tint: KingDesignTokens.Colors.accent))
+                    .scaleEffect(1.5)
                 
-                VStack(alignment: .leading, spacing: KingDesignTokens.Spacing.sm) {
-                    SecurityGuideItem(text: "다른 사람이 쉽게 추측할 수 없는 번호")
-                    SecurityGuideItem(text: "생일이나 전화번호 사용 금지")
-                    SecurityGuideItem(text: "PIN은 암호화되어 안전하게 보관")
-                }
+                Text("처리 중...")
+                    .font(KingDesignTokens.Typography.body)
+                    .foregroundColor(.white)
             }
+            .padding()
+            .background(Color.black.opacity(0.8))
+            .cornerRadius(KingDesignTokens.Radius.lg)
         }
     }
-}
-
-struct SecurityGuideItem: View {
-    let text: String
     
-    var body: some View {
-        HStack(spacing: KingDesignTokens.Spacing.sm) {
-            Circle()
-                .fill(KingDesignTokens.Colors.success)
-                .frame(width: 6, height: 6)
-            
-            Text(text)
-                .font(KingDesignTokens.Typography.caption)
-                .foregroundColor(KingDesignTokens.Colors.secondaryText)
-        }
-    }
-}
-
-/// 🚨 프리미엄 오류 오버레이
-struct PremiumErrorOverlay: View {
-    let message: String
-    let onDismiss: () -> Void
-    
-    var body: some View {
+    @ViewBuilder
+    private func ErrorOverlay(message: String, onDismiss: @escaping () -> Void) -> some View {
         ZStack {
             Color.black.opacity(0.6)
                 .ignoresSafeArea()
                 .onTapGesture { onDismiss() }
             
-            GlassAlertCard(
-                type: .error,
-                title: "오류",
-                message: message
-            )
+            VStack(spacing: KingDesignTokens.Spacing.lg) {
+                Text("오류")
+                    .font(KingDesignTokens.Typography.body)
+                    .fontWeight(.bold)
+                    .foregroundColor(KingDesignTokens.Colors.error)
+                
+                Text(message)
+                    .font(KingDesignTokens.Typography.body)
+                    .foregroundColor(KingDesignTokens.Colors.primaryText)
+                    .multilineTextAlignment(.center)
+                
+                Button("확인") {
+                    onDismiss()
+                }
+                .font(KingDesignTokens.Typography.body)
+                .fontWeight(.semibold)
+                .foregroundColor(.white)
+                .padding(.horizontal, KingDesignTokens.Spacing.xl)
+                .padding(.vertical, KingDesignTokens.Spacing.md)
+                .background(KingDesignTokens.Colors.accent)
+                .cornerRadius(KingDesignTokens.Radius.md)
+            }
+            .padding()
+            .background(KingDesignTokens.Colors.background)
+            .cornerRadius(KingDesignTokens.Radius.lg)
             .padding(.horizontal, KingDesignTokens.Spacing.lg)
         }
-        .animation(KingDesignTokens.Animation.normal, value: message)
     }
-}
-
-/// 🔄 프리미엄 로딩 오버레이
-struct PremiumLoadingOverlay: View {
-    @State private var isAnimating = false
     
-    var body: some View {
-        ZStack {
-            Color.black.opacity(0.6)
-                .ignoresSafeArea()
-            
-            GlassCard(level: .prominent) {
-                VStack(spacing: KingDesignTokens.Spacing.lg) {
-                    ZStack {
-                        Circle()
-                            .stroke(KingDesignTokens.Colors.accent.opacity(0.3), lineWidth: 3)
-                            .frame(width: 60, height: 60)
-                        
-                        Circle()
-                            .trim(from: 0, to: 0.3)
-                            .stroke(KingDesignTokens.Colors.accent, lineWidth: 3)
-                            .frame(width: 60, height: 60)
-                            .rotationEffect(Angle(degrees: isAnimating ? 360 : 0))
-                            .animation(
-                                Animation.linear(duration: 1).repeatForever(autoreverses: false),
-                                value: isAnimating
-                            )
-                    }
-                    
-                    Text("보안 검증 중...")
-                        .font(KingDesignTokens.Typography.body)
-                        .foregroundColor(KingDesignTokens.Colors.primaryText)
-                }
+    // MARK: - Actions
+    
+    private func createWallet() {
+        viewStore.isLoading = true
+        let request = AuthenticationScene.CreateWallet.Request(walletName: "My Wallet")
+        viewStore.interactor?.createWallet(request: request)
+    }
+    
+    private func checkBiometricAvailability() {
+        let request = AuthenticationScene.CheckBiometricAvailability.Request()
+        viewStore.interactor?.checkBiometricAvailability(request: request)
+    }
+    
+    private func completeSetup() {
+        viewStore.appCoordinator?.completeAuthentication()
+    }
+    
+    private func copyMnemonicToClipboard(_ mnemonic: String) {
+        // 클립보드에 복사
+        UIPasteboard.general.string = mnemonic
+        
+        // 햅틱 피드백
+        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+        impactFeedback.impactOccurred()
+        
+        // TODO: 토스트 메시지 표시 (옵션)
+        // showToast("복구 구문이 클립보드에 복사되었습니다")
+        
+        // 보안: 30초 후 클립보드 자동 삭제
+        DispatchQueue.main.asyncAfter(deadline: .now() + 30) {
+            if UIPasteboard.general.string == mnemonic {
+                UIPasteboard.general.string = ""
             }
         }
-        .onAppear {
-            isAnimating = true
-        }
-    }
-}
-
-/// 🔐 프리미엄 니모닉 뷰
-struct PremiumMnemonicView: View {
-    var body: some View {
-        VStack(spacing: KingDesignTokens.Spacing.xl) {
-            Text("복구 구문")
-                .font(KingDesignTokens.Typography.displayM)
-                .foregroundColor(KingDesignTokens.Colors.primaryText)
-            
-            Text("지갑의 니모닉 복구 구문을 안전하게 보관하세요")
-                .font(KingDesignTokens.Typography.body)
-                .foregroundColor(KingDesignTokens.Colors.secondaryText)
-                .multilineTextAlignment(.center)
-            
-            Spacer()
-        }
-        .padding(KingDesignTokens.Spacing.xl)
-        .background(KingDesignTokens.Colors.background)
     }
 }

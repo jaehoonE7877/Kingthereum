@@ -289,6 +289,29 @@ public enum KingDesignTokens {
 - [Factory](https://github.com/hmlongco/Factory) - 의존성 주입
 - [Tuist](https://tuist.io) - 프로젝트 관리 도구
 
+## 📋 Git 커밋 규칙
+
+### 기본 형식
+```
+<타입>: <한글 설명>
+```
+
+### 타입별 사용법
+- `feat`: 새 기능 추가
+- `fix`: 버그 수정  
+- `refactor`: 코드 리팩토링
+- `improvement`: 기존 기능 개선
+- `docs`: 문서 수정
+- `chore`: 빌드/패키지 업데이트
+- `remove`: 파일/코드 제거
+
+### 예시
+```bash
+feat: 지갑 생성 기능 구현
+fix: 거래 전송 오류 해결
+improvement: UI 성능 최적화
+```
+
 ---
 
 <div align="center">

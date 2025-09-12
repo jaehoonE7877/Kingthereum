@@ -34,34 +34,33 @@ protocol SettingsRoutingLogic {
 @MainActor
 @Observable
 final class SettingsViewStore: SettingsDisplayLogic {
+    // 동적 상태 (관찰 필요)
     var isLoading = false
     var displayMode = "시스템"
-    var fontSize = "기본"
     var notificationStatus = "켜짐"
     var securityMode = "Face ID"
     var network = "메인넷"
-    var currency = "USD"
-    var language = "한국어"
-    var version = "1.0.0"
-    var profileData = ProfileData(
+    var showDisplayModeSelector = false
+    var alertMessage: String?
+    
+    // 정적 데이터 (성능 최적화)
+    let fontSize = "기본"
+    let currency = "USD"
+    let language = "한국어"
+    let version = "1.0.0"
+    let profileData = ProfileData(
         displayName: "Kingthereum Wallet",
         formattedAddress: "0x742d...9aE3",
         avatarInitials: "KW"
     )
-    var showDisplayModeSelector = false
-    var alertMessage: String?
     
     // MARK: - Display Logic
     
     func displaySettings(viewModel: SettingsScene.LoadSettings.ViewModel) {
         displayMode = viewModel.displayMode
-        fontSize = viewModel.fontSize
         notificationStatus = viewModel.notificationEnabled ? "켜짐" : "꺼짐"
         securityMode = viewModel.securityMode
         network = viewModel.network
-        currency = viewModel.currency
-        language = viewModel.language
-        profileData = viewModel.profileData
         
         if let errorMessage = viewModel.errorMessage {
             alertMessage = errorMessage
@@ -109,8 +108,7 @@ final class SettingsViewStore: SettingsDisplayLogic {
     }
     
     func displayProfile(viewModel: SettingsScene.LoadProfile.ViewModel) {
-        profileData = viewModel.profileData
-        
+        // profileData는 이제 정적이므로 업데이트 불필요
         if let errorMessage = viewModel.errorMessage {
             alertMessage = errorMessage
         }
@@ -174,7 +172,7 @@ struct SettingsView: View {
                     .trustGlassCard(level: .standard, cornerRadius: 20)
                 } else {
                     ScrollView(showsIndicators: false) {
-                        LazyVStack(spacing: 32) {
+                        VStack(spacing: 32) {
                             // 1. 프리미엄 프로필 히어로 섹션
                             premiumProfileHero
                             
@@ -293,74 +291,25 @@ extension SettingsView {
                 VStack(spacing: 16) {
                     // 프리미엄 아바타 컨테이너
                     ZStack {
-                        // 외부 골드 글로우
+                        // 외부 골드 글로우 (최적화된 단순 버전)
                         Circle()
-                            .fill(
-                                RadialGradient(
-                                    colors: [
-                                        KingDesignTokens.Colors.accent.opacity(0.3),
-                                        KingDesignTokens.Colors.accent.opacity(0.1),
-                                        Color.clear
-                                    ],
-                                    center: .center,
-                                    startRadius: 30,
-                                    endRadius: 60
-                                )
-                            )
+                            .fill(KingDesignTokens.Colors.accent.opacity(0.15))
                             .frame(width: 120, height: 120)
                         
-                        // 메인 아바타 글래스
-                        ZStack {
-                            Circle()
-                                .fill(.ultraThinMaterial)
-                                .background(
-                                    Circle()
-                                        .fill(
-                                            LinearGradient(
-                                                colors: [
-                                                    KingDesignTokens.Colors.accent.opacity(0.6),
-                                                    KingDesignTokens.Colors.accent.opacity(0.3)
-                                                ],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            )
-                                        )
-                                )
-                                .frame(width: 88, height: 88)
-                            
-                            // 골드 테두리 그라데이션
-                            Circle()
-                                .stroke(
-                                    AngularGradient(
-                                        colors: [
-                                            KingDesignTokens.Colors.accent,
-                                            KingDesignTokens.Colors.accent.opacity(0.3),
-                                            KingDesignTokens.Colors.accent,
-                                            KingDesignTokens.Colors.accent.opacity(0.6),
-                                            KingDesignTokens.Colors.accent
-                                        ],
-                                        center: .center
-                                    ),
-                                    lineWidth: 2
-                                )
-                                .frame(width: 88, height: 88)
-                            
-                            // 아바타 텍스트
-                            Text(viewStore.profileData.avatarInitials)
-                                .font(KingDesignTokens.Typography.body)
-                                .fontWeight(.bold)
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        colors: [
-                                            Color.white,
-                                            KingDesignTokens.Colors.accent.opacity(0.8)
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                        }
-                        .shadow(color: KingDesignTokens.Colors.accent.opacity(0.3), radius: 20, x: 0, y: 8)
+                        // 메인 아바타 (단순화된 계층)
+                        Text(viewStore.profileData.avatarInitials)
+                            .font(KingDesignTokens.Typography.body)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
+                            .frame(width: 88, height: 88)
+                            .background(.ultraThinMaterial)
+                            .background(KingDesignTokens.Colors.accent.opacity(0.4))
+                            .clipShape(Circle())
+                            .overlay(
+                                Circle()
+                                    .stroke(KingDesignTokens.Colors.accent.opacity(0.6), lineWidth: 2)
+                            )
+                        .shadow(color: KingDesignTokens.Colors.accent.opacity(0.2), radius: 10, x: 0, y: 4)
                     }
                     
                     // 프리미엄 프로필 정보
@@ -401,7 +350,7 @@ extension SettingsView {
         }
         .padding(32)
         .trustGlassCard(level: .prominent, cornerRadius: 24)
-        .shadow(color: KingDesignTokens.Colors.secondary.opacity(0.1), radius: 20, x: 0, y: 10)
+        .shadow(color: KingDesignTokens.Colors.accent.opacity(0.15), radius: 12, x: 0, y: 6)
     }
     
     // MARK: - 2. 핵심 보안 설정 섹션
@@ -590,26 +539,14 @@ extension SettingsView {
     @ViewBuilder
     private var premiumBrandingFooter: some View {
         VStack(spacing: 16) {
-            // Kingthereum 로고
+            // Kingthereum 로고 (단순화)
             HStack(spacing: 12) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    KingDesignTokens.Colors.accent,
-                                    KingDesignTokens.Colors.accent.opacity(0.8)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 32, height: 32)
-                    
-                    Image(systemName: "crown.fill")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(.white)
-                }
+                Image(systemName: "crown.fill")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.white)
+                    .frame(width: 32, height: 32)
+                    .background(KingDesignTokens.Colors.accent)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Kingthereum")
@@ -646,29 +583,14 @@ extension SettingsView {
     ) -> some View {
         Button(action: action) {
             HStack(spacing: 16) {
-                // 프리미엄 아이콘 컨테이너
-                ZStack {
-                    // 배경 그라데이션
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(
-                            RadialGradient(
-                                colors: [
-                                    accentColor.opacity(isPrimary ? 0.3 : 0.15),
-                                    accentColor.opacity(isPrimary ? 0.1 : 0.05)
-                                ],
-                                center: .center,
-                                startRadius: 0,
-                                endRadius: 22
-                            )
-                        )
-                        .frame(width: 44, height: 44)
-                    
-                    // 아이콘
-                    Image(systemName: icon)
-                        .font(.title3)
-                        .fontWeight(.medium)
-                        .foregroundColor(accentColor)
-                }
+                // 프리미엄 아이콘 (단순화)
+                Image(systemName: icon)
+                    .font(.title3)
+                    .fontWeight(.medium)
+                    .foregroundColor(accentColor)
+                    .frame(width: 44, height: 44)
+                    .background(accentColor.opacity(isPrimary ? 0.2 : 0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                 
                 // 텍스트 정보
                 VStack(alignment: .leading, spacing: 4) {
@@ -709,12 +631,7 @@ extension SettingsView {
                         )
                 )
         )
-        .shadow(
-            color: accentColor.opacity(isPrimary ? 0.15 : 0.05),
-            radius: isPrimary ? 8 : 4,
-            x: 0,
-            y: isPrimary ? 4 : 2
-        )
+        .shadow(color: accentColor.opacity(0.1), radius: 6, x: 0, y: 3)
     }
     
     @ViewBuilder
@@ -727,27 +644,14 @@ extension SettingsView {
     ) -> some View {
         Button(action: action) {
             VStack(spacing: 16) {
-                // 아이콘 컨테이너
-                ZStack {
-                    Circle()
-                        .fill(
-                            RadialGradient(
-                                colors: [
-                                    accentColor.opacity(0.2),
-                                    accentColor.opacity(0.05)
-                                ],
-                                center: .center,
-                                startRadius: 0,
-                                endRadius: 28
-                            )
-                        )
-                        .frame(width: 56, height: 56)
-                    
-                    Image(systemName: icon)
-                        .font(.title2)
-                        .fontWeight(.medium)
-                        .foregroundColor(accentColor)
-                }
+                // 아이콘 (단순화)
+                Image(systemName: icon)
+                    .font(.title2)
+                    .fontWeight(.medium)
+                    .foregroundColor(accentColor)
+                    .frame(width: 56, height: 56)
+                    .background(accentColor.opacity(0.15))
+                    .clipShape(Circle())
                 
                 // 텍스트 정보
                 VStack(spacing: 4) {
@@ -768,7 +672,7 @@ extension SettingsView {
         }
         .buttonStyle(PlainButtonStyle())
         .ultraMinimalGlass(level: .standard)
-        .shadow(color: accentColor.opacity(0.1), radius: 6, x: 0, y: 3)
+        .shadow(color: accentColor.opacity(0.08), radius: 4, x: 0, y: 2)
     }
     
     @ViewBuilder

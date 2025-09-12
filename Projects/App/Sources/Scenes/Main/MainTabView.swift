@@ -124,7 +124,19 @@ struct MainTabView: View {
             }
         }
         .ignoresSafeArea(.keyboard)
-        .background(KingDesignTokens.Colors.background)
+        .background(
+            // 일관된 배경 그라데이션
+            LinearGradient(
+                colors: [
+                    KingDesignTokens.Colors.background,
+                    KingDesignTokens.Colors.surface,
+                    KingDesignTokens.Colors.surfaceSecondary
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea(.all)
+        )
     }
     
     /// Premium transition for tab bar appearance/disappearance

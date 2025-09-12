@@ -1,17 +1,23 @@
 import SwiftUI
-import DesignSystem
+
 import Core
+import DesignSystem
+import Entity
+import WalletKit
+
+import Factory
 
 // MARK: - Premium Fintech Dashboard
 
-// MARK: - WalletHomeViewStore (성능 최적화된 상태 관리)
-@Observable
-class WalletHomeViewStore {
+// MARK: - WalletHomeViewStore (실제 데이터 연동)
+final class WalletHomeViewStore {
     // UI 상태 그룹 - 화면 표시 관련
     struct UIState {
         var showSendView = false
         var isScrollingDown = false
         var isLoading = false
+        var errorMessage: String?
+        var isRefreshing = false
     }
     
     // 스크롤 상태 그룹 - 스크롤 추적 관련
@@ -20,17 +26,30 @@ class WalletHomeViewStore {
         var isScrollingDown = false
     }
     
-    // 지갑 데이터 그룹 - Mock 데이터
+    // 실제 지갑 데이터 그룹
     struct WalletData {
-        var balance = "2.5"
-        var usdValue = "$4,250.00"
+        var balance = "0.0"
+        var usdValue = "$0.00"
         var symbol = "ETH"
+        var walletAddress: String?
     }
     
     // 통합된 상태 그룹들
     var uiState = UIState()
     var scrollState = ScrollState()
     var walletData = WalletData()
+    
+    // 실제 거래 내역
+    var transactions: [Entity.Transaction] = []
+    
+    @Injected(\.walletService) private var walletService
+    @Injected(\.etherscanService) private var etherscanService: EtherscanService
+
+    init() { }
+        
+    // 간단한 메모리 캐시 (화면 세션 동안만)
+    private var lastRefreshTime: Date?
+    private let cacheValidDuration: TimeInterval = 300 // 5분
     
     // 🚀 성능 최적화: 계산 프로퍼티로 파생 상태 처리
     var shouldHideTabBar: Bool {
@@ -52,8 +71,44 @@ class WalletHomeViewStore {
         scrollState.lastOffset = currentOffset
     }
     
+    @MainActor
     func loadWalletData() {
-        uiState.isLoading = false
+        Task {
+            uiState.isLoading = true
+            uiState.errorMessage = nil
+            
+            do {
+                // Get current wallet address
+                let address = try await walletService.getCurrentWalletAddress()
+                
+                // Fetch wallet balance
+                let balanceInEth = try await walletService.getBalance(for: address)
+                
+                // Fetch transaction history via EtherscanService
+                let etherscanResponse = try await etherscanService.getTransactionHistory(address: address)
+                let transactionHistory = etherscanResponse.result.map { $0.toTransaction() }
+                
+                // Update wallet data on MainActor
+                await MainActor.run {
+                    walletData.walletAddress = address
+                    walletData.balance = balanceInEth
+                    walletData.symbol = "ETH"
+                    walletData.usdValue = "0.00" // TODO: Add price service integration
+                    
+                    // Update transactions
+                    transactions = transactionHistory
+                    
+                    uiState.isLoading = false
+                }
+                
+            } catch {
+                await MainActor.run {
+                    uiState.isLoading = false
+                    uiState.errorMessage = "데이터를 불러오는데 실패했습니다: \(error.localizedDescription)"
+                }
+                print("❌ Failed to load wallet data: \(error)")
+            }
+        }
     }
     
     func showSendView() {
@@ -113,6 +168,9 @@ struct WalletHomeView: View {
                 .coordinateSpace(name: "scroll")
                 .onPreferenceChange(ScrollOffsetKey.self) { value in
                     viewStore.handleScrollOffset(value)
+                }
+                .refreshable {
+                    viewStore.loadWalletData()
                 }
             }
             .background(KingDesignTokens.Gradients.background)
@@ -257,18 +315,39 @@ struct PremiumBalanceCard: View {
         .padding(32)
         .background(
             ZStack {
-                // 미니멀 글래스 배경
+                // 강화된 글래스 배경
                 RoundedRectangle(cornerRadius: 28)
                     .fill(.ultraThinMaterial)
+                    .background(
+                        RoundedRectangle(cornerRadius: 28)
+                            .fill(
+                                KingDesignTokens.Gradients.pureGlassMorphism
+                            )
+                    )
                 
-                // 서브틀 골드 보더
+                // 프리미엄 골드 액센트 오버레이
+                RoundedRectangle(cornerRadius: 28)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                KingDesignTokens.Colors.accent.opacity(0.08),
+                                Color.white.opacity(0.12),
+                                Color.clear
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                
+                // 프리미엄 보더
                 RoundedRectangle(cornerRadius: 28)
                     .stroke(
                         LinearGradient(
                             colors: [
-                                KingDesignTokens.Colors.accent.opacity(0.3),
-                                KingDesignTokens.Colors.accent.opacity(0.8).opacity(0.2),
-                                KingDesignTokens.Colors.primary.opacity(0.1)
+                                KingDesignTokens.Colors.accent.opacity(0.4),
+                                Color.white.opacity(0.3),
+                                KingDesignTokens.Colors.accent.opacity(0.2),
+                                Color.clear
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
@@ -276,6 +355,12 @@ struct PremiumBalanceCard: View {
                         lineWidth: 1.5
                     )
             }
+            .shadow(
+                color: KingDesignTokens.Colors.accent.opacity(0.1),
+                radius: 16,
+                x: 0,
+                y: 8
+            )
         )
         .scaleEffect(isScrollingDown ? 0.96 : 1.0)
         .animation(.spring(response: 0.5, dampingFraction: 0.8), value: isScrollingDown)
@@ -370,22 +455,46 @@ struct GoldenActionButton: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 24)
             .background(
-                RoundedRectangle(cornerRadius: 24)
-                    .fill(.ultraThinMaterial)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 24)
-                            .stroke(
-                                LinearGradient(
-                                    colors: [
-                                        KingDesignTokens.Colors.accent.opacity(0.2),
-                                        KingDesignTokens.Colors.primary.opacity(0.1)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 1
+                ZStack {
+                    // 강화된 글래스 배경
+                    RoundedRectangle(cornerRadius: 24)
+                        .fill(.ultraThinMaterial)
+                        .background(
+                            RoundedRectangle(cornerRadius: 24)
+                                .fill(
+                                    KingDesignTokens.Gradients.pureGlassMorphism
+                                )
+                        )
+                    
+                    // 서브틀한 골드 오버레이
+                    RoundedRectangle(cornerRadius: 24)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    KingDesignTokens.Colors.accent.opacity(0.05),
+                                    Color.white.opacity(0.08),
+                                    Color.clear
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
                             )
-                    )
+                        )
+                    
+                    // 일관된 보더
+                    RoundedRectangle(cornerRadius: 24)
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    KingDesignTokens.Colors.accent.opacity(0.3),
+                                    Color.white.opacity(0.2),
+                                    Color.clear
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                }
             )
             .scaleEffect(isPressed ? 0.96 : 1.0)
             .animation(.easeInOut(duration: 0.1), value: isPressed)
