@@ -251,6 +251,9 @@ public actor WalletService: WalletServiceImplementation, WalletServiceProtocol {
     }
     
     public func getTransactionHistory(address: String) async throws -> [Transaction] {
+        // Use EtherscanService to fetch transaction history
+        // Note: This requires EtherscanService to be injected or accessed
+        // For now, return empty array - this will be handled by WalletHomeView using EtherscanService directly
         return []
     }
 }

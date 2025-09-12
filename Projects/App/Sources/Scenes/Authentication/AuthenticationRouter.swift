@@ -3,11 +3,27 @@ import Foundation
 import Entity
 import Core
 
+// MARK: - Routing Logic Protocol
+
+/// 인증 화면의 라우팅 로직 프로토콜
+@MainActor
+protocol AuthenticationRoutingLogic: AnyObject {
+    func routeToMain()
+    func routeToWalletCreation()
+    func routeToWalletImport(method: WalletImportMethod)
+    func routeToBiometricSetup()
+    func routeToPINSetup(isFirstTime: Bool)
+    func showAuthenticationError(_ message: String)
+    func showValidationError(_ message: String)
+    func showLoading(_ message: String)
+    func hideLoading()
+}
+
 /// 인증 화면의 네비게이션을 관리하는 Router
 /// SwiftUI의 선언적 패러다임에 맞춘 새로운 Router 패턴 적용
 @Observable
 @MainActor
-public final class AuthenticationRouter {
+public final class AuthenticationRouter: AuthenticationRoutingLogic {
     
     // MARK: - Router Dependencies
     

@@ -303,7 +303,7 @@ struct ReceiveView: View {
             VStack(alignment: .leading, spacing: KingDesignTokens.Spacing.md) {
                 // 헤더
                 HStack(spacing: KingDesignTokens.Spacing.sm) {
-                    Image(systemName: "shield.checkered.fill")
+                    Image(systemName: "checkmark.shield.fill")
                         .font(KingDesignTokens.Typography.body)
                         .foregroundColor(KingDesignTokens.Colors.success)
                     

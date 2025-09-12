@@ -12,7 +12,20 @@ public final class EtherscanService {
     
     private struct Config {
         static let baseURL = "https://api.etherscan.io/api"
-        static let apiKey = "YourEtherscanAPIKey" // TODO: 실제 API 키로 교체 필요
+        static let apiKey: String = {
+            // 환경 변수에서 API 키 읽기 (개발/운영 분리)
+            if let apiKey = Bundle.main.object(forInfoDictionaryKey: "ETHERSCAN_API_KEY") as? String,
+               !apiKey.isEmpty && apiKey != "$(ETHERSCAN_API_KEY)" {
+                return apiKey
+            }
+            // Info.plist에 없으면 UserDefaults에서 확인
+            if let savedKey = UserDefaults.standard.string(forKey: "etherscan_api_key"),
+               !savedKey.isEmpty {
+                return savedKey
+            }
+            // 기본값 (테스트용 - 실제로는 공식 키 필요)
+            return "YourEtherscanAPIKey"
+        }()
         static let requestTimeout: TimeInterval = 15.0
         static let maxRetries = 3
         static let rateLimitDelay: TimeInterval = 0.2 // 5 requests/second
@@ -41,15 +54,15 @@ public final class EtherscanService {
         
         self.session = URLSession(configuration: configuration)
         
-        logger.info("🔗 EtherscanService initialized")
+        logger.info("🔗 EtherscanService shared instance initialized")
     }
     
     // MARK: - Public API
     
     /// 지갑 주소의 거래 내역 조회 (페이지네이션 지원)
     func getTransactionHistory(
-        address: String, 
-        startBlock: Int? = nil, 
+        address: String,
+        startBlock: Int? = nil,
         endBlock: Int? = nil,
         page: Int = 1,
         offset: Int = 20
@@ -172,10 +185,30 @@ public final class EtherscanService {
         switch httpResponse.statusCode {
         case 200:
             do {
+                // 디버그용 로그 (개발 환경에서만)
+#if DEBUG
+                if let jsonString = String(data: data, encoding: .utf8) {
+                    logger.debug("📦 Response Data: \(String(jsonString.prefix(500)))...")
+                }
+#endif
+                
                 let decodedResponse = try JSONDecoder().decode(T.self, from: data)
                 return decodedResponse
             } catch {
                 logger.error("❌ JSON Decoding failed: \(error)")
+                
+                // 더 구체적인 디코딩 에러 정보 제공
+                if let decodingError = error as? DecodingError {
+                    logger.error("📋 Decoding Error Details: \(decodingError.localizedDescription)")
+                    
+                    // 개발 환경에서 원본 데이터 로그
+#if DEBUG
+                    if let jsonString = String(data: data, encoding: .utf8) {
+                        logger.error("📦 Failed to decode data: \(jsonString)")
+                    }
+#endif
+                }
+                
                 throw EtherscanError.decodingFailed(error)
             }
             
@@ -185,12 +218,19 @@ public final class EtherscanService {
             return try await performRequest(parameters: parameters, responseType: responseType)
             
         case 400...499:
+            logger.error("❌ Client error: \(httpResponse.statusCode)")
+            if let errorData = String(data: data, encoding: .utf8) {
+                logger.error("📋 Error details: \(errorData)")
+            }
             throw EtherscanError.clientError(httpResponse.statusCode)
-            
         case 500...599:
+            logger.error("❌ Server error: \(httpResponse.statusCode)")
+            if let errorData = String(data: data, encoding: .utf8) {
+                logger.error("📋 Error details: \(errorData)")
+            }
             throw EtherscanError.serverError(httpResponse.statusCode)
-            
         default:
+            logger.error("❌ Unknown error: \(httpResponse.statusCode)")
             throw EtherscanError.unknownError(httpResponse.statusCode)
         }
     }
@@ -219,6 +259,76 @@ public final class EtherscanService {
         }
         
         lastRequestTime = Date()
+    }
+}
+
+// MARK: - API 키 설정 헬퍼
+
+extension EtherscanService {
+    /// API 키 설정 상태 확인
+    static var isAPIKeyConfigured: Bool {
+        return Config.apiKey != "YourEtherscanAPIKey" && !Config.apiKey.isEmpty
+    }
+    
+    /// API 키 런타임 설정 (테스트용)
+    static func setAPIKey(_ apiKey: String) {
+        UserDefaults.standard.set(apiKey, forKey: "etherscan_api_key")
+    }
+    
+    /// API 키 설정 가이드 메시지
+    static var apiKeySetupGuide: String {
+        return """
+        🔑 Etherscan API 키 설정 필요:
+        
+        1. https://etherscan.io/register 에서 계정 생성
+        2. https://etherscan.io/apis 에서 무료 API 키 발급
+        3. Info.plist에 ETHERSCAN_API_KEY 추가:
+           <key>ETHERSCAN_API_KEY</key>
+           <string>YOUR_API_KEY_HERE</string>
+        
+        또는 런타임에서:
+        EtherscanService.setAPIKey("YOUR_API_KEY_HERE")
+        """
+    }
+}
+
+// MARK: - 안전한 API 응답 검증
+
+extension EtherscanTransactionListResponse {
+    /// 응답 유효성 검사
+    var isValidResponse: Bool {
+        guard isSuccess else { return false }
+        
+        // "No transactions found" 메시지도 유효한 응답으로 처리
+        if message.lowercased().contains("no transactions found") {
+            return true
+        }
+        
+        // 실제 결과가 있는 경우 검증
+        return !result.isEmpty && result.allSatisfy { !$0.hash.isEmpty }
+    }
+    
+    /// 안전한 거래 목록 반환
+    var safeResult: [EtherscanTransaction] {
+        return result.filter { !$0.hash.isEmpty && !$0.from.isEmpty }
+    }
+}
+
+extension EtherscanTokenTransferResponse {
+    /// 응답 유효성 검사
+    var isValidResponse: Bool {
+        guard isSuccess else { return false }
+        
+        if message.lowercased().contains("no transactions found") {
+            return true
+        }
+        
+        return !result.isEmpty && result.allSatisfy { !$0.hash.isEmpty }
+    }
+    
+    /// 안전한 토큰 전송 목록 반환
+    var safeResult: [EtherscanTokenTransfer] {
+        return result.filter { !$0.hash.isEmpty && !$0.from.isEmpty && !$0.to.isEmpty }
     }
 }
 
@@ -290,22 +400,71 @@ struct EtherscanTransaction: Codable {
     let timeStamp: String
     let hash: String
     let nonce: String
-    let blockHash: String
+    let blockHash: String?
     let transactionIndex: String
     let from: String
-    let to: String
+    let to: String?
     let value: String
     let gas: String
     let gasPrice: String
     let isError: String
-    let txreceipt_status: String
-    let input: String
-    let contractAddress: String
+    let txreceipt_status: String?
+    let input: String?
+    let contractAddress: String?
     let cumulativeGasUsed: String
     let gasUsed: String
     let confirmations: String
     let methodId: String?
     let functionName: String?
+    
+    // 커스텀 디코딩으로 안정성 향상
+    private enum CodingKeys: String, CodingKey {
+        case blockNumber
+        case timeStamp
+        case hash
+        case nonce
+        case blockHash
+        case transactionIndex
+        case from
+        case to
+        case value
+        case gas
+        case gasPrice
+        case isError
+        case txreceipt_status
+        case input
+        case contractAddress
+        case cumulativeGasUsed
+        case gasUsed
+        case confirmations
+        case methodId
+        case functionName
+    }
+    
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        blockNumber = try container.decode(String.self, forKey: .blockNumber)
+        timeStamp = try container.decode(String.self, forKey: .timeStamp)
+        hash = try container.decode(String.self, forKey: .hash)
+        nonce = try container.decode(String.self, forKey: .nonce)
+        blockHash = try container.decodeIfPresent(String.self, forKey: .blockHash)
+        transactionIndex = try container.decode(String.self, forKey: .transactionIndex)
+        from = try container.decode(String.self, forKey: .from)
+        to = try container.decodeIfPresent(String.self, forKey: .to)
+        value = try container.decode(String.self, forKey: .value)
+        gas = try container.decode(String.self, forKey: .gas)
+        gasPrice = try container.decode(String.self, forKey: .gasPrice)
+        isError = try container.decode(String.self, forKey: .isError)
+        txreceipt_status = try container.decodeIfPresent(String.self, forKey: .txreceipt_status)
+        input = try container.decodeIfPresent(String.self, forKey: .input)
+        contractAddress = try container.decodeIfPresent(String.self, forKey: .contractAddress)
+        cumulativeGasUsed = try container.decode(String.self, forKey: .cumulativeGasUsed)
+        gasUsed = try container.decode(String.self, forKey: .gasUsed)
+        confirmations = try container.decode(String.self, forKey: .confirmations)
+        methodId = try container.decodeIfPresent(String.self, forKey: .methodId)
+        functionName = try container.decodeIfPresent(String.self, forKey: .functionName)
+    }
 }
 
 /// Etherscan 토큰 전송 정보
@@ -314,21 +473,68 @@ struct EtherscanTokenTransfer: Codable {
     let timeStamp: String
     let hash: String
     let nonce: String
-    let blockHash: String
+    let blockHash: String?
     let from: String
     let contractAddress: String
     let to: String
     let value: String
-    let tokenName: String
-    let tokenSymbol: String
-    let tokenDecimal: String
+    let tokenName: String?
+    let tokenSymbol: String?
+    let tokenDecimal: String?
     let transactionIndex: String
     let gas: String
     let gasPrice: String
     let gasUsed: String
     let cumulativeGasUsed: String
-    let input: String
+    let input: String?
     let confirmations: String
+    
+    // 커스텀 디코딩으로 안정성 향상
+    private enum CodingKeys: String, CodingKey {
+        case blockNumber
+        case timeStamp
+        case hash
+        case nonce
+        case blockHash
+        case from
+        case contractAddress
+        case to
+        case value
+        case tokenName
+        case tokenSymbol
+        case tokenDecimal
+        case transactionIndex
+        case gas
+        case gasPrice
+        case gasUsed
+        case cumulativeGasUsed
+        case input
+        case confirmations
+    }
+    
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        blockNumber = try container.decode(String.self, forKey: .blockNumber)
+        timeStamp = try container.decode(String.self, forKey: .timeStamp)
+        hash = try container.decode(String.self, forKey: .hash)
+        nonce = try container.decode(String.self, forKey: .nonce)
+        blockHash = try container.decodeIfPresent(String.self, forKey: .blockHash)
+        from = try container.decode(String.self, forKey: .from)
+        contractAddress = try container.decode(String.self, forKey: .contractAddress)
+        to = try container.decode(String.self, forKey: .to)
+        value = try container.decode(String.self, forKey: .value)
+        tokenName = try container.decodeIfPresent(String.self, forKey: .tokenName)
+        tokenSymbol = try container.decodeIfPresent(String.self, forKey: .tokenSymbol)
+        tokenDecimal = try container.decodeIfPresent(String.self, forKey: .tokenDecimal)
+        transactionIndex = try container.decode(String.self, forKey: .transactionIndex)
+        gas = try container.decode(String.self, forKey: .gas)
+        gasPrice = try container.decode(String.self, forKey: .gasPrice)
+        gasUsed = try container.decode(String.self, forKey: .gasUsed)
+        cumulativeGasUsed = try container.decode(String.self, forKey: .cumulativeGasUsed)
+        input = try container.decodeIfPresent(String.self, forKey: .input)
+        confirmations = try container.decode(String.self, forKey: .confirmations)
+    }
 }
 
 /// Etherscan 거래 상세 정보
@@ -410,10 +616,13 @@ extension EtherscanTransaction {
             status = .confirmed
         }
         
+        // 안전한 변환으로 nil 값 처리
+        let safeToAddress = to?.isEmpty == true ? nil : to
+        
         return Transaction(
             hash: hash,
             from: from,
-            to: to,
+            to: safeToAddress ?? "", // 빈 문자열로 대체
             value: value,
             gasUsed: gasUsed,
             gasPrice: gasPrice,

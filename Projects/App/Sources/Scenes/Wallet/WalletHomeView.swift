@@ -1,17 +1,23 @@
 import SwiftUI
-import DesignSystem
+
 import Core
+import DesignSystem
+import Entity
+import WalletKit
+
+import Factory
 
 // MARK: - Premium Fintech Dashboard
 
-// MARK: - WalletHomeViewStore (성능 최적화된 상태 관리)
-@Observable
-class WalletHomeViewStore {
+// MARK: - WalletHomeViewStore (실제 데이터 연동)
+final class WalletHomeViewStore {
     // UI 상태 그룹 - 화면 표시 관련
     struct UIState {
         var showSendView = false
         var isScrollingDown = false
         var isLoading = false
+        var errorMessage: String?
+        var isRefreshing = false
     }
     
     // 스크롤 상태 그룹 - 스크롤 추적 관련
@@ -20,17 +26,30 @@ class WalletHomeViewStore {
         var isScrollingDown = false
     }
     
-    // 지갑 데이터 그룹 - Mock 데이터
+    // 실제 지갑 데이터 그룹
     struct WalletData {
-        var balance = "2.5"
-        var usdValue = "$4,250.00"
+        var balance = "0.0"
+        var usdValue = "$0.00"
         var symbol = "ETH"
+        var walletAddress: String?
     }
     
     // 통합된 상태 그룹들
     var uiState = UIState()
     var scrollState = ScrollState()
     var walletData = WalletData()
+    
+    // 실제 거래 내역
+    var transactions: [Entity.Transaction] = []
+    
+    @Injected(\.walletService) private var walletService
+    @Injected(\.etherscanService) private var etherscanService: EtherscanService
+
+    init() { }
+        
+    // 간단한 메모리 캐시 (화면 세션 동안만)
+    private var lastRefreshTime: Date?
+    private let cacheValidDuration: TimeInterval = 300 // 5분
     
     // 🚀 성능 최적화: 계산 프로퍼티로 파생 상태 처리
     var shouldHideTabBar: Bool {
@@ -52,8 +71,44 @@ class WalletHomeViewStore {
         scrollState.lastOffset = currentOffset
     }
     
+    @MainActor
     func loadWalletData() {
-        uiState.isLoading = false
+        Task {
+            uiState.isLoading = true
+            uiState.errorMessage = nil
+            
+            do {
+                // Get current wallet address
+                let address = try await walletService.getCurrentWalletAddress()
+                
+                // Fetch wallet balance
+                let balanceInEth = try await walletService.getBalance(for: address)
+                
+                // Fetch transaction history via EtherscanService
+                let etherscanResponse = try await etherscanService.getTransactionHistory(address: address)
+                let transactionHistory = etherscanResponse.result.map { $0.toTransaction() }
+                
+                // Update wallet data on MainActor
+                await MainActor.run {
+                    walletData.walletAddress = address
+                    walletData.balance = balanceInEth
+                    walletData.symbol = "ETH"
+                    walletData.usdValue = "0.00" // TODO: Add price service integration
+                    
+                    // Update transactions
+                    transactions = transactionHistory
+                    
+                    uiState.isLoading = false
+                }
+                
+            } catch {
+                await MainActor.run {
+                    uiState.isLoading = false
+                    uiState.errorMessage = "데이터를 불러오는데 실패했습니다: \(error.localizedDescription)"
+                }
+                print("❌ Failed to load wallet data: \(error)")
+            }
+        }
     }
     
     func showSendView() {
@@ -113,6 +168,9 @@ struct WalletHomeView: View {
                 .coordinateSpace(name: "scroll")
                 .onPreferenceChange(ScrollOffsetKey.self) { value in
                     viewStore.handleScrollOffset(value)
+                }
+                .refreshable {
+                    viewStore.loadWalletData()
                 }
             }
             .background(KingDesignTokens.Gradients.background)
