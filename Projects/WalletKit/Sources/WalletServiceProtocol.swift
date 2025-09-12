@@ -54,6 +54,11 @@ public protocol WalletServiceProtocol: Sendable {
     /// - Throws: 거래 조회 에러
     func getTransactionStatus(transactionHash: String) async throws -> TransactionStatus
     
+    /// 현재 가스 가격 조회
+    /// - Returns: 현재 가스 가격 (Wei 단위)
+    /// - Throws: 가스 가격 조회 에러
+    func getCurrentGasPrice() async throws -> String
+    
     // MARK: - Address Validation
     
     /// 이더리움 주소 유효성 검증

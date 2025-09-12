@@ -82,6 +82,15 @@ public enum WalletError: LocalizedError, Sendable {
     /// - 잘못된 단어 순서
     case invalidMnemonic
     
+    /// 유효하지 않은 금액 또는 잔액 형식
+    ///
+    /// 발생 상황:
+    /// - 음수 금액
+    /// - 소수점 자릿수 초과 (18자리 초과)
+    /// - 0 또는 공백 금액
+    /// - 수치로 변환할 수 없는 형식
+    case invalidAmount
+    
     /// 트랜잭션 실행에 필요한 자금 부족
     ///
     /// 발생 상황:
@@ -141,6 +150,8 @@ public enum WalletError: LocalizedError, Sendable {
             return "잘못된 주소입니다"
         case .invalidMnemonic:
             return "잘못된 니모닉 문구입니다"
+        case .invalidAmount:
+            return "잘못된 금액입니다"
         case .insufficientFunds:
             return "잔액이 부족합니다"
         case .transactionFailed:
@@ -167,6 +178,8 @@ public enum WalletError: LocalizedError, Sendable {
             return "Invalid Ethereum address format - must be 42-character hex with 0x prefix"
         case .invalidMnemonic:
             return "Invalid BIP39 mnemonic phrase - checksum or word validation failed"
+        case .invalidAmount:
+            return "Invalid amount format - must be positive number with max 18 decimal places"
         case .insufficientFunds:
             return "Insufficient balance for transaction including gas fees"
         case .transactionFailed:
@@ -193,6 +206,8 @@ public enum WalletError: LocalizedError, Sendable {
             return "이더리움 주소 형식을 확인해주세요 (0x로 시작하는 42자리)."
         case .invalidMnemonic:
             return "12개 또는 24개의 올바른 시드 단어를 입력해주세요. 순서와 철자를 확인해보세요."
+        case .invalidAmount:
+            return "양수 금액을 입력해주세요. 소수점은 최대 18자리까지 가능합니다."
         case .insufficientFunds:
             return "ETH를 충전하거나 전송 금액을 줄여주세요. 가스비도 함께 고려해야 합니다."
         case .transactionFailed:
@@ -207,7 +222,7 @@ public enum WalletError: LocalizedError, Sendable {
     /// 오류가 사용자 액션으로 인한 것인지 확인
     public var isUserError: Bool {
         switch self {
-        case .invalidPrivateKey, .invalidAddress, .invalidMnemonic, .insufficientFunds:
+        case .invalidPrivateKey, .invalidAddress, .invalidMnemonic, .invalidAmount, .insufficientFunds:
             return true
         default:
             return false
@@ -236,35 +251,35 @@ public enum WalletError: LocalizedError, Sendable {
         }
     }
     
-    /// 오류 심각도 레벨
-    public var severity: WalletErrorSeverity {
+    /// 오류 심각도 레벨 (문자열로 반환)
+    public var severityLevel: String {
         switch self {
         case .noWalletFound:
-            return .critical // 앱 핵심 기능 불가
+            return "critical" // 앱 핵심 기능 불가
         case .keychainError, .privateKeyExtractionFailed:
-            return .high // 보안 관련 문제
+            return "high" // 보안 관련 문제
         case .walletCreationFailed, .transactionFailed:
-            return .high // 주요 기능 실패
+            return "high" // 주요 기능 실패
         case .insufficientFunds, .networkError:
-            return .medium // 사용자가 해결 가능
-        case .invalidPrivateKey, .invalidAddress, .invalidMnemonic:
-            return .low // 입력 오류
+            return "medium" // 사용자가 해결 가능
+        case .invalidPrivateKey, .invalidAddress, .invalidMnemonic, .invalidAmount:
+            return "low" // 입력 오류
         }
     }
     
-    /// 오류 카테고리
-    public var category: WalletErrorCategory {
+    /// 오류 카테고리 (문자열로 반환)
+    public var errorCategory: String {
         switch self {
         case .walletCreationFailed, .noWalletFound:
-            return .wallet
+            return "wallet"
         case .privateKeyExtractionFailed, .invalidPrivateKey, .keychainError:
-            return .security
-        case .invalidAddress, .invalidMnemonic:
-            return .validation
+            return "security"
+        case .invalidAddress, .invalidMnemonic, .invalidAmount:
+            return "validation"
         case .insufficientFunds, .transactionFailed:
-            return .transaction
+            return "transaction"
         case .networkError:
-            return .network
+            return "network"
         }
     }
     
@@ -284,33 +299,5 @@ public enum WalletError: LocalizedError, Sendable {
         default:
             return nil
         }
-    }
-    
-    // MARK: - Supporting Types
-    
-    /// 지갑 오류 심각도 레벨
-    public enum WalletErrorSeverity {
-        /// 낮은 심각도 - 사용자 입력 오류
-        case low
-        /// 중간 심각도 - 기능 제한이나 사용자 액션 필요
-        case medium
-        /// 높은 심각도 - 주요 기능 실패
-        case high
-        /// 치명적 심각도 - 앱 핵심 기능 불가
-        case critical
-    }
-    
-    /// 지갑 오류 카테고리
-    public enum WalletErrorCategory {
-        /// 지갑 생성/관리 관련
-        case wallet
-        /// 보안 및 키 관리 관련
-        case security
-        /// 데이터 유효성 검증 관련
-        case validation
-        /// 트랜잭션 처리 관련
-        case transaction
-        /// 네트워크 연결 관련
-        case network
     }
 }

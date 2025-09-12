@@ -214,44 +214,6 @@ public enum NetworkType: String, CaseIterable, Sendable {
     }
 }
 
-/// 지원되는 통화 타입
-public enum CurrencyType: String, CaseIterable, Sendable {
-    case krw = "KRW"
-    case usd = "USD"
-    case eur = "EUR"
-    case jpy = "JPY"
-    case cny = "CNY"
-    
-    public var displayName: String {
-        switch self {
-        case .krw: return "KRW (원)"
-        case .usd: return "USD (달러)"
-        case .eur: return "EUR (유로)"
-        case .jpy: return "JPY (엔)"
-        case .cny: return "CNY (위안)"
-        }
-    }
-    
-    public var symbol: String {
-        switch self {
-        case .krw: return "₩"
-        case .usd: return "$"
-        case .eur: return "€"
-        case .jpy: return "¥"
-        case .cny: return "¥"
-        }
-    }
-    
-    public var flagEmoji: String {
-        switch self {
-        case .krw: return "🇰🇷"
-        case .usd: return "🇺🇸"
-        case .eur: return "🇪🇺"
-        case .jpy: return "🇯🇵"
-        case .cny: return "🇨🇳"
-        }
-    }
-}
 
 /// 지원되는 언어 타입
 public enum LanguageType: String, CaseIterable, Sendable {

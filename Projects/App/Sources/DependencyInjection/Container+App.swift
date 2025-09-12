@@ -29,7 +29,7 @@ public extension Container {
     
     /// WalletService 구현체
     /// 지갑 관련 핵심 비즈니스 로직 처리
-    var walletService: Factory<WalletService> {
+    var walletService: Factory<any WalletServiceProtocol> {
         self {
             // 안전한 Container 접근을 위한 Task 사용
             let configService = Container.shared.configurationService()
@@ -38,7 +38,7 @@ public extension Container {
             // WalletService.shared를 사용하거나 새로 초기화
             do {
                 let service = try WalletService.initialize(rpcURL: rpcURL)
-                return service
+                return service as any WalletServiceProtocol
             } catch {
                 // 더 나은 에러 핸들링
                 fatalError("Critical service initialization failed: \(error.localizedDescription)")
@@ -121,7 +121,7 @@ actor ContainerManager {
     }
     
     /// WalletService 안전한 해결
-    func resolveWalletService() -> WalletService {
+    func resolveWalletService() -> any WalletServiceProtocol {
         container.walletService()
     }
     
