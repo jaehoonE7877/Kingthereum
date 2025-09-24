@@ -8,60 +8,60 @@ struct PremiumPINSetupView: View {
     @State private var pinCode = ""
     @State private var confirmPIN = ""
     @State private var isConfirmingPIN = false
-    
+
     var body: some View {
-        VStack(spacing: 0) {
-            // Top spacing
-            Spacer()
-                .frame(height: KingDesignTokens.Spacing.xxxl * 2)
-            
-            // Header section - Minimal & professional
+        ScrollView {
             VStack(spacing: KingDesignTokens.Spacing.xl) {
-                // Simple lock icon - no gradients
-                Image(systemName: "lock.fill")
-                    .font(.system(size: 32, weight: .medium))
-                    .foregroundColor(KingDesignTokens.Colors.accent)
-                
-                VStack(spacing: KingDesignTokens.Spacing.sm) {
-                    Text(isConfirmingPIN ? "Confirm PIN" : "Create PIN")
-                        .font(.system(size: 28, weight: .semibold))
-                        .foregroundColor(KingDesignTokens.Colors.primaryText)
-                    
-                    Text(isConfirmingPIN ? "Enter your PIN again" : "Enter 6-digit PIN")
-                        .font(.system(size: 17, weight: .regular))
-                        .foregroundColor(KingDesignTokens.Colors.secondaryText)
+                AuthenticationGlassCard {
+                    VStack(alignment: .leading, spacing: KingDesignTokens.Spacing.sm) {
+                        Image(systemName: "lock.square.fill")
+                            .font(.system(size: 28, weight: .semibold))
+                            .foregroundColor(KingDesignTokens.Colors.accent)
+                            .padding(.bottom, KingDesignTokens.Spacing.sm)
+
+                        Text(isConfirmingPIN ? "PIN 확인" : "PIN 생성")
+                            .font(KingDesignTokens.Typography.displayS)
+                            .foregroundColor(KingDesignTokens.Colors.primaryText)
+
+                        Text(isConfirmingPIN ? "같은 PIN을 다시 입력해 주세요." : "6자리 숫자로 PIN을 설정하세요.")
+                            .font(KingDesignTokens.Typography.caption)
+                            .foregroundColor(KingDesignTokens.Colors.secondaryText)
+                    }
+                }
+
+                AuthenticationGlassCard {
+                    VStack(spacing: KingDesignTokens.Spacing.xl) {
+                        PremiumPINField(
+                            pin: isConfirmingPIN ? $confirmPIN : $pinCode,
+                            length: 6
+                        ) { pin in
+                            if isConfirmingPIN {
+                                handlePINConfirmation(pin)
+                            } else {
+                                handlePINEntry(pin)
+                            }
+                        }
+
+                        VStack(alignment: .leading, spacing: KingDesignTokens.Spacing.sm) {
+                            Label {
+                                Text("생성 팁")
+                                    .font(KingDesignTokens.Typography.caption)
+                                    .foregroundColor(KingDesignTokens.Colors.secondaryText)
+                            } icon: {
+                                Image(systemName: "shield.lefthalf.filled")
+                                    .foregroundColor(KingDesignTokens.Colors.warning)
+                            }
+
+                            Text("생일이나 반복되는 숫자 조합은 피하고, 주기적으로 변경하면 보안이 강화됩니다.")
+                                .font(KingDesignTokens.Typography.caption)
+                                .foregroundColor(KingDesignTokens.Colors.secondaryText)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                 }
             }
-            
-            Spacer()
-            
-            // PIN 입력 섹션
-            PremiumPINField(
-                pin: isConfirmingPIN ? $confirmPIN : $pinCode,
-                length: 6
-            ) { pin in
-                if isConfirmingPIN {
-                    handlePINConfirmation(pin)
-                } else {
-                    handlePINEntry(pin)
-                }
-            }
-            
-            // Flexible spacer
-            Spacer()
-            
-            // Minimal security guide
-            VStack(spacing: KingDesignTokens.Spacing.sm) {
-                Text("Keep your PIN secure")
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundColor(KingDesignTokens.Colors.primaryText)
-                
-                Text("Don't use birthdays or obvious patterns")
-                    .font(.system(size: 13, weight: .regular))
-                    .foregroundColor(KingDesignTokens.Colors.secondaryText)
-                    .multilineTextAlignment(.center)
-            }
-            .padding(.horizontal, KingDesignTokens.Spacing.xl)
+            .padding(.horizontal, KingDesignTokens.Spacing.lg)
+            .padding(.top, KingDesignTokens.Spacing.xl)
             .padding(.bottom, KingDesignTokens.Spacing.xxxl)
         }
     }
