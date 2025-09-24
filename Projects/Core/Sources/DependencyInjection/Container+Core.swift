@@ -35,18 +35,18 @@ public extension Container {
             .singleton
     }
     
-    /// 다크 모드/라이트 모드 상태를 관리하는 서비스 (향후 추가 예정)
-    /// 
-    /// 사용자의 테마 설정을 관리하고 앱 전체에 일관된 테마를 적용합니다.
-    /// UserDefaults와 연동하여 사용자 선호도를 영구 저장합니다.
-    /// 
-    /// - Note: 현재는 주석 처리됨. DisplayModeService 구현 후 활성화 예정
-    /*
-    var displayModeService: Factory<any DisplayModeServiceProtocol> {
-        self { DisplayModeService() as any DisplayModeServiceProtocol }
+    /// 다크 모드/라이트 모드 상태를 관리하는 서비스
+    ///
+    /// Core 모듈에서 직접 Factory를 등록하여, App 모듈 등에서
+    /// 중복 정의 없이 동일한 인스턴스를 사용할 수 있도록 합니다.
+    var displayModeService: Factory<DisplayModeService> {
+        self {
+            MainActor.assumeIsolated {
+                DisplayModeService()
+            }
+        }
             .singleton
     }
-    */
 }
 
 // MARK: - Swift Concurrency Support
@@ -71,8 +71,8 @@ public extension Container {
     /// 
     /// ## 사용 예시:
     /// ```swift
-    /// let config = await container.resolveConfigurationService()
-    /// let rpcURL = await config.getRPCURL(for: .mainnet)
+    /// let config = container.resolveConfigurationService()
+    /// let rpcURL = try config.getRPCURL(for: .mainnet)
     /// ```
     func resolveConfigurationService() -> any ConfigurationServiceProtocol {
         return configurationService()

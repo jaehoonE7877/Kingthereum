@@ -2,7 +2,7 @@ import ProjectDescription
 
 public enum Environment {
     public static let appVersion: String = "1.0.0"
-    public static let bundlePrefix: String = "com.kingtherum"
+    public static let bundlePrefix: String = "com.kingthereum"
     public static let deploymentTarget: DeploymentTargets = .iOS("18.0")
     public static let destination: Destinations = [.iPhone, .iPad]
 }

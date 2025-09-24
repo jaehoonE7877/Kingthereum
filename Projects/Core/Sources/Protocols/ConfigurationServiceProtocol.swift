@@ -7,26 +7,26 @@ public protocol ConfigurationServiceProtocol: Sendable {
     // MARK: - Infura Configuration
     
     /// Infura Project ID
-    var infuraProjectID: String { get async }
+    func infuraProjectID() throws -> String
     
     /// Infura Project Secret (옵션)
-    var infuraProjectSecret: String? { get async }
+    func infuraProjectSecret() -> String?
     
     /// 이더리움 메인넷 RPC URL (기본 네트워크용)
-    var ethereumRPCURL: String { get }
+    func ethereumRPCURL() throws -> String
     
     /// 특정 네트워크에 대한 RPC URL 생성
     /// - Parameter network: 네트워크 타입
     /// - Returns: 해당 네트워크의 RPC URL
-    func getRPCURL(for network: NetworkType) async -> String
+    func getRPCURL(for network: NetworkType) throws -> String
     
     // MARK: - API Configuration
     
     /// Etherscan API 키
-    var etherscanAPIKey: String { get async }
+    func etherscanAPIKey() throws -> String
     
     /// Etherscan Base URL
-    var etherscanBaseURL: String { get async }
+    func etherscanBaseURL() -> String
     
     // MARK: - App Configuration
     

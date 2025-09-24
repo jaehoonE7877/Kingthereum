@@ -14,26 +14,18 @@ import Factory
 /// Swift 6.0 strict concurrency 규칙 준수
 public extension Container {
     
-    /// DisplayModeService 구현체 (MainActor 격리)
-    /// 다크모드/라이트모드 관리 서비스
-    var displayModeService: Factory<DisplayModeService> {
-        self {
-            // MainActor에서 안전하게 DisplayModeService 생성
-            // assumeIsolated는 현재 컨텍스트가 MainActor임을 가정
-            return MainActor.assumeIsolated {
-                DisplayModeService()
-            }
-        }
-        .singleton
-    }
-    
     /// WalletService 구현체
     /// 지갑 관련 핵심 비즈니스 로직 처리
     var walletService: Factory<any WalletServiceProtocol> {
         self {
             // 안전한 Container 접근을 위한 Task 사용
             let configService = Container.shared.configurationService()
-            let rpcURL = configService.ethereumRPCURL
+            let rpcURL: String
+            do {
+                rpcURL = try configService.ethereumRPCURL()
+            } catch {
+                fatalError("Missing configuration for Ethereum RPC URL: \(error)")
+            }
             
             // WalletService.shared를 사용하거나 새로 초기화
             do {

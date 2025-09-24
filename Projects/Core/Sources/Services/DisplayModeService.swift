@@ -157,11 +157,8 @@ public final class DisplayModeService: DisplayModeServiceProtocol, ObservableObj
         
         Logger.debug("디스플레이 모드 적용 완료: \(windowCount)개 윈도우에 \(mode.rawValue) 적용")
         
-        // 메인 스레드에서 UI 업데이트 강제 실행
-        // SwiftUI와 UIKit 간의 동기화를 보장
-        DispatchQueue.main.async { [weak self] in
-            self?.objectWillChange.send()
-        }
+        // @MainActor 컨텍스트이므로 즉시 변경 알림을 전파
+        objectWillChange.send()
     }
 }
 

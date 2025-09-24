@@ -1,6 +1,48 @@
 import Testing
 import Foundation
+import Darwin
 @testable import Core
+
+private let configurationTestEnvironment: [String: String] = [
+    "INFURA_PROJECT_ID": "test-infura-project-id",
+    "INFURA_PROJECT_SECRET": "test-infura-secret",
+    "ETHERSCAN_API_KEY": "test-etherscan-api-key"
+]
+
+@discardableResult
+private func withConfigurationEnvironment<T>(
+    _ execute: () async throws -> T
+) async rethrows -> T {
+    var previousValues: [String: String?] = [:]
+    for (key, value) in configurationTestEnvironment {
+        if let existing = getenv(key) {
+            previousValues[key] = String(cString: existing)
+        } else {
+            previousValues[key] = nil
+        }
+        setenv(key, value, 1)
+    }
+    defer {
+        for (key, oldValue) in previousValues {
+            if let old = oldValue {
+                setenv(key, old, 1)
+            } else {
+                unsetenv(key)
+            }
+        }
+    }
+    return try await execute()
+}
+
+@discardableResult
+private func withConfigurationService<T>(
+    _ execute: (ConfigurationService) async throws -> T
+) async rethrows -> T {
+    return try await withConfigurationEnvironment {
+        let service = ConfigurationService()
+        return try await execute(service)
+    }
+}
 
 /// ConfigurationService 단위 테스트
 /// 설정 서비스의 환경별 구성 및 API 키 관리 기능을 테스트
@@ -32,110 +74,89 @@ struct ConfigurationServiceTests {
     // MARK: - API Configuration Tests
     
     @Test("Infura project ID configuration")
-    func testInfuraProjectIDConfiguration() async {
+    func testInfuraProjectIDConfiguration() async throws {
         // Given
-        let configService = ConfigurationService()
-        
-        // When
-        let projectID = await configService.infuraProjectID
-        
-        // Then
-        #expect(!projectID.isEmpty, "Infura project ID should not be empty")
-        #expect(projectID.contains("test") || projectID.contains("dev"), "Should contain test or dev identifier for development")
+        try await withConfigurationService { configService in
+            let projectID = try configService.infuraProjectID()
+            #expect(!projectID.isEmpty, "Infura project ID should not be empty")
+            #expect(projectID.contains("test") || projectID.contains("dev"), "Should contain test or dev identifier for development")
+        }
     }
     
     @Test("Infura project secret configuration")
     func testInfuraProjectSecretConfiguration() async {
         // Given
-        let configService = ConfigurationService()
-        
-        // When
-        let projectSecret = await configService.infuraProjectSecret
-        
-        // Then
-        #expect(projectSecret != nil, "Infura project secret should be available")
-        if let secret = projectSecret {
-            #expect(!secret.isEmpty, "Infura project secret should not be empty")
+        await withConfigurationService { configService in
+            let projectSecret = configService.infuraProjectSecret()
+            #expect(projectSecret != nil, "Infura project secret should be available")
+            if let secret = projectSecret {
+                #expect(!secret.isEmpty, "Infura project secret should not be empty")
+            }
         }
     }
     
     @Test("Etherscan API key configuration")
-    func testEtherscanAPIKeyConfiguration() async {
+    func testEtherscanAPIKeyConfiguration() async throws {
         // Given
-        let configService = ConfigurationService()
-        
-        // When
-        let apiKey = await configService.etherscanAPIKey
-        
-        // Then
-        #expect(!apiKey.isEmpty, "Etherscan API key should not be empty")
-        #expect(apiKey.contains("test") || apiKey.contains("dev"), "Should contain test or dev identifier for development")
+        try await withConfigurationService { configService in
+            let apiKey = try configService.etherscanAPIKey()
+            #expect(!apiKey.isEmpty, "Etherscan API key should not be empty")
+            #expect(apiKey.contains("test") || apiKey.contains("dev"), "Should contain test or dev identifier for development")
+        }
     }
     
     @Test("Etherscan base URL configuration")
     func testEtherscanBaseURLConfiguration() async {
         // Given
-        let configService = ConfigurationService()
-        
-        // When
-        let baseURL = await configService.etherscanBaseURL
-        
-        // Then
-        #expect(!baseURL.isEmpty, "Etherscan base URL should not be empty")
-        #expect(baseURL.hasPrefix("https://"), "Should use HTTPS protocol")
-        #expect(baseURL.contains("etherscan"), "Should contain etherscan domain")
+        await withConfigurationService { configService in
+            let baseURL = configService.etherscanBaseURL()
+            #expect(!baseURL.isEmpty, "Etherscan base URL should not be empty")
+            #expect(baseURL.hasPrefix("https://"), "Should use HTTPS protocol")
+            #expect(baseURL.contains("etherscan"), "Should contain etherscan domain")
+        }
     }
     
     // MARK: - Network URL Configuration Tests
     
     @Test("Ethereum mainnet RPC URL configuration")
-    func testEthereumMainnetRPCURL() async {
+    func testEthereumMainnetRPCURL() async throws {
         // Given
-        let configService = ConfigurationService()
-        
-        // When
-        let rpcURL = await configService.getRPCURL(for: .mainnet)
-        
-        // Then
-        #expect(!rpcURL.isEmpty, "RPC URL should not be empty")
-        #expect(rpcURL.hasPrefix("https://"), "Should use HTTPS protocol")
-        #expect(rpcURL.contains("mainnet"), "Should contain mainnet identifier")
-        #expect(rpcURL.contains("infura"), "Should use Infura provider")
+        try await withConfigurationService { configService in
+            let rpcURL = try configService.getRPCURL(for: .mainnet)
+            #expect(!rpcURL.isEmpty, "RPC URL should not be empty")
+            #expect(rpcURL.hasPrefix("https://"), "Should use HTTPS protocol")
+            #expect(rpcURL.contains("mainnet"), "Should contain mainnet identifier")
+            #expect(rpcURL.contains("infura"), "Should use Infura provider")
+        }
     }
     
     @Test("Sepolia testnet RPC URL configuration")
-    func testSepoliaTestnetRPCURL() async {
+    func testSepoliaTestnetRPCURL() async throws {
         // Given
-        let configService = ConfigurationService()
-        
-        // When
-        let rpcURL = await configService.getRPCURL(for: .sepolia)
-        
-        // Then
-        #expect(!rpcURL.isEmpty, "RPC URL should not be empty")
-        #expect(rpcURL.hasPrefix("https://"), "Should use HTTPS protocol")
-        #expect(rpcURL.contains("sepolia"), "Should contain sepolia identifier")
-        #expect(rpcURL.contains("infura"), "Should use Infura provider")
+        try await withConfigurationService { configService in
+            let rpcURL = try configService.getRPCURL(for: .sepolia)
+            #expect(!rpcURL.isEmpty, "RPC URL should not be empty")
+            #expect(rpcURL.hasPrefix("https://"), "Should use HTTPS protocol")
+            #expect(rpcURL.contains("sepolia"), "Should contain sepolia identifier")
+            #expect(rpcURL.contains("infura"), "Should use Infura provider")
+        }
     }
     
     
     // MARK: - URL Validation Tests
     
     @Test("RPC URL format validation")
-    func testRPCURLFormatValidation() async {
+    func testRPCURLFormatValidation() async throws {
         // Given
-        let configService = ConfigurationService()
-        let networks: [NetworkType] = [.mainnet, .sepolia]
-        
-        for network in networks {
-            // When
-            let rpcURL = await configService.getRPCURL(for: network)
-            
-            // Then
-            let url = URL(string: rpcURL)
-            #expect(url != nil, "RPC URL should be a valid URL for \(network)")
-            #expect(url?.scheme == "https", "RPC URL should use HTTPS for \(network)")
-            #expect(url?.host != nil, "RPC URL should have a valid host for \(network)")
+        try await withConfigurationService { configService in
+            let networks: [NetworkType] = [.mainnet, .sepolia]
+            for network in networks {
+                let rpcURL = try configService.getRPCURL(for: network)
+                let url = URL(string: rpcURL)
+                #expect(url != nil, "RPC URL should be a valid URL for \(network)")
+                #expect(url?.scheme == "https", "RPC URL should use HTTPS for \(network)")
+                #expect(url?.host != nil, "RPC URL should have a valid host for \(network)")
+            }
         }
     }
     
@@ -143,103 +164,86 @@ struct ConfigurationServiceTests {
     // MARK: - API Key Security Tests
     
     @Test("API keys should not be hardcoded")
-    func testAPIKeysNotHardcoded() async {
+    func testAPIKeysNotHardcoded() async throws {
         // Given
-        let configService = ConfigurationService()
-        
-        // When
-        let infuraProjectID = await configService.infuraProjectID
-        let etherscanAPIKey = await configService.etherscanAPIKey
-        
-        // Then - API keys should not contain common hardcoded patterns
-        #expect(!infuraProjectID.contains("YOUR_PROJECT_ID"), "Infura project ID should not be placeholder")
-        #expect(!infuraProjectID.contains("REPLACE_ME"), "Infura project ID should not be placeholder")
-        #expect(!etherscanAPIKey.contains("YOUR_API_KEY"), "Etherscan API key should not be placeholder")
-        #expect(!etherscanAPIKey.contains("REPLACE_ME"), "Etherscan API key should not be placeholder")
+        try await withConfigurationService { configService in
+            let infuraProjectID = try configService.infuraProjectID()
+            let etherscanAPIKey = try configService.etherscanAPIKey()
+            #expect(!infuraProjectID.contains("YOUR_PROJECT_ID"), "Infura project ID should not be placeholder")
+            #expect(!infuraProjectID.contains("REPLACE_ME"), "Infura project ID should not be placeholder")
+            #expect(!etherscanAPIKey.contains("YOUR_API_KEY"), "Etherscan API key should not be placeholder")
+            #expect(!etherscanAPIKey.contains("REPLACE_ME"), "Etherscan API key should not be placeholder")
+        }
     }
     
     @Test("API keys should have minimum length")
-    func testAPIKeysMinimumLength() async {
+    func testAPIKeysMinimumLength() async throws {
         // Given
-        let configService = ConfigurationService()
-        
-        // When
-        let infuraProjectID = await configService.infuraProjectID
-        let etherscanAPIKey = await configService.etherscanAPIKey
-        
-        // Then - API keys should have reasonable minimum lengths
-        #expect(infuraProjectID.count >= 10, "Infura project ID should have minimum length")
-        #expect(etherscanAPIKey.count >= 10, "Etherscan API key should have minimum length")
+        try await withConfigurationService { configService in
+            let infuraProjectID = try configService.infuraProjectID()
+            let etherscanAPIKey = try configService.etherscanAPIKey()
+            #expect(infuraProjectID.count >= 10, "Infura project ID should have minimum length")
+            #expect(etherscanAPIKey.count >= 10, "Etherscan API key should have minimum length")
+        }
     }
     
     // MARK: - Performance Tests
     
     @Test("Configuration access performance")
-    func testConfigurationAccessPerformance() async {
+    func testConfigurationAccessPerformance() async throws {
         // Given
-        let configService = ConfigurationService()
-        let startTime = CFAbsoluteTimeGetCurrent()
-        
-        // When - Access multiple configuration values
-        async let infuraProjectID = configService.infuraProjectID
-        async let etherscanAPIKey = configService.etherscanAPIKey
-        async let rpcURL = configService.getRPCURL(for: .mainnet)
-        
-        let _ = await (infuraProjectID, etherscanAPIKey, rpcURL)
-        let timeElapsed = CFAbsoluteTimeGetCurrent() - startTime
-        
-        // Then - Should be fast (under 100ms)
-        #expect(timeElapsed < 0.1, "Configuration access should be fast")
+        try await withConfigurationService { configService in
+            let startTime = CFAbsoluteTimeGetCurrent()
+            _ = try configService.infuraProjectID()
+            _ = try configService.etherscanAPIKey()
+            _ = try configService.getRPCURL(for: .mainnet)
+            let timeElapsed = CFAbsoluteTimeGetCurrent() - startTime
+
+            #expect(timeElapsed < 0.1, "Configuration access should be fast")
+        }
     }
     
     // MARK: - Concurrent Access Tests
     
     @Test("Concurrent configuration access")
-    func testConcurrentConfigurationAccess() async {
+    func testConcurrentConfigurationAccess() async throws {
         // Given
-        let configService = ConfigurationService()
-        
         // When - Multiple concurrent requests
-        await withTaskGroup(of: String.self) { group in
-            for i in 0..<10 {
-                group.addTask {
-                    if i % 2 == 0 {
-                        return await configService.getRPCURL(for: .mainnet)
-                    } else {
-                        return await configService.getRPCURL(for: .sepolia)
+        try await withConfigurationService { configService in
+            try await withThrowingTaskGroup(of: String.self) { group in
+                for i in 0..<10 {
+                    group.addTask {
+                        if i % 2 == 0 {
+                            return try configService.getRPCURL(for: .mainnet)
+                        } else {
+                            return try configService.getRPCURL(for: .sepolia)
+                        }
                     }
                 }
+                
+                var results: [String] = []
+                for try await result in group {
+                    results.append(result)
+                }
+                #expect(results.count == 10, "All concurrent requests should complete")
+                #expect(results.allSatisfy { !$0.isEmpty }, "All results should be non-empty")
             }
-            
-            var results: [String] = []
-            for await result in group {
-                results.append(result)
-            }
-            
-            // Then - All requests should complete successfully
-            #expect(results.count == 10, "All concurrent requests should complete")
-            #expect(results.allSatisfy { !$0.isEmpty }, "All results should be non-empty")
         }
     }
     
     // MARK: - Environment Switching Tests
     
     @Test("Configuration consistency across network types")
-    func testConfigurationConsistencyAcrossNetworks() async {
+    func testConfigurationConsistencyAcrossNetworks() async throws {
         // Given
-        let configService = ConfigurationService()
-        let networks: [NetworkType] = [.mainnet, .sepolia]
-        
-        // When & Then - Verify consistent patterns across networks
-        for network in networks {
-            let rpcURL = await configService.getRPCURL(for: network)
-            
-            // RPC URL should use the same project ID
-            let projectID = await configService.infuraProjectID
-            #expect(rpcURL.contains(projectID), "RPC URL should contain project ID for \(network)")
-            
-            // RPC URL should use Infura
-            #expect(rpcURL.contains("infura.io"), "RPC URL should use Infura for \(network)")
+        try await withConfigurationService { configService in
+            let networks: [NetworkType] = [.mainnet, .sepolia]
+            let projectID = try configService.infuraProjectID()
+            for network in networks {
+                let rpcURL = try configService.getRPCURL(for: network)
+                #expect(rpcURL.contains(projectID), "RPC URL should contain project ID for \(network)")
+                #expect(rpcURL.contains("infura.io"), "RPC URL should use Infura for \(network)")
+            }
         }
     }
 }
@@ -273,35 +277,24 @@ final class MockConfigurationService: ConfigurationServiceProtocol {
         mockEnvironment == .development
     }
     
-    var infuraProjectID: String {
-        get async { mockInfuraProjectID }
-    }
-    
-    var infuraProjectSecret: String? {
-        get async { mockInfuraProjectSecret }
-    }
-    
-    var etherscanAPIKey: String {
-        get async { mockEtherscanAPIKey }
-    }
-    
-    var etherscanBaseURL: String {
-        get async {
-            switch mockEnvironment {
-            case .development, .staging:
-                return "https://api-sepolia.etherscan.io"
-            case .production:
-                return "https://api.etherscan.io"
-            }
+    func infuraProjectID() throws -> String { mockInfuraProjectID }
+    func infuraProjectSecret() -> String? { mockInfuraProjectSecret }
+    func etherscanAPIKey() throws -> String { mockEtherscanAPIKey }
+    func etherscanBaseURL() -> String {
+        switch mockEnvironment {
+        case .development, .staging:
+            return "https://api-sepolia.etherscan.io"
+        case .production:
+            return "https://api.etherscan.io"
         }
     }
     
-    var ethereumRPCURL: String {
+    func ethereumRPCURL() throws -> String {
         let network: NetworkType = mockEnvironment == .production ? .mainnet : .sepolia
-        return "https://\(network.subdomain).infura.io/v3/\(mockInfuraProjectID)"
+        return try getRPCURL(for: network)
     }
     
-    func getRPCURL(for network: NetworkType) async -> String {
+    func getRPCURL(for network: NetworkType) throws -> String {
         return "https://\(network.subdomain).infura.io/v3/\(mockInfuraProjectID)"
     }
 }
@@ -311,19 +304,19 @@ final class MockConfigurationService: ConfigurationServiceProtocol {
 struct ConfigurationServiceMockIntegrationTests {
     
     @Test("MockConfigurationService basic functionality")  
-    func testMockConfigurationServiceBasicFunctionality() async {
+    func testMockConfigurationServiceBasicFunctionality() async throws {
         // Given
         let mockConfigService = MockConfigurationService(environment: .development)
         
         // When & Then
         #expect(mockConfigService.currentEnvironment == .development, "Should use development environment")
         #expect(mockConfigService.isDebugMode == true, "Should be in debug mode")
-        #expect(await mockConfigService.infuraProjectID == "test-infura-project-id-mock", "Should return mock project ID")
-        #expect(await mockConfigService.etherscanAPIKey == "test-etherscan-api-key-mock", "Should return mock API key")
+        #expect(try mockConfigService.infuraProjectID() == "test-infura-project-id-mock", "Should return mock project ID")
+        #expect(try mockConfigService.etherscanAPIKey() == "test-etherscan-api-key-mock", "Should return mock API key")
     }
     
     @Test("MockConfigurationService custom values")
-    func testMockConfigurationServiceCustomValues() async {
+    func testMockConfigurationServiceCustomValues() async throws {
         // Given
         let customProjectID = "custom-test-project-id"
         let customAPIKey = "custom-test-api-key"
@@ -336,18 +329,18 @@ struct ConfigurationServiceMockIntegrationTests {
         // When & Then
         #expect(mockConfigService.currentEnvironment == .production, "Should use production environment")
         #expect(mockConfigService.isDebugMode == false, "Should not be in debug mode for production")
-        #expect(await mockConfigService.infuraProjectID == customProjectID, "Should return custom project ID")
-        #expect(await mockConfigService.etherscanAPIKey == customAPIKey, "Should return custom API key")
+        #expect(try mockConfigService.infuraProjectID() == customProjectID, "Should return custom project ID")
+        #expect(try mockConfigService.etherscanAPIKey() == customAPIKey, "Should return custom API key")
     }
     
     @Test("MockConfigurationService RPC URL generation")
-    func testMockConfigurationServiceRPCURLGeneration() async {
+    func testMockConfigurationServiceRPCURLGeneration() async throws {
         // Given
         let mockConfigService = MockConfigurationService()
         
         // When
-        let mainnetURL = await mockConfigService.getRPCURL(for: .mainnet)
-        let sepoliaURL = await mockConfigService.getRPCURL(for: .sepolia)
+        let mainnetURL = try mockConfigService.getRPCURL(for: .mainnet)
+        let sepoliaURL = try mockConfigService.getRPCURL(for: .sepolia)
         
         // Then
         #expect(mainnetURL.contains("mainnet.infura.io"), "Should contain mainnet endpoint")
@@ -363,8 +356,8 @@ struct ConfigurationServiceMockIntegrationTests {
         let prodMockService = MockConfigurationService(environment: .production)
         
         // When
-        let devEtherscanURL = await devMockService.etherscanBaseURL
-        let prodEtherscanURL = await prodMockService.etherscanBaseURL
+        let devEtherscanURL = devMockService.etherscanBaseURL()
+        let prodEtherscanURL = prodMockService.etherscanBaseURL()
         
         // Then
         #expect(devEtherscanURL.contains("sepolia"), "Development should use Sepolia Etherscan")
