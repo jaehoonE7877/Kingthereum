@@ -1,10 +1,20 @@
 import SwiftUI
 import Core
 import DesignSystem
+import Entity
+
+// MARK: - Display Logic
+
+@MainActor
+protocol SplashDisplayLogic: AnyObject {
+    func displayInitialAnimations(viewModel: SplashScene.Appear.ViewModel)
+    func displayCompletion(viewModel: SplashScene.Complete.ViewModel)
+}
 
 // MARK: - SplashViewStore (성능 최적화된 상태 관리)
+@MainActor
 @Observable
-class SplashViewStore {
+final class SplashViewStore: SplashDisplayLogic {
     // 시각적 애니메이션 상태 그룹
     struct VisualState {
         var logoScale: CGFloat = 0.95
@@ -30,9 +40,32 @@ class SplashViewStore {
     var visualState = VisualState()
     var progressState = ProgressState()
     var animationState = AnimationState()
-    
+    private(set) var interactor: SplashBusinessLogic?
+
+    init(interactor: SplashBusinessLogic? = nil) {
+        setupVIP(interactor: interactor)
+    }
+
+    private func setupVIP(interactor: SplashBusinessLogic?) {
+        let interactor = interactor ?? SplashInteractor()
+        let presenter = SplashPresenter()
+
+        self.interactor = interactor
+        interactor.presenter = presenter
+        presenter.viewController = self
+    }
+
+    func onAppear(reduceMotion: Bool) {
+        let request = SplashScene.Appear.Request(reduceMotion: reduceMotion)
+        interactor?.handleAppear(request: request)
+    }
+
+    func completeSplash() {
+        interactor?.completeSplash(request: SplashScene.Complete.Request())
+    }
+
     // 🚀 성능 최적화: 상태 업데이트 액션들
-    func startFullAnimations() {
+    private func startFullAnimations() {
         visualState.logoScale = 1.0
         visualState.logoOpacity = 1.0
         visualState.brandOpacity = 1.0
@@ -42,8 +75,8 @@ class SplashViewStore {
         progressState.loadingProgress = 1.0
         animationState.breathingEffect = true
     }
-    
-    func startReducedAnimations() {
+
+    private func startReducedAnimations() {
         visualState.logoScale = 1.0
         visualState.logoOpacity = 1.0
         visualState.brandOpacity = 1.0
@@ -52,10 +85,26 @@ class SplashViewStore {
         progressState.loadingProgress = 1.0
         visualState.subtleGlow = 1.0
     }
-    
-    func completeAnimation() {
+
+    private func completeAnimation() {
         progressState.isCompleting = true
         visualState.overallOpacity = 0.0
+    }
+
+    // MARK: - Display Logic
+
+    func displayInitialAnimations(viewModel: SplashScene.Appear.ViewModel) {
+        switch viewModel.animationStyle {
+        case .full:
+            startFullAnimations()
+        case .reduced:
+            startReducedAnimations()
+        }
+    }
+
+    func displayCompletion(viewModel: SplashScene.Complete.ViewModel) {
+        guard viewModel.shouldFadeOut else { return }
+        completeAnimation()
     }
 }
 
@@ -85,7 +134,7 @@ struct SplashView: View {
         }
         .opacity(viewStore.visualState.overallOpacity)
         .onAppear {
-            viewStore.startFullAnimations()
+            viewStore.onAppear(reduceMotion: reduceMotion)
         }
     }
     
