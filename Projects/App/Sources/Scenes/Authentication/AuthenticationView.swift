@@ -69,6 +69,42 @@ final class AuthenticationViewStore: AuthenticationDisplayLogic {
         presenter.viewController = self
     }
 
+    @ViewBuilder
+    private func methodOption(icon: String, title: String, subtitle: String, accentColor: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            AuthenticationGlassCard {
+                HStack(alignment: .center, spacing: KingDesignTokens.Spacing.md) {
+                    Image(systemName: icon)
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundColor(accentColor)
+                        .frame(width: 48, height: 48)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .fill(accentColor.opacity(0.12))
+                        )
+
+                    VStack(alignment: .leading, spacing: KingDesignTokens.Spacing.xs) {
+                        Text(title)
+                            .font(KingDesignTokens.Typography.body)
+                            .fontWeight(.semibold)
+                            .foregroundColor(KingDesignTokens.Colors.primaryText)
+
+                        Text(subtitle)
+                            .font(KingDesignTokens.Typography.caption)
+                            .foregroundColor(KingDesignTokens.Colors.secondaryText)
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "arrow.forward.circle.fill")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(accentColor)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
     func clearError() {
         errorMessage = nil
     }
@@ -377,71 +413,46 @@ struct AuthenticationView: View {
     private func MethodSelectionView() -> some View {
         ScrollView {
             VStack(spacing: KingDesignTokens.Spacing.xl) {
-                VStack(spacing: KingDesignTokens.Spacing.sm) {
-                    Text("지갑 설정")
-                        .font(KingDesignTokens.Typography.displayL)
-                        .fontWeight(.bold)
-                        .foregroundColor(KingDesignTokens.Colors.primaryText)
+                AuthenticationGlassCard {
+                    VStack(alignment: .leading, spacing: KingDesignTokens.Spacing.sm) {
+                        Text("어떤 방법으로 시작할까요?")
+                            .font(KingDesignTokens.Typography.displayS)
+                            .foregroundColor(KingDesignTokens.Colors.primaryText)
 
-                    Text("새 지갑을 생성하거나 기존 지갑을 복구하세요")
-                        .font(KingDesignTokens.Typography.body)
-                        .foregroundColor(KingDesignTokens.Colors.secondaryText)
-                        .multilineTextAlignment(.center)
-                }
-                .padding(.top, KingDesignTokens.Spacing.xxxl)
-
-                VStack(spacing: KingDesignTokens.Spacing.lg) {
-                    Button(action: createWallet) {
-                        HStack {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.title2)
-                            Text("새 지갑 생성")
-                                .font(KingDesignTokens.Typography.body)
-                                .fontWeight(.semibold)
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                        }
-                        .foregroundColor(KingDesignTokens.Colors.systemWhite)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 56)
-                        .background(KingDesignTokens.Colors.accent)
-                        .cornerRadius(KingDesignTokens.Radius.lg)
+                        Text("지갑 생성은 새로운 키쌍을 만들고, 지갑 복구는 기존 복구 구문을 불러옵니다.")
+                            .font(KingDesignTokens.Typography.caption)
+                            .foregroundColor(KingDesignTokens.Colors.secondaryText)
                     }
-                    .disabled(viewStore.isLoading)
-
-                    Button {
-                        viewStore.requestFlow(.showWalletImport)
-                    } label: {
-                        HStack {
-                            Image(systemName: "arrow.clockwise.circle.fill")
-                                .font(.title2)
-                            Text("지갑 복구")
-                                .font(KingDesignTokens.Typography.body)
-                                .fontWeight(.semibold)
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                        }
-                        .foregroundColor(KingDesignTokens.Colors.accent)
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 56)
-                        .background(KingDesignTokens.Colors.accent.opacity(0.1))
-                        .cornerRadius(KingDesignTokens.Radius.lg)
-                    }
-                    .disabled(viewStore.isLoading)
                 }
-                .padding(.horizontal, KingDesignTokens.Spacing.lg)
-                .padding(.bottom, KingDesignTokens.Spacing.lg)
+
+                VStack(spacing: KingDesignTokens.Spacing.md) {
+                    methodOption(
+                        icon: "wand.and.stars.inverse",
+                        title: "새 지갑 생성",
+                        subtitle: "니모닉과 프라이빗 키를 자동 생성",
+                        accentColor: KingDesignTokens.Colors.accent,
+                        action: createWallet
+                    )
+
+                    methodOption(
+                        icon: "arrow.clockwise.square",
+                        title: "지갑 복구",
+                        subtitle: "기존 복구 구문 입력으로 즉시 접근",
+                        accentColor: KingDesignTokens.Colors.primaryText,
+                        action: { viewStore.requestFlow(.showWalletImport) }
+                    )
+                }
             }
-            .frame(maxWidth: .infinity)
+            .padding(.horizontal, KingDesignTokens.Spacing.lg)
+            .padding(.top, KingDesignTokens.Spacing.xl)
+            .padding(.bottom, 140)
         }
         .safeAreaInset(edge: .bottom) {
             AuthenticationCTAContainer {
                 Button(action: viewStore.goBack) {
-                    Text("뒤로 가기")
+                    Text("이전 단계")
                         .font(KingDesignTokens.Typography.body)
-                        .foregroundColor(KingDesignTokens.Colors.secondaryText)
+                        .foregroundColor(viewStore.canGoBack ? KingDesignTokens.Colors.secondaryText : KingDesignTokens.Colors.secondaryText.opacity(0.5))
                         .frame(maxWidth: .infinity)
                 }
                 .disabled(!viewStore.canGoBack)
