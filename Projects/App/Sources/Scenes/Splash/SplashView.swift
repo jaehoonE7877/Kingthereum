@@ -47,11 +47,16 @@ final class SplashViewStore: SplashDisplayLogic {
     }
 
     private func setupVIP(interactor: SplashBusinessLogic?) {
-        let interactor = interactor ?? SplashInteractor()
+        let resolvedInteractor: SplashInteractor
+        if let splashInteractor = interactor as? SplashInteractor {
+            resolvedInteractor = splashInteractor
+        } else {
+            resolvedInteractor = SplashInteractor()
+        }
         let presenter = SplashPresenter()
 
-        self.interactor = interactor
-        interactor.presenter = presenter
+        self.interactor = resolvedInteractor
+        resolvedInteractor.presenter = presenter
         presenter.viewController = self
     }
 

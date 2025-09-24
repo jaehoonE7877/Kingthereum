@@ -5,6 +5,7 @@ import UIKit
 import Core
 import DesignSystem
 import Factory
+import WalletKit
 
 // MARK: - SOLID 원칙 적용: Interface Segregation Principle (ISP)
 // 기능별로 인터페이스를 분리하여 의존성을 최소화
@@ -28,7 +29,7 @@ protocol ReceiveWorkerProtocol: QRCodeGeneratorProtocol, WalletAddressProviderPr
 // MARK: - Performance-Optimized & Secure ReceiveWorker
 final class ReceiveWorker: ReceiveWorkerProtocol, @unchecked Sendable {
     
-    @Injected(\.walletService) private var walletService
+    @Injected(\.walletService) private var walletService: WalletServiceProtocol
     private let qrCodeCache = NSCache<NSString, NSData>()
     private let processingQueue = DispatchQueue(label: "receive.worker.queue", qos: .userInitiated)
     

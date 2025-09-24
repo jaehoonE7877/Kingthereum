@@ -25,7 +25,7 @@ final class SettingsInteractor: SettingsBusinessLogic, SettingsDataStore {
     var presenter: SettingsPresentationLogic?
     private let worker: SettingsWorkerProtocol
     
-    @Injected(\.displayModeService) private var displayModeService
+    @Injected(\.displayModeService) private var displayModeService: DisplayModeService
     
     // MARK: - Data Store
     var currentSettings: UserSettings?

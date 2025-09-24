@@ -45,7 +45,7 @@ final class HomeViewStore {
     var walletData = WalletData()
     
     @Injected(\.priceService) private var priceService: PriceServiceProtocol
-    @Injected(\.walletService) private var walletService
+    @Injected(\.walletService) private var walletService: WalletServiceProtocol
     
     // 캐시 관리
     private var lastRefreshTime: Date?
@@ -78,15 +78,10 @@ final class HomeViewStore {
         uiState.errorMessage = nil
         
         do {
-            // 병렬로 데이터 로드
-            async let walletTask = loadWalletData()
-            async let priceTask = loadPriceData()
-            
-            try await walletTask
-            try await priceTask
-            
+            // 순차적으로 데이터 로드
+            try await loadWalletData()
+            try await loadPriceData()
             calculatePortfolioValue()
-            
         } catch {
             uiState.errorMessage = "데이터를 불러오는데 실패했습니다: \(error.localizedDescription)"
         }
@@ -94,6 +89,7 @@ final class HomeViewStore {
         uiState.isLoading = false
     }
     
+    @MainActor
     private func loadWalletData() async throws {
         let address = try await walletService.getCurrentWalletAddress()
         let balanceInEth = try await walletService.getBalance(for: address)
@@ -103,6 +99,7 @@ final class HomeViewStore {
         walletData.symbol = "ETH"
     }
     
+    @MainActor
     private func loadPriceData() async throws {
         // ETH 가격 조회
         priceData.ethPrice = try await priceService.getCurrentPrice(for: "ETH")
@@ -166,18 +163,11 @@ struct HomeView: View {
                         
                         Spacer(minLength: 120)
                     }
-                    .background(
-                        GeometryReader { scrollGeometry in
-                            KingDesignTokens.Colors.clear.preference(
-                                key: ScrollOffsetKey.self,
-                                value: scrollGeometry.frame(in: .named("scroll")).minY
-                            )
-                        }
-                    )
                 }
-                .coordinateSpace(name: "scroll")
-                .onPreferenceChange(ScrollOffsetKey.self) { value in
-                    viewStore.handleScrollOffset(value)
+                .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                    geometry.contentOffset.y
+                } action: { oldValue, newValue in
+                    viewStore.handleScrollOffset(newValue)
                 }
                 .refreshable {
                     await viewStore.loadData()
@@ -304,7 +294,7 @@ struct PortfolioOverviewCard: View {
                     // 보유 ETH 표시
                     HStack {
                         Text(balance)
-                            .font(KingDesignTokens.Typography.headlineMedium)
+                            .font(KingDesignTokens.Typography.headlineLarge)
                             .foregroundColor(KingDesignTokens.Colors.primaryText)
                         
                         Text(symbol)

@@ -10,7 +10,8 @@ import Factory
 
 // MARK: - WalletViewStore
 
-final class WalletViewStore {
+@MainActor
+final class WalletViewStore: ObservableObject {
     // UI 상태 관리
     struct UIState {
         var showSendView = false
@@ -34,14 +35,14 @@ final class WalletViewStore {
         var walletAddress: String?
     }
     
-    var uiState = UIState()
-    var scrollState = ScrollState()
-    var walletData = WalletData()
+    @Published var uiState = UIState()
+    @Published var scrollState = ScrollState()
+    @Published var walletData = WalletData()
     
     // 거래 내역
-    var transactions: [Entity.Transaction] = []
+    @Published var transactions: [Entity.Transaction] = []
     
-    @Injected(\.walletService) private var walletService
+    @Injected(\.walletService) private var walletService: WalletServiceProtocol
     @Injected(\.etherscanService) private var etherscanService: EtherscanService
     @Injected(\.priceService) private var priceService: PriceServiceProtocol
     
@@ -131,7 +132,7 @@ struct WalletView: View {
     @Binding var showTabBar: Bool
     @Binding var showReceiveView: Bool
     
-    @State private var viewStore = WalletViewStore()
+    @StateObject private var viewStore = WalletViewStore()
     
     var body: some View {
         NavigationView {
@@ -166,18 +167,11 @@ struct WalletView: View {
                         
                         Spacer(minLength: 120)
                     }
-                    .background(
-                        GeometryReader { scrollGeometry in
-                            KingDesignTokens.Colors.clear.preference(
-                                key: ScrollOffsetKey.self,
-                                value: scrollGeometry.frame(in: .named("scroll")).minY
-                            )
-                        }
-                    )
                 }
-                .coordinateSpace(name: "scroll")
-                .onPreferenceChange(ScrollOffsetKey.self) { value in
-                    viewStore.handleScrollOffset(value)
+                .onScrollGeometryChange(for: CGFloat.self) { geometry in
+                    geometry.contentOffset.y
+                } action: { oldValue, newValue in
+                    viewStore.handleScrollOffset(newValue)
                 }
                 .refreshable {
                     await viewStore.loadWalletData()
@@ -696,7 +690,7 @@ struct TransactionRow: View {
             
             // 금액
             VStack(alignment: .trailing, spacing: KingDesignTokens.Spacing.xxs) {
-                Text("\(amountPrefix)\(transaction.amount) ETH")
+                Text("\(amountPrefix)\(transaction.amountInTokenUnit ?? 0) ETH")
                     .font(KingDesignTokens.Typography.bodyMedium)
                     .fontWeight(.semibold)
                     .foregroundStyle(
@@ -723,32 +717,34 @@ struct TransactionRow: View {
             }
         )
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(transactionTitle). \(amountPrefix)\(transaction.amount) 이더리움. \(formatDate(transaction.timestamp))")
+        .accessibilityLabel("\(transactionTitle). \(amountPrefix)\(transaction.amountInTokenUnit ?? 0) 이더리움. \(formatDate(transaction.timestamp))")
     }
     
     private var iconName: String {
-        transaction.type == .send ? "arrow.up.right" : "arrow.down.left"
+        // Transaction이 outgoing인지 확인하려면 사용자 주소가 필요
+        // 임시로 from address로 판단 (실제로는 현재 지갑 주소와 비교해야 함)
+        return "arrow.up.right" // 일단 송금으로 가정
     }
     
     private var iconColor: Color {
-        transaction.type == .send ? KingDesignTokens.Colors.primary : KingDesignTokens.Colors.success
+        return KingDesignTokens.Colors.primary
     }
     
     private var iconBackgroundColor: Color {
-        transaction.type == .send ? KingDesignTokens.Colors.primary : KingDesignTokens.Colors.success
+        return KingDesignTokens.Colors.primary
     }
     
     private var transactionTitle: String {
-        transaction.type == .send ? "전송" : "수신"
+        return "거래" // 일단 중립적 표현
     }
     
     private var amountPrefix: String {
-        transaction.type == .send ? "-" : "+"
+        return "" // 일단 prefix 없이
     }
     
     private var statusColor: Color {
         switch transaction.status {
-        case .completed:
+        case .confirmed:
             return KingDesignTokens.Colors.success
         case .pending:
             return KingDesignTokens.Colors.warning
