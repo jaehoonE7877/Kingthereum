@@ -464,55 +464,67 @@ struct AuthenticationView: View {
     private func WalletCreationView() -> some View {
         ScrollView {
             VStack(spacing: KingDesignTokens.Spacing.xl) {
-                VStack(spacing: KingDesignTokens.Spacing.md) {
-                    Text("지갑 생성 완료")
-                        .font(KingDesignTokens.Typography.displayM)
-                        .fontWeight(.bold)
-                        .foregroundColor(KingDesignTokens.Colors.primaryText)
-
-                    Text("지갑이 성공적으로 생성되었습니다")
-                        .font(KingDesignTokens.Typography.body)
-                        .foregroundColor(KingDesignTokens.Colors.secondaryText)
-                        .multilineTextAlignment(.center)
-                }
-                .padding(.top, KingDesignTokens.Spacing.xxxl)
-
-                if let address = viewStore.walletAddress {
-                    VStack(spacing: KingDesignTokens.Spacing.sm) {
-                        Text("지갑 주소")
-                            .font(KingDesignTokens.Typography.body)
-                            .fontWeight(.semibold)
+                AuthenticationGlassCard {
+                    VStack(alignment: .leading, spacing: KingDesignTokens.Spacing.sm) {
+                        Text("지갑 생성 완료")
+                            .font(KingDesignTokens.Typography.displayS)
                             .foregroundColor(KingDesignTokens.Colors.primaryText)
 
-                        Text(address)
+                        Text("새로 발급된 주소와 복구 구문을 안전한 곳에 보관하세요.")
                             .font(KingDesignTokens.Typography.caption)
                             .foregroundColor(KingDesignTokens.Colors.secondaryText)
-                            .padding()
-                            .background(KingDesignTokens.Colors.surfaceSecondary)
-                            .cornerRadius(KingDesignTokens.Radius.md)
-                            .textSelection(.enabled)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                if let address = viewStore.walletAddress {
+                    AuthenticationGlassCard {
+                        VStack(alignment: .leading, spacing: KingDesignTokens.Spacing.sm) {
+                            Text("지갑 주소")
+                                .font(KingDesignTokens.Typography.caption)
+                                .foregroundColor(KingDesignTokens.Colors.secondaryText)
+
+                            HStack {
+                                Text(address)
+                                    .font(KingDesignTokens.Typography.body)
+                                    .foregroundColor(KingDesignTokens.Colors.primaryText)
+                                    .textSelection(.enabled)
+                                Spacer()
+                                Button {
+                                    UIPasteboard.general.string = address
+                                } label: {
+                                    Image(systemName: "doc.on.doc.fill")
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundColor(KingDesignTokens.Colors.accent)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
                 }
 
                 if let mnemonic = viewStore.mnemonic {
-                    VStack(spacing: KingDesignTokens.Spacing.md) {
-                        Text("복구 구문")
-                            .font(KingDesignTokens.Typography.body)
-                            .fontWeight(.semibold)
-                            .foregroundColor(KingDesignTokens.Colors.error)
+                    AuthenticationGlassCard {
+                        VStack(alignment: .leading, spacing: KingDesignTokens.Spacing.md) {
+                            VStack(alignment: .leading, spacing: KingDesignTokens.Spacing.xs) {
+                                Text("복구 구문")
+                                    .font(KingDesignTokens.Typography.body)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(KingDesignTokens.Colors.error)
 
-                        Text("이 구문을 안전한 곳에 보관하세요")
-                            .font(KingDesignTokens.Typography.caption)
-                            .foregroundColor(KingDesignTokens.Colors.secondaryText)
+                                Text("공유하지 말고, 오프라인에 안전하게 보관하세요.")
+                                    .font(KingDesignTokens.Typography.caption)
+                                    .foregroundColor(KingDesignTokens.Colors.secondaryText)
+                            }
 
-                        VStack(spacing: KingDesignTokens.Spacing.sm) {
                             Text(mnemonic)
                                 .font(KingDesignTokens.Typography.caption)
                                 .foregroundColor(KingDesignTokens.Colors.primaryText)
                                 .padding()
-                                .background(KingDesignTokens.Colors.surfaceSecondary)
-                                .cornerRadius(KingDesignTokens.Radius.md)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(
+                                    RoundedRectangle(cornerRadius: KingDesignTokens.Radius.lg, style: .continuous)
+                                        .fill(KingDesignTokens.Colors.surfaceSecondary)
+                                )
                                 .textSelection(.enabled)
 
                             Button {
@@ -527,17 +539,18 @@ struct AuthenticationView: View {
                                 .foregroundColor(KingDesignTokens.Colors.accent)
                                 .padding(.vertical, KingDesignTokens.Spacing.xs)
                                 .padding(.horizontal, KingDesignTokens.Spacing.md)
-                                .background(KingDesignTokens.Colors.accent.opacity(0.1))
+                                .background(KingDesignTokens.Colors.accent.opacity(0.12))
                                 .cornerRadius(KingDesignTokens.Radius.sm)
                             }
+                            .buttonStyle(.plain)
                             .accessibilityLabel("복구 구문 복사")
                         }
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
             .padding(.horizontal, KingDesignTokens.Spacing.lg)
-            .padding(.bottom, 120)
+            .padding(.top, KingDesignTokens.Spacing.xl)
+            .padding(.bottom, 140)
         }
         .safeAreaInset(edge: .bottom) {
             AuthenticationCTAContainer {
