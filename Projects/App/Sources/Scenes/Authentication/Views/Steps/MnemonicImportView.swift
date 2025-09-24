@@ -21,75 +21,73 @@ struct MnemonicImportView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: KingDesignTokens.Spacing.xl) {
-                // Header Section - Minimal
-                VStack(spacing: KingDesignTokens.Spacing.lg) {
-                    Image(systemName: "key.fill")
-                        .font(.system(size: 32, weight: .medium))
-                        .foregroundColor(KingDesignTokens.Colors.accent)
-                    
-                    VStack(spacing: KingDesignTokens.Spacing.sm) {
-                        Text("Import Wallet")
-                            .font(.system(size: 28, weight: .semibold))
-                            .foregroundColor(KingDesignTokens.Colors.primaryText)
-                        
-                        Text("Enter your 12-word recovery phrase")
-                            .font(.system(size: 17, weight: .regular))
-                            .foregroundColor(KingDesignTokens.Colors.secondaryText)
-                            .multilineTextAlignment(.center)
-                    }
-                }
-                .padding(.top, KingDesignTokens.Spacing.xl)
-                
-                // Mnemonic Input Grid
-                VStack(spacing: KingDesignTokens.Spacing.lg) {
-                    // Quick Paste Section - Minimal
+                AuthenticationGlassCard {
                     VStack(spacing: KingDesignTokens.Spacing.md) {
-                        Button {
-                            showMnemonicPaste.toggle()
-                        } label: {
-                            HStack {
-                                Image(systemName: "doc.on.clipboard")
-                                Text("Paste from clipboard")
-                                    .font(.system(size: 16, weight: .medium))
-                            }
+                        Image(systemName: "key.fill")
+                            .font(.system(size: 32, weight: .semibold))
                             .foregroundColor(KingDesignTokens.Colors.accent)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 44)
-                            .background(KingDesignTokens.Colors.clear)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(KingDesignTokens.Colors.accent.opacity(0.3), lineWidth: 1)
-                            )
-                        }
-                        
-                        if showMnemonicPaste {
-                            PasteableTextField(
-                                onPaste: handleMnemonicPaste,
-                                onCancel: { showMnemonicPaste = false }
-                            )
+
+                        VStack(spacing: KingDesignTokens.Spacing.xs) {
+                            Text("지갑 복구")
+                                .font(KingDesignTokens.Typography.displayS)
+                                .foregroundColor(KingDesignTokens.Colors.primaryText)
+
+                            Text("12개 단어 복구 구문을 순서대로 입력하세요.")
+                                .font(KingDesignTokens.Typography.caption)
+                                .foregroundColor(KingDesignTokens.Colors.secondaryText)
+                                .multilineTextAlignment(.center)
                         }
                     }
-                    
-                    // Word Input Grid
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: KingDesignTokens.Spacing.sm), count: 2), spacing: KingDesignTokens.Spacing.sm) {
-                        ForEach(0..<standardWordCount, id: \.self) { index in
-                            MnemonicWordField(
-                                index: index,
-                                word: $mnemonicWords[index],
-                                isValid: wordValidator.isValidWord(mnemonicWords[index]),
-                                isFocused: focusedIndex == index,
-                                onCommit: {
-                                    moveToNextField()
+                    .frame(maxWidth: .infinity)
+                }
+
+                AuthenticationGlassCard {
+                    VStack(spacing: KingDesignTokens.Spacing.lg) {
+                        VStack(spacing: KingDesignTokens.Spacing.md) {
+                            Button {
+                                showMnemonicPaste.toggle()
+                            } label: {
+                                HStack {
+                                    Image(systemName: "doc.on.clipboard")
+                                    Text("클립보드에서 붙여넣기")
+                                        .font(.system(size: 16, weight: .medium))
                                 }
-                            )
-                            .focused($focusedIndex, equals: index)
-                            .onTapGesture {
-                                focusedIndex = index
+                                .foregroundColor(KingDesignTokens.Colors.accent)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 44)
+                                .background(KingDesignTokens.Colors.accent.opacity(0.08))
+                                .cornerRadius(12)
+                            }
+                            .buttonStyle(.plain)
+
+                            if showMnemonicPaste {
+                                PasteableTextField(
+                                    onPaste: handleMnemonicPaste,
+                                    onCancel: { showMnemonicPaste = false }
+                                )
+                            }
+                        }
+
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: KingDesignTokens.Spacing.sm), count: 2), spacing: KingDesignTokens.Spacing.sm) {
+                            ForEach(0..<standardWordCount, id: \.self) { index in
+                                MnemonicWordField(
+                                    index: index,
+                                    word: $mnemonicWords[index],
+                                    isValid: wordValidator.isValidWord(mnemonicWords[index]),
+                                    isFocused: focusedIndex == index,
+                                    onCommit: {
+                                        moveToNextField()
+                                    }
+                                )
+                                .focused($focusedIndex, equals: index)
+                                .onTapGesture {
+                                    focusedIndex = index
+                                }
                             }
                         }
                     }
                 }
-                
+
                 // Validation Error
                 if let error = validationError {
                     HStack(spacing: KingDesignTokens.Spacing.sm) {
