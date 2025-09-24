@@ -381,12 +381,6 @@ struct AuthenticationView: View {
         return Double(index) / Double(orderedSteps.count - 1)
     }
 
-    private struct StepMetadata {
-        let title: String
-        let subtitle: String?
-        let iconSystemName: String?
-    }
-
     // MARK: - Child Views
 
     @ViewBuilder
@@ -490,7 +484,7 @@ struct AuthenticationView: View {
                                     .textSelection(.enabled)
                                 Spacer()
                                 Button {
-                                    UIPasteboard.general.string = address
+                                    copyAddressToClipboard(address)
                                 } label: {
                                     Image(systemName: "doc.on.doc.fill")
                                         .font(.system(size: 16, weight: .semibold))
@@ -680,7 +674,19 @@ struct AuthenticationView: View {
     private func completeSetup() {
         viewStore.completeAuthentication()
     }
-    
+
+    private func copyAddressToClipboard(_ address: String) {
+        UIPasteboard.general.string = address
+        KingToastManager.shared.show(
+            KingToastItem(
+                type: .success,
+                title: "주소 복사 완료",
+                message: "지갑 주소가 클립보드에 저장되었습니다",
+                duration: 2.5
+            )
+        )
+    }
+
     private func copyMnemonicToClipboard(_ mnemonic: String) {
         // 클립보드에 복사
         UIPasteboard.general.string = mnemonic
@@ -709,7 +715,7 @@ struct AuthenticationView: View {
 }
 
 private struct AuthenticationNavigationBar: View {
-    let metadata: AuthenticationView.StepMetadata
+    let metadata: StepMetadata
     let progress: Double
     let canGoBack: Bool
     let onBack: () -> Void
@@ -783,4 +789,10 @@ private struct AuthenticationNavigationBar: View {
             )
         )
     }
+}
+
+private struct StepMetadata {
+    let title: String
+    let subtitle: String?
+    let iconSystemName: String?
 }
