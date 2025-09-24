@@ -4,59 +4,47 @@ import DesignSystem
 /// 🔐 Professional Biometric Setup
 struct PremiumBiometricSetupView: View {
     @Bindable var viewStore: AuthenticationViewStore
-    
+
     var body: some View {
-        VStack(spacing: 0) {
-            // Top spacing
-            Spacer()
-                .frame(height: KingDesignTokens.Spacing.xxxl * 2)
-            
-            // Biometric icon and content
+        ScrollView {
             VStack(spacing: KingDesignTokens.Spacing.xl) {
-                // Simple Face ID icon - no decorative circle
-                Image(systemName: biometricIconName)
-                    .font(.system(size: 32, weight: .medium))
-                    .foregroundColor(KingDesignTokens.Colors.accent)
-                
-                VStack(spacing: KingDesignTokens.Spacing.sm) {
-                    Text("Enable Biometrics")
-                        .font(.system(size: 28, weight: .semibold))
-                        .foregroundColor(KingDesignTokens.Colors.primaryText)
-                    
-                    Text(biometricDescription)
-                        .font(.system(size: 17, weight: .regular))
-                        .foregroundColor(KingDesignTokens.Colors.secondaryText)
-                        .multilineTextAlignment(.center)
+                AuthenticationGlassCard {
+                    VStack(alignment: .leading, spacing: KingDesignTokens.Spacing.sm) {
+                        Image(systemName: biometricIconName)
+                            .font(.system(size: 32, weight: .semibold))
+                            .foregroundColor(KingDesignTokens.Colors.accent)
+                            .padding(.bottom, KingDesignTokens.Spacing.sm)
+
+                        Text("생체 인증 연결")
+                            .font(KingDesignTokens.Typography.displayS)
+                            .foregroundColor(KingDesignTokens.Colors.primaryText)
+
+                        Text(biometricDescription)
+                            .font(KingDesignTokens.Typography.caption)
+                            .foregroundColor(KingDesignTokens.Colors.secondaryText)
+                    }
+                }
+
+                if !viewStore.biometricAvailable {
+                    AuthenticationGlassCard {
+                        VStack(alignment: .leading, spacing: KingDesignTokens.Spacing.sm) {
+                            Label("사용 불가", systemImage: "exclamationmark.triangle.fill")
+                                .font(KingDesignTokens.Typography.caption)
+                                .foregroundColor(KingDesignTokens.Colors.warning)
+
+                            Text("설정 > Face ID & 암호 또는 Touch ID에서 생체 인증을 활성화한 뒤 다시 시도하세요.")
+                                .font(KingDesignTokens.Typography.caption)
+                                .foregroundColor(KingDesignTokens.Colors.secondaryText)
+                        }
+                    }
                 }
             }
-            
-            // Flexible spacer
-            Spacer()
-            
-            // Biometric not available warning
-            if !viewStore.biometricAvailable {
-                VStack(spacing: KingDesignTokens.Spacing.sm) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.system(size: 20))
-                        .foregroundColor(KingDesignTokens.Colors.warning)
-                    
-                    Text("Biometric authentication is not available")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(KingDesignTokens.Colors.secondaryText)
-                        .multilineTextAlignment(.center)
-                    
-                    Text("Please enable Face ID or Touch ID in device Settings")
-                        .font(.system(size: 12, weight: .regular))
-                        .foregroundColor(KingDesignTokens.Colors.secondaryText)
-                        .multilineTextAlignment(.center)
-                }
-                .padding(.horizontal, KingDesignTokens.Spacing.xl)
-                .padding(.bottom, KingDesignTokens.Spacing.md)
-            }
-            
-            // Action buttons - Professional style
-            VStack(spacing: KingDesignTokens.Spacing.md) {
-                // Primary CTA
+            .padding(.horizontal, KingDesignTokens.Spacing.lg)
+            .padding(.top, KingDesignTokens.Spacing.xl)
+            .padding(.bottom, 140)
+        }
+        .safeAreaInset(edge: .bottom) {
+            AuthenticationCTAContainer {
                 Button {
                     viewStore.authenticateWithBiometrics(
                         reason: "Enable biometric authentication for secure wallet access"
@@ -69,29 +57,27 @@ struct PremiumBiometricSetupView: View {
                                 .progressViewStyle(CircularProgressViewStyle(tint: .white))
                         }
                         Text(buttonTitle)
-                            .font(.system(size: 17, weight: .semibold))
+                            .font(KingDesignTokens.Typography.body)
+                            .fontWeight(.semibold)
                             .foregroundColor(KingDesignTokens.Colors.systemWhite)
                     }
                     .frame(maxWidth: .infinity)
-                    .frame(height: 50)
+                    .frame(height: 56)
                     .background(buttonBackground)
-                    .cornerRadius(12)
+                    .cornerRadius(KingDesignTokens.Radius.lg)
                 }
                 .disabled(viewStore.isLoading || !viewStore.biometricAvailable)
 
-                // Text link - subtle
                 Button {
                     viewStore.skipBiometricSetup()
                 } label: {
-                    Text("Skip for now")
-                        .font(.system(size: 16, weight: .medium))
+                    Text("나중에 설정")
+                        .font(KingDesignTokens.Typography.body)
                         .foregroundColor(KingDesignTokens.Colors.secondaryText)
+                        .frame(maxWidth: .infinity)
                 }
-                .padding(.top, KingDesignTokens.Spacing.sm)
                 .disabled(viewStore.isLoading)
             }
-            .padding(.horizontal, KingDesignTokens.Spacing.xl)
-            .padding(.bottom, KingDesignTokens.Spacing.xxxl)
         }
     }
 
