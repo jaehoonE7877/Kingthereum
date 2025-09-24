@@ -124,47 +124,46 @@ struct MnemonicImportView: View {
                         .frame(height: 2)
                 }
                 
-                // Action Buttons - Professional
-                VStack(spacing: KingDesignTokens.Spacing.md) {
-                    Button {
-                        validateAndImportWallet()
-                    } label: {
-                        HStack {
-                            if isValidating {
-                                ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                    .scaleEffect(0.8)
-                            }
-                            Text(isValidating ? "Importing..." : "Import Wallet")
-                                .font(.system(size: 17, weight: .semibold))
-                        }
-                        .foregroundColor(KingDesignTokens.Colors.systemWhite)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .background(isImportEnabled ? KingDesignTokens.Colors.accent : KingDesignTokens.Colors.border)
-                        .cornerRadius(12)
-                    }
-                    .disabled(!isImportEnabled || isValidating)
-                    
-                    Button {
-                        clearAllWords()
-                    } label: {
-                        Text("Clear all")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(KingDesignTokens.Colors.secondaryText)
-                    }
-                }
-                
                 // Security Notice
                 SecurityNoticeCard()
             }
             .padding(.horizontal, KingDesignTokens.Spacing.lg)
+            .padding(.bottom, 140)
         }
         .onAppear {
             focusedIndex = 0
         }
         .onChange(of: mnemonicWords) { _, _ in
             validationError = nil
+        }
+        .safeAreaInset(edge: .bottom) {
+            AuthenticationCTAContainer {
+                Button(action: validateAndImportWallet) {
+                    HStack {
+                        if isValidating {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .scaleEffect(0.8)
+                        }
+                        Text(isValidating ? "Importing..." : "Import Wallet")
+                            .font(.system(size: 17, weight: .semibold))
+                    }
+                    .foregroundColor(KingDesignTokens.Colors.systemWhite)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 50)
+                    .background(isImportEnabled ? KingDesignTokens.Colors.accent : KingDesignTokens.Colors.border)
+                    .cornerRadius(12)
+                }
+                .disabled(!isImportEnabled || isValidating)
+
+                Button(action: clearAllWords) {
+                    Text("Clear all")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(KingDesignTokens.Colors.secondaryText)
+                        .frame(maxWidth: .infinity)
+                }
+                .disabled(isValidating)
+            }
         }
     }
     

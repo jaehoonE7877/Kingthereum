@@ -59,7 +59,7 @@ struct PremiumWelcomeView: View {
             VStack(spacing: KingDesignTokens.Spacing.md) {
                 // Primary CTA - Create wallet
                 Button {
-                    viewStore.createWallet(named: "My Wallet")
+                    viewStore.requestFlow(.showMethodSelection)
                 } label: {
                     HStack {
                         Text("Create Wallet")

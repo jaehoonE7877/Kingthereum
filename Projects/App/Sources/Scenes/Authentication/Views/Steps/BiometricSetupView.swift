@@ -1,7 +1,5 @@
 import SwiftUI
 import DesignSystem
-import SecurityKit
-import Entity
 
 /// 🔐 Professional Biometric Setup
 struct PremiumBiometricSetupView: View {
