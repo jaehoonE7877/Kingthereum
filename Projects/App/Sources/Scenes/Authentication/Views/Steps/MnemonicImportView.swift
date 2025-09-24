@@ -6,7 +6,7 @@ import web3swift
 import Web3Core
 
 struct MnemonicImportView: View {
-    let viewStore: AuthenticationViewStore
+    @Bindable var viewStore: AuthenticationViewStore
     
     @State private var mnemonicWords: [String] = Array(repeating: "", count: 12)
     @State private var currentWordIndex = 0
@@ -262,8 +262,8 @@ struct MnemonicImportView: View {
             mnemonic: mnemonicString,
             pin: "" // PIN은 다음 단계에서 설정
         )
-        
-        viewStore.interactor?.importWalletFromMnemonic(request: request)
+
+        viewStore.importWallet(request: request)
         isValidating = false
     }
     

@@ -19,6 +19,8 @@ protocol AuthenticationDisplayLogic: AnyObject {
     func displayBiometricAvailability(viewModel: AuthenticationScene.CheckBiometricAvailability.ViewModel)
     func displayWalletCreationResult(viewModel: AuthenticationScene.CreateWallet.ViewModel)
     func displayWalletImportResult(viewModel: AuthenticationScene.ImportWallet.ViewModel)
+    func displayFlow(viewModel: AuthenticationScene.Flow.ViewModel)
+    func displayLoading(viewModel: AuthenticationScene.Loading.ViewModel)
 }
 
 // MARK: - View Store
@@ -28,11 +30,13 @@ protocol AuthenticationDisplayLogic: AnyObject {
 final class AuthenticationViewStore: AuthenticationDisplayLogic {
     // State
     weak var appCoordinator: AppCoordinator?
-    var currentStep: AuthenticationStep = .welcome
+    var currentStep: AuthenticationScene.Step = .welcome
     var errorMessage: String?
     var showMnemonicView = false
     var isLoading = false
     var biometricAvailable = false
+    var biometricIconName = "lock.fill"
+    var biometricDescription = ""
     var walletAddress: String?
     var mnemonic: String?
     
@@ -43,7 +47,7 @@ final class AuthenticationViewStore: AuthenticationDisplayLogic {
     var interactor: AuthenticationBusinessLogic?
     var presenter: AuthenticationPresentationLogic?
     var router: AuthenticationRoutingLogic?
-    
+
     init() {
         setupVIP()
     }
@@ -56,28 +60,75 @@ final class AuthenticationViewStore: AuthenticationDisplayLogic {
         self.interactor = interactor
         self.presenter = presenter  
         self.router = router
-        
+
         interactor.presenter = presenter
         presenter.viewController = self
     }
-    
+
     func clearError() {
         errorMessage = nil
     }
-    
+
+    func attach(coordinator: AppCoordinator) {
+        appCoordinator = coordinator
+    }
+
+    func requestFlow(_ action: AuthenticationScene.Flow.Action) {
+        let request = AuthenticationScene.Flow.Request(action: action)
+        interactor?.changeFlow(request: request)
+    }
+
+    func createWallet(named walletName: String) {
+        let request = AuthenticationScene.CreateWallet.Request(walletName: walletName)
+        interactor?.createWallet(request: request)
+    }
+
+    func checkBiometricAvailability() {
+        let request = AuthenticationScene.CheckBiometricAvailability.Request()
+        interactor?.checkBiometricAvailability(request: request)
+    }
+
+    func importWallet(request: AuthenticationScene.ImportWallet.Request) {
+        interactor?.importWalletFromMnemonic(request: request)
+    }
+
+    func setupPIN(pin: String) {
+        let request = AuthenticationScene.SetupPIN.Request(pin: pin)
+        interactor?.setupPIN(request: request)
+    }
+
+    func authenticateWithBiometrics(reason: String) {
+        let request = AuthenticationScene.AuthenticateWithBiometrics.Request(reason: reason)
+        interactor?.authenticateWithBiometrics(request: request)
+    }
+
+    func completeAuthentication() {
+        appCoordinator?.completeAuthentication()
+    }
+
+    func showError(_ message: String) {
+        errorMessage = message
+    }
+
+    func skipBiometricSetup() {
+        if !UserDefaults.standard.bool(forKey: "has_completed_biometric_setup") {
+            UserDefaults.standard.set(false, forKey: "biometric_enabled")
+            UserDefaults.standard.set(true, forKey: "has_completed_biometric_setup")
+        }
+        completeAuthentication()
+    }
+
     // MARK: - AuthenticationDisplayLogic
-    
+
     func displayPINSetupResult(viewModel: AuthenticationScene.SetupPIN.ViewModel) {
-        isLoading = false
         if viewModel.success {
-            currentStep = .biometricSetup
+            // Flow change handled via presenter
         } else {
             errorMessage = viewModel.errorMessage
         }
     }
-    
+
     func displayBiometricAuthenticationResult(viewModel: AuthenticationScene.AuthenticateWithBiometrics.ViewModel) {
-        isLoading = false
         if viewModel.success {
             appCoordinator?.completeAuthentication()
         } else {
@@ -93,50 +144,47 @@ final class AuthenticationViewStore: AuthenticationDisplayLogic {
             errorMessage = viewModel.errorMessage
         }
     }
-    
+
     func displayBiometricAvailability(viewModel: AuthenticationScene.CheckBiometricAvailability.ViewModel) {
         biometricAvailable = viewModel.isAvailable
+        biometricIconName = viewModel.biometricIcon
+        biometricDescription = viewModel.biometricTypeDescription
     }
-    
+
     func displayWalletCreationResult(viewModel: AuthenticationScene.CreateWallet.ViewModel) {
-        isLoading = false
         if viewModel.success {
             walletAddress = viewModel.walletAddress
             mnemonic = viewModel.mnemonic
-            currentStep = .walletCreation
+            // Flow change handled via presenter
         } else {
             errorMessage = viewModel.errorMessage
         }
     }
-    
+
     func displayWalletImportResult(viewModel: AuthenticationScene.ImportWallet.ViewModel) {
-        isLoading = false
         if viewModel.success {
             walletAddress = viewModel.walletAddress
-            currentStep = .pinSetup
+            // Flow change handled via presenter
         } else {
             errorMessage = viewModel.errorMessage
         }
     }
-}
 
-// MARK: - Authentication Steps
+    func displayFlow(viewModel: AuthenticationScene.Flow.ViewModel) {
+        currentStep = viewModel.step
+    }
 
-enum AuthenticationStep: String, CaseIterable {
-    case welcome = "welcome"
-    case methodSelection = "method_selection"
-    case pinSetup = "pin_setup"
-    case biometricSetup = "biometric_setup" 
-    case walletCreation = "wallet_creation"
-    case walletImport = "wallet_import"
-    case congratulations = "congratulations"
+    func displayLoading(viewModel: AuthenticationScene.Loading.ViewModel) {
+        isLoading = viewModel.isLoading
+    }
 }
 
 // MARK: - Main View
 
 struct AuthenticationView: View {
+    @EnvironmentObject private var appCoordinator: AppCoordinator
     @State private var viewStore = AuthenticationViewStore()
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -182,7 +230,9 @@ struct AuthenticationView: View {
             .animation(.easeInOut(duration: 0.3), value: viewStore.currentStep)
         }
         .onAppear {
-            checkBiometricAvailability()
+            viewStore.attach(coordinator: appCoordinator)
+            viewStore.requestFlow(.showWelcome)
+            viewStore.checkBiometricAvailability()
         }
     }
     
@@ -233,7 +283,7 @@ struct AuthenticationView: View {
                 
                 // Import Wallet Button  
                 Button {
-                    viewStore.currentStep = .walletImport
+                    viewStore.requestFlow(.showWalletImport)
                 } label: {
                     HStack {
                         Image(systemName: "arrow.clockwise.circle.fill")
@@ -338,7 +388,7 @@ struct AuthenticationView: View {
                     }
                     
                     Button {
-                        viewStore.currentStep = .pinSetup
+                        viewStore.requestFlow(.showPINSetup)
                     } label: {
                         Text("복구 구문 저장 완료")
                             .font(KingDesignTokens.Typography.body)
@@ -459,18 +509,11 @@ struct AuthenticationView: View {
     // MARK: - Actions
     
     private func createWallet() {
-        viewStore.isLoading = true
-        let request = AuthenticationScene.CreateWallet.Request(walletName: "My Wallet")
-        viewStore.interactor?.createWallet(request: request)
+        viewStore.createWallet(named: "My Wallet")
     }
-    
-    private func checkBiometricAvailability() {
-        let request = AuthenticationScene.CheckBiometricAvailability.Request()
-        viewStore.interactor?.checkBiometricAvailability(request: request)
-    }
-    
+
     private func completeSetup() {
-        viewStore.appCoordinator?.completeAuthentication()
+        viewStore.completeAuthentication()
     }
     
     private func copyMnemonicToClipboard(_ mnemonic: String) {

@@ -45,6 +45,7 @@ public final class DisplayModeService: DisplayModeServiceProtocol, ObservableObj
     
     /// UserDefaults 인스턴스 (테스트 가능성을 위해 주입 가능)
     private let userDefaults: UserDefaults
+    private let shouldApplyToSystem: Bool
     
     /// UserDefaults에서 사용할 키 이름
     private let displayModeKey = "DisplayMode"
@@ -60,8 +61,9 @@ public final class DisplayModeService: DisplayModeServiceProtocol, ObservableObj
     /// 시스템에 초기 테마를 적용합니다.
     /// 
     /// - Parameter userDefaults: 사용할 UserDefaults 인스턴스 (기본값: .standard)
-    public init(userDefaults: UserDefaults = .standard) {
+    public init(userDefaults: UserDefaults = .standard, applyToSystem: Bool = true) {
         self.userDefaults = userDefaults
+        self.shouldApplyToSystem = applyToSystem
         
         // UserDefaults에서 저장된 값 로드, 기본값은 system
         let savedModeRawValue = userDefaults.string(forKey: displayModeKey) ?? DisplayMode.system.rawValue
@@ -101,7 +103,11 @@ public final class DisplayModeService: DisplayModeServiceProtocol, ObservableObj
         Logger.info("디스플레이 모드 변경 요청: \(currentMode.rawValue) → \(mode.rawValue)")
         
         // SwiftUI 애니메이션과 함께 상태 업데이트
-        withAnimation(.easeInOut(duration: animationDuration)) {
+        if shouldApplyToSystem {
+            withAnimation(.easeInOut(duration: animationDuration)) {
+                currentMode = mode
+            }
+        } else {
             currentMode = mode
         }
         
@@ -131,6 +137,8 @@ public final class DisplayModeService: DisplayModeServiceProtocol, ObservableObj
     /// 
     /// - Parameter mode: 적용할 디스플레이 모드
     private func applyDisplayModeToSystem(_ mode: DisplayMode) {
+        guard shouldApplyToSystem else { return }
+
         Logger.debug("시스템에 디스플레이 모드 적용 중: \(mode.rawValue)")
         
         // 적용할 UIUserInterfaceStyle 결정

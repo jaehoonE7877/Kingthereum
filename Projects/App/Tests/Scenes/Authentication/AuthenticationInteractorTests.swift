@@ -75,6 +75,22 @@ struct AuthenticationInteractorTests {
             presentErrorCalled = true
             presentErrorResponse = response
         }
+
+        var presentFlowStepCalled = false
+        var lastFlowResponse: AuthenticationScene.Flow.Response?
+
+        func presentFlowStep(response: AuthenticationScene.Flow.Response) {
+            presentFlowStepCalled = true
+            lastFlowResponse = response
+        }
+
+        var presentLoadingCalled = false
+        var lastLoadingResponse: AuthenticationScene.Loading.Response?
+
+        func presentLoading(response: AuthenticationScene.Loading.Response) {
+            presentLoadingCalled = true
+            lastLoadingResponse = response
+        }
     }
     
     class WorkerSpy: AuthenticationWorkerProtocol {

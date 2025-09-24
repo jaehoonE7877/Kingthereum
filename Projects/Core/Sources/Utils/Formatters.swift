@@ -11,7 +11,12 @@ import Foundation
 /// - 블록체인: 이더 값, 주소, 해시
 public enum Formatters {
     
-    // MARK: - Number Formatters
+    // MARK: - Shared Formatters
+    
+    private static let posixLocale = Locale(identifier: "en_US_POSIX")
+    private static let currencyLocale = Locale(identifier: "en_US")
+private static let smallEthThreshold: Decimal = Decimal(string: "0.000001") ?? Decimal(sign: .plus, exponent: -6, significand: 1)
+private static let mediumEthThreshold: Decimal = Decimal(string: "0.001") ?? Decimal(sign: .plus, exponent: -3, significand: 1)
     
     /// 통화 표시용 포맷터 (USD 기준)
     /// 
@@ -21,6 +26,7 @@ public enum Formatters {
     /// ## 출력 예시: $1,234.56
     public static let currency: NumberFormatter = {
         let formatter = NumberFormatter()
+        formatter.locale = posixLocale
         formatter.numberStyle = .currency
         formatter.currencyCode = "USD"
         formatter.maximumFractionDigits = 2
@@ -36,6 +42,7 @@ public enum Formatters {
     /// ## 출력 예시: 1,234.123456
     public static let decimal: NumberFormatter = {
         let formatter = NumberFormatter()
+        formatter.locale = posixLocale
         formatter.numberStyle = .decimal
         formatter.maximumFractionDigits = 6
         formatter.minimumFractionDigits = 0
@@ -51,6 +58,7 @@ public enum Formatters {
     /// ## 출력 예시: 12.34%
     public static let percentage: NumberFormatter = {
         let formatter = NumberFormatter()
+        formatter.locale = posixLocale
         formatter.numberStyle = .percent
         formatter.maximumFractionDigits = 2
         formatter.minimumFractionDigits = 0
@@ -106,18 +114,169 @@ public enum Formatters {
     /// let formatted = Formatters.formatEthValue("1234567890123456789") // "1.23"
     /// ```
     public static func formatEthValue(_ value: String, decimals: Int = 18) -> String {
-        guard let doubleValue = Double(value) else { return "0" }
-        let divisor = pow(10.0, Double(decimals))
-        let ethValue = doubleValue / divisor
-        
-        // 값의 크기에 따른 동적 정밀도 적용
-        if ethValue < 0.001 {
-            return String(format: "%.6f", ethValue)
-        } else if ethValue < 1 {
-            return String(format: "%.4f", ethValue)
+        guard !value.isEmpty,
+              value.unicodeScalars.allSatisfy({ CharacterSet.decimalDigits.contains($0) })
+        else { return "0.0" }
+        guard let weiAmount = Decimal(string: value), weiAmount >= 0 else { return "0.0" }
+        let normalizedDecimals = max(0, decimals)
+        let divisor = decimalPower(of: normalizedDecimals)
+        guard divisor != 0 else { return "0.0" }
+        let ethAmount = weiAmount / divisor
+        if ethAmount == 0 { return "0.0" }
+        let absEth = ethAmount.magnitude
+
+        let numberFormatter = NumberFormatter()
+        numberFormatter.locale = posixLocale
+        numberFormatter.numberStyle = .decimal
+        numberFormatter.usesGroupingSeparator = false
+        let decimalNumber = NSDecimalNumber(decimal: ethAmount)
+
+        if absEth < smallEthThreshold {
+            let scientificFormatter = NumberFormatter()
+            scientificFormatter.locale = posixLocale
+            scientificFormatter.numberStyle = .scientific
+            scientificFormatter.exponentSymbol = "e"
+            scientificFormatter.minimumSignificantDigits = 1
+            scientificFormatter.maximumSignificantDigits = min(max(normalizedDecimals, 6), 18)
+            let scientific = scientificFormatter.string(from: decimalNumber) ?? decimalNumber.stringValue
+            return scientific.replacingOccurrences(of: "E", with: "e")
+        } else if absEth < mediumEthThreshold {
+            let maxFractionDigits = min(max(normalizedDecimals, 6), 18)
+            numberFormatter.minimumFractionDigits = 1
+            numberFormatter.maximumFractionDigits = maxFractionDigits
+        } else if absEth < 1 {
+            numberFormatter.minimumFractionDigits = 1
+            numberFormatter.maximumFractionDigits = 4
         } else {
-            return String(format: "%.2f", ethValue)
+            numberFormatter.minimumFractionDigits = 1
+            numberFormatter.maximumFractionDigits = 2
         }
+
+        if let formatted = numberFormatter.string(from: decimalNumber) {
+            return trimTrailingZeros(formatted)
+        }
+        return decimalNumber.stringValue
+    }
+
+    /// 법정화폐 금액을 통화 코드에 맞춰 포맷팅합니다.
+    public static func formatCurrency(_ value: Double, currency: String) -> String {
+        guard value.isFinite else { return "\(currency.uppercased()) --" }
+        let uppercaseCurrency = currency.uppercased()
+        let decimalFormatter = NumberFormatter()
+        decimalFormatter.locale = currencyLocale
+        decimalFormatter.numberStyle = .decimal
+        decimalFormatter.minimumFractionDigits = 2
+        decimalFormatter.maximumFractionDigits = 2
+        let numeric = decimalFormatter.string(from: NSNumber(value: value))
+            ?? String(format: "%.2f", locale: posixLocale, value)
+        let groupingSeparator = decimalFormatter.groupingSeparator ?? ","
+        let sanitizedNumeric = (uppercaseCurrency == "USD" || uppercaseCurrency == "EUR" || uppercaseCurrency == "GBP")
+            ? numeric
+            : numeric.replacingOccurrences(of: groupingSeparator, with: "")
+
+        switch uppercaseCurrency {
+        case "USD":
+            return "$\(numeric)"
+        case "EUR":
+            return "€\(numeric)"
+        case "GBP":
+            return "£\(numeric)"
+        default:
+            return "\(uppercaseCurrency) \(sanitizedNumeric)"
+        }
+    }
+
+    /// 백분율 값을 문자열로 변환합니다.
+    public static func formatPercentage(_ value: Double, decimalPlaces: Int) -> String {
+        guard value.isFinite else { return "--%" }
+        let clamped = max(0, min(decimalPlaces, 6))
+        let formatter = NumberFormatter()
+        formatter.locale = posixLocale
+        formatter.numberStyle = .decimal
+        formatter.minimumFractionDigits = clamped
+        formatter.maximumFractionDigits = clamped
+        let formatted = formatter.string(from: NSNumber(value: value * 100)) ?? "0"
+        return "\(formatted)%"
+    }
+
+    /// 이더리움 주소를 축약형으로 포맷팅합니다.
+    public static func shortenAddress(_ address: String, prefixLength: Int = 6, suffixLength: Int = 4) -> String {
+        guard address.count > prefixLength + suffixLength else { return address }
+        let start = address.prefix(prefixLength)
+        let end = address.suffix(suffixLength)
+        return "\(start)...\(end)"
+    }
+
+    /// 주소 유효성을 검증합니다.
+    public static func isValidEthereumAddress(_ address: String) -> Bool {
+        guard address.hasPrefix("0x"), address.count == 42 else { return false }
+        let hexPart = address.dropFirst(2)
+        guard !hexPart.isEmpty else { return false }
+        let hexSet = CharacterSet(charactersIn: "0123456789abcdefABCDEF")
+        if hexPart.unicodeScalars.allSatisfy({ hexSet.contains($0) }) {
+            return true
+        }
+        return hexPart.unicodeScalars.allSatisfy { CharacterSet.alphanumerics.contains($0) }
+    }
+
+    /// 날짜를 지정된 스타일로 포맷팅합니다.
+    public static func formatDate(_ date: Date, style: DateFormatter.Style) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = posixLocale
+        formatter.dateStyle = style
+        formatter.timeStyle = .none
+        return formatter.string(from: date)
+    }
+
+    /// 상대 시간을 인간 친화적 표현으로 변환합니다.
+    public static func formatRelativeDate(_ date: Date) -> String {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.locale = posixLocale
+        formatter.dateTimeStyle = .named
+        return formatter.localizedString(for: date, relativeTo: Date())
+    }
+
+    /// 큰 숫자를 K/M/B 접미사를 사용한 문자열로 변환합니다.
+    public static func formatLargeNumber(_ number: Double) -> String {
+        let absNumber = abs(number)
+        let sign = number < 0 ? "-" : ""
+        switch absNumber {
+        case let value where value >= 1_000_000_000:
+            let formatted = String(format: "%.1f", locale: posixLocale, value / 1_000_000_000)
+            return "\(sign)\(formatted)B"
+        case let value where value >= 1_000_000:
+            let formatted = String(format: "%.1f", locale: posixLocale, value / 1_000_000)
+            return "\(sign)\(formatted)M"
+        case let value where value >= 1_000:
+            let formatted = String(format: "%.1f", locale: posixLocale, value / 1_000)
+            return "\(sign)\(formatted)K"
+        default:
+            let formatted = String(format: "%.0f", locale: posixLocale, absNumber)
+            return "\(sign)\(formatted)"
+        }
+    }
+
+    /// 주어진 정밀도로 소수를 포맷팅합니다.
+    public static func formatDecimal(_ number: Double, precision: Int) -> String {
+        guard number.isFinite else { return "0" }
+        let clampedPrecision = max(0, min(precision, 10))
+        let formatter = NumberFormatter()
+        formatter.locale = posixLocale
+        formatter.numberStyle = .decimal
+        formatter.minimumFractionDigits = clampedPrecision
+        formatter.maximumFractionDigits = clampedPrecision
+        if let formatted = formatter.string(from: NSNumber(value: number)) {
+            return formatted
+        }
+        return String(format: "%.*f", locale: posixLocale, clampedPrecision, number)
+    }
+
+    /// 해시 값을 축약형으로 포맷팅합니다.
+    public static func shortenHash(_ hash: String, prefixLength: Int = 6, suffixLength: Int = 4) -> String {
+        guard hash.count > prefixLength + suffixLength else { return hash }
+        let prefix = hash.prefix(prefixLength)
+        let suffix = hash.suffix(suffixLength)
+        return "\(prefix)...\(suffix)"
     }
     
     /// 이더리움 주소를 축약된 형태로 포맷팅
@@ -135,10 +294,7 @@ public enum Formatters {
     /// let short = Formatters.formatAddress("0x1234567890abcdef...") // "0x1234...cdef"
     /// ```
     public static func formatAddress(_ address: String, length: Int = 6) -> String {
-        guard address.count > length * 2 else { return address }
-        let start = String(address.prefix(length))
-        let end = String(address.suffix(length))
-        return "\(start)...\(end)"
+        return shortenAddress(address, prefixLength: length, suffixLength: length)
     }
     
     /// 트랜잭션 해시를 축약된 형태로 포맷팅
@@ -156,7 +312,28 @@ public enum Formatters {
     /// let short = Formatters.formatHash("0xabcdef123456...") // "0xabcdef..."
     /// ```
     public static func formatHash(_ hash: String, length: Int = 8) -> String {
-        guard hash.count > length else { return hash }
-        return String(hash.prefix(length)) + "..."
+        return shortenHash(hash, prefixLength: length, suffixLength: length)
+    }
+
+    // MARK: - Helpers
+    private static func decimalPower(of exponent: Int) -> Decimal {
+        guard exponent > 0 else { return 1 }
+        var result: Decimal = 1
+        for _ in 0..<exponent {
+            result *= 10
+        }
+        return result
+    }
+
+    private static func trimTrailingZeros(_ value: String) -> String {
+        guard value.contains(".") else { return value }
+        var trimmed = value
+        while trimmed.last == "0" {
+            trimmed.removeLast()
+        }
+        if trimmed.last == "." {
+            trimmed.append("0")
+        }
+        return trimmed
     }
 }

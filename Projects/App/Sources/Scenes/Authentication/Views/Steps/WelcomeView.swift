@@ -4,7 +4,7 @@ import Entity
 
 /// 🔐 Premium Fintech Welcome - Minimalist Design
 struct PremiumWelcomeView: View {
-    @State var viewStore: AuthenticationViewStore
+    @Bindable var viewStore: AuthenticationViewStore
     
     var body: some View {
         VStack(spacing: 0) {
@@ -59,7 +59,7 @@ struct PremiumWelcomeView: View {
             VStack(spacing: KingDesignTokens.Spacing.md) {
                 // Primary CTA - Create wallet
                 Button {
-                    createWallet()
+                    viewStore.createWallet(named: "My Wallet")
                 } label: {
                     HStack {
                         Text("Create Wallet")
@@ -76,7 +76,7 @@ struct PremiumWelcomeView: View {
                 
                 // Secondary CTA - Import wallet
                 Button {
-                    importWallet()
+                    viewStore.requestFlow(.showWalletImport)
                 } label: {
                     HStack {
                         Text("Import Wallet")
@@ -116,15 +116,6 @@ struct PremiumWelcomeView: View {
     
     // MARK: - Private Methods
     
-    private func importWallet() {
-        viewStore.currentStep = .walletImport
-    }
-    
-    private func createWallet() {
-        viewStore.isLoading = true
-        let request = AuthenticationScene.CreateWallet.Request(walletName: "My Wallet")
-        viewStore.interactor?.createWallet(request: request)
-    }
 }
 
 // MARK: - Supporting Views

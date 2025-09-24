@@ -3,7 +3,7 @@ import DesignSystem
 
 /// 🔐 Professional PIN Setup
 struct PremiumPINSetupView: View {
-    @State var viewStore: AuthenticationViewStore
+    @Bindable var viewStore: AuthenticationViewStore
 
     @State private var pinCode = ""
     @State private var confirmPIN = ""
@@ -75,14 +75,14 @@ struct PremiumPINSetupView: View {
     
     private func handlePINConfirmation(_ pin: String) {
         if pin == pinCode {
-            viewStore.currentStep = .biometricSetup
+            viewStore.setupPIN(pin: pinCode)
         } else {
             withAnimation(KingDesignTokens.Animation.normal) {
                 isConfirmingPIN = false
                 pinCode = ""
                 confirmPIN = ""
             }
-            viewStore.errorMessage = "PIN이 일치하지 않습니다. 다시 설정해주세요."
+            viewStore.showError("PIN이 일치하지 않습니다. 다시 설정해주세요.")
         }
     }
 }
@@ -142,4 +142,3 @@ struct PremiumPINField: View {
         }
     }
 }
-

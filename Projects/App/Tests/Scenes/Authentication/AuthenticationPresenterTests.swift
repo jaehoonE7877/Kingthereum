@@ -68,10 +68,26 @@ struct AuthenticationPresenterTests {
         
         var displayErrorCalled = false
         var displayErrorViewModel: AuthenticationScene.Error.ViewModel?
-        
+
         func displayError(viewModel: AuthenticationScene.Error.ViewModel) {
             displayErrorCalled = true
             displayErrorViewModel = viewModel
+        }
+
+        var displayFlowCalled = false
+        var flowViewModel: AuthenticationScene.Flow.ViewModel?
+
+        func displayFlow(viewModel: AuthenticationScene.Flow.ViewModel) {
+            displayFlowCalled = true
+            flowViewModel = viewModel
+        }
+
+        var displayLoadingCalled = false
+        var loadingViewModel: AuthenticationScene.Loading.ViewModel?
+
+        func displayLoading(viewModel: AuthenticationScene.Loading.ViewModel) {
+            displayLoadingCalled = true
+            loadingViewModel = viewModel
         }
     }
     

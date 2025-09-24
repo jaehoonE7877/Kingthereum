@@ -2,7 +2,73 @@ import Foundation
 
 /// 인증 Scene의 VIP 모델들
 public enum AuthenticationScene {
-    
+
+    // MARK: - Flow Step
+
+    public enum Step: String, Equatable, Sendable {
+        case welcome
+        case methodSelection
+        case pinSetup
+        case biometricSetup
+        case walletCreation
+        case walletImport
+        case congratulations
+    }
+
+    public enum Flow {
+        public enum Action: Equatable {
+            case showWelcome
+            case showMethodSelection
+            case showWalletCreation
+            case showWalletImport
+            case showPINSetup
+            case showBiometricSetup
+            case showCongratulations
+        }
+
+        public struct Request {
+            public let action: Action
+
+            public init(action: Action) {
+                self.action = action
+            }
+        }
+
+        public struct Response: Sendable {
+            public let step: Step
+
+            public init(step: Step) {
+                self.step = step
+            }
+        }
+
+        public struct ViewModel {
+            public let step: Step
+
+            public init(step: Step) {
+                self.step = step
+            }
+        }
+    }
+
+    public enum Loading {
+        public struct Response: Sendable {
+            public let isLoading: Bool
+
+            public init(isLoading: Bool) {
+                self.isLoading = isLoading
+            }
+        }
+
+        public struct ViewModel {
+            public let isLoading: Bool
+
+            public init(isLoading: Bool) {
+                self.isLoading = isLoading
+            }
+        }
+    }
+
     // MARK: - Use Cases
     public enum SetupPIN {
         public struct Request {

@@ -11,6 +11,8 @@ protocol AuthenticationPresentationLogic {
     func presentBiometricAvailability(response: AuthenticationScene.CheckBiometricAvailability.Response)
     func presentWalletCreationResult(response: AuthenticationScene.CreateWallet.Response)
     func presentWalletImportResult(response: AuthenticationScene.ImportWallet.Response)
+    func presentFlowStep(response: AuthenticationScene.Flow.Response)
+    func presentLoading(response: AuthenticationScene.Loading.Response)
 }
 
 @MainActor
@@ -80,5 +82,15 @@ final class AuthenticationPresenter: AuthenticationPresentationLogic {
             errorMessage: response.error?.localizedDescription
         )
         viewController?.displayWalletImportResult(viewModel: displayModel)
+    }
+
+    func presentFlowStep(response: AuthenticationScene.Flow.Response) {
+        let viewModel = AuthenticationScene.Flow.ViewModel(step: response.step)
+        viewController?.displayFlow(viewModel: viewModel)
+    }
+
+    func presentLoading(response: AuthenticationScene.Loading.Response) {
+        let viewModel = AuthenticationScene.Loading.ViewModel(isLoading: response.isLoading)
+        viewController?.displayLoading(viewModel: viewModel)
     }
 }
