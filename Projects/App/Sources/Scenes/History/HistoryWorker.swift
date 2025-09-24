@@ -190,20 +190,21 @@ public actor HistoryService: HistoryServiceProtocol {
         // Etherscan은 페이지 기반이므로 offset을 page로 변환
         let page = (offset / limit) + 1
         
-        // 일반 ETH 거래와 토큰 거래를 동시에 가져옴
-        async let ethTransactions = etherscanService.getTransactionHistory(
+        // 순차적으로 API 요청 (Rate limit 방지)
+        let ethResponse = try await etherscanService.getTransactionHistory(
             address: walletAddress,
             page: page,
             offset: limit
         )
         
-        async let tokenTransactions = etherscanService.getTokenTransferHistory(
+        // Rate limit 방지를 위한 딜레이 (2req/sec 제한 준수)
+        try await Task.sleep(nanoseconds: 600_000_000) // 0.6초 대기
+        
+        let tokenResponse = try await etherscanService.getTokenTransferHistory(
             address: walletAddress,
             page: page,
             offset: limit
         )
-        
-        let (ethResponse, tokenResponse) = try await (ethTransactions, tokenTransactions)
         
         // 응답 유효성 검사 - "No transactions found"는 정상 응답
         if ethResponse.message.lowercased().contains("no transactions found") {

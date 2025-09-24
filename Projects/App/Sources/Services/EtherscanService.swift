@@ -28,7 +28,7 @@ public final class EtherscanService {
         }()
         static let requestTimeout: TimeInterval = 15.0
         static let maxRetries = 3
-        static let rateLimitDelay: TimeInterval = 0.2 // 5 requests/second
+        static let rateLimitDelay: TimeInterval = 0.6 // 2 requests/second (Etherscan limit compliance)
     }
     
     // MARK: - Core Properties
