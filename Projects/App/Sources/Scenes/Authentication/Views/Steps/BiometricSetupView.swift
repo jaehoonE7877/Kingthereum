@@ -16,7 +16,7 @@ struct PremiumBiometricSetupView: View {
                             .padding(.bottom, KingDesignTokens.Spacing.sm)
 
                         Text("생체 인증 연결")
-                            .font(KingDesignTokens.Typography.displayS)
+                            .font(KingDesignTokens.Typography.displayM)
                             .foregroundColor(KingDesignTokens.Colors.primaryText)
 
                         Text(biometricDescription)

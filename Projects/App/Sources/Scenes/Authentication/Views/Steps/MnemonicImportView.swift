@@ -29,7 +29,7 @@ struct MnemonicImportView: View {
 
                         VStack(spacing: KingDesignTokens.Spacing.xs) {
                             Text("지갑 복구")
-                                .font(KingDesignTokens.Typography.displayS)
+                                .font(KingDesignTokens.Typography.displayM)
                                 .foregroundColor(KingDesignTokens.Colors.primaryText)
 
                             Text("12개 단어 복구 구문을 순서대로 입력하세요.")

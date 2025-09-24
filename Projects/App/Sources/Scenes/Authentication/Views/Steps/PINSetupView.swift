@@ -20,7 +20,7 @@ struct PremiumPINSetupView: View {
                             .padding(.bottom, KingDesignTokens.Spacing.sm)
 
                         Text(isConfirmingPIN ? "PIN 확인" : "PIN 생성")
-                            .font(KingDesignTokens.Typography.displayS)
+                            .font(KingDesignTokens.Typography.displayM)
                             .foregroundColor(KingDesignTokens.Colors.primaryText)
 
                         Text(isConfirmingPIN ? "같은 PIN을 다시 입력해 주세요." : "6자리 숫자로 PIN을 설정하세요.")

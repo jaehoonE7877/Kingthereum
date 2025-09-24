@@ -69,42 +69,6 @@ final class AuthenticationViewStore: AuthenticationDisplayLogic {
         presenter.viewController = self
     }
 
-    @ViewBuilder
-    private func methodOption(icon: String, title: String, subtitle: String, accentColor: Color, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            AuthenticationGlassCard {
-                HStack(alignment: .center, spacing: KingDesignTokens.Spacing.md) {
-                    Image(systemName: icon)
-                        .font(.system(size: 24, weight: .semibold))
-                        .foregroundColor(accentColor)
-                        .frame(width: 48, height: 48)
-                        .background(
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(accentColor.opacity(0.12))
-                        )
-
-                    VStack(alignment: .leading, spacing: KingDesignTokens.Spacing.xs) {
-                        Text(title)
-                            .font(KingDesignTokens.Typography.body)
-                            .fontWeight(.semibold)
-                            .foregroundColor(KingDesignTokens.Colors.primaryText)
-
-                        Text(subtitle)
-                            .font(KingDesignTokens.Typography.caption)
-                            .foregroundColor(KingDesignTokens.Colors.secondaryText)
-                    }
-
-                    Spacer()
-
-                    Image(systemName: "arrow.forward.circle.fill")
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(accentColor)
-                }
-            }
-        }
-        .buttonStyle(.plain)
-    }
-
     func clearError() {
         errorMessage = nil
     }
@@ -264,10 +228,10 @@ struct AuthenticationView: View {
     @State private var viewStore = AuthenticationViewStore()
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                let palette = palette(for: viewStore.currentStep)
+        let palette = palette(for: viewStore.currentStep)
 
+        return NavigationStack {
+            ZStack {
                 backgroundGradient(for: palette)
                     .ignoresSafeArea()
 
@@ -440,6 +404,42 @@ struct AuthenticationView: View {
         return Double(index) / Double(orderedSteps.count - 1)
     }
 
+    @ViewBuilder
+    private func methodOption(icon: String, title: String, subtitle: String, accentColor: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            AuthenticationGlassCard {
+                HStack(alignment: .center, spacing: KingDesignTokens.Spacing.md) {
+                    Image(systemName: icon)
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundColor(accentColor)
+                        .frame(width: 48, height: 48)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .fill(accentColor.opacity(0.12))
+                        )
+
+                    VStack(alignment: .leading, spacing: KingDesignTokens.Spacing.xs) {
+                        Text(title)
+                            .font(KingDesignTokens.Typography.body)
+                            .fontWeight(.semibold)
+                            .foregroundColor(KingDesignTokens.Colors.primaryText)
+
+                        Text(subtitle)
+                            .font(KingDesignTokens.Typography.caption)
+                            .foregroundColor(KingDesignTokens.Colors.secondaryText)
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "arrow.forward.circle.fill")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(accentColor)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
     // MARK: - Child Views
 
     @ViewBuilder
@@ -469,7 +469,7 @@ struct AuthenticationView: View {
                 AuthenticationGlassCard {
                     VStack(alignment: .leading, spacing: KingDesignTokens.Spacing.sm) {
                         Text("어떤 방법으로 시작할까요?")
-                            .font(KingDesignTokens.Typography.displayS)
+                            .font(KingDesignTokens.Typography.displayM)
                             .foregroundColor(KingDesignTokens.Colors.primaryText)
 
                         Text("지갑 생성은 새로운 키쌍을 만들고, 지갑 복구는 기존 복구 구문을 불러옵니다.")
@@ -520,7 +520,7 @@ struct AuthenticationView: View {
                 AuthenticationGlassCard {
                     VStack(alignment: .leading, spacing: KingDesignTokens.Spacing.sm) {
                         Text("지갑 생성 완료")
-                            .font(KingDesignTokens.Typography.displayS)
+                            .font(KingDesignTokens.Typography.displayM)
                             .foregroundColor(KingDesignTokens.Colors.primaryText)
 
                         Text("새로 발급된 주소와 복구 구문을 안전한 곳에 보관하세요.")
@@ -813,7 +813,7 @@ private struct AuthenticationNavigationBar: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(metadata.title)
-                    .font(KingDesignTokens.Typography.displayS)
+                    .font(KingDesignTokens.Typography.displayM)
                     .foregroundColor(KingDesignTokens.Colors.primaryText)
 
                 if let subtitle = metadata.subtitle {
@@ -866,4 +866,32 @@ private struct StepMetadata {
 private struct StepPalette {
     let background: [Color]
     let accent: Color
+}
+
+// MARK: - Helper Extensions
+private extension Color {
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let a, r, g, b: UInt64
+        switch hex.count {
+        case 3: // RGB (12-bit)
+            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+        case 6: // RGB (24-bit)
+            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8: // ARGB (32-bit)
+            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default:
+            (a, r, g, b) = (1, 1, 1, 0)
+        }
+
+        self.init(
+            .sRGB,
+            red: Double(r) / 255,
+            green: Double(g) / 255,
+            blue: Double(b) / 255,
+            opacity: Double(a) / 255
+        )
+    }
 }
