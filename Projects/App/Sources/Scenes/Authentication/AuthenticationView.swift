@@ -266,7 +266,12 @@ struct AuthenticationView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                backgroundGradient
+                let palette = palette(for: viewStore.currentStep)
+
+                backgroundGradient(for: palette)
+                    .ignoresSafeArea()
+
+                heroBackdrop(for: palette)
                     .ignoresSafeArea()
 
                 // Content
@@ -294,6 +299,7 @@ struct AuthenticationView: View {
                     metadata: metadata(for: viewStore.currentStep),
                     progress: progress(for: viewStore.currentStep),
                     canGoBack: viewStore.canGoBack,
+                    accentColor: palette.accent,
                     onBack: viewStore.goBack
                 )
             }
@@ -306,15 +312,25 @@ struct AuthenticationView: View {
         .scrollDismissesKeyboard(.interactively)
     }
 
-    private var backgroundGradient: LinearGradient {
+    private func backgroundGradient(for palette: StepPalette) -> LinearGradient {
         LinearGradient(
-            colors: [
-                KingDesignTokens.Colors.background,
-                KingDesignTokens.Colors.surface.opacity(0.4)
-            ],
+            colors: palette.background,
             startPoint: .topLeading,
             endPoint: .bottomTrailing
         )
+    }
+
+    @ViewBuilder
+    private func heroBackdrop(for palette: StepPalette) -> some View {
+        RadialGradient(
+            colors: [palette.accent.opacity(0.35), Color.clear],
+            center: .topTrailing,
+            startRadius: 40,
+            endRadius: 320
+        )
+        .blur(radius: 20)
+        .offset(x: 60, y: -120)
+        .transition(.opacity)
     }
 
     private let orderedSteps: [AuthenticationScene.Step] = [
@@ -374,17 +390,54 @@ struct AuthenticationView: View {
         }
     }
 
+    private func palette(for step: AuthenticationScene.Step) -> StepPalette {
+        switch step {
+        case .welcome:
+            return StepPalette(
+                background: [
+                    Color(hex: "#0F172A"),
+                    Color(hex: "#1F2937")
+                ],
+                accent: Color(hex: "#F59E0B")
+            )
+        case .methodSelection:
+            return StepPalette(
+                background: [Color(hex: "#1F2937"), Color(hex: "#111827")],
+                accent: Color(hex: "#38BDF8")
+            )
+        case .walletCreation:
+            return StepPalette(
+                background: [Color(hex: "#111827"), Color(hex: "#0F172A")],
+                accent: Color(hex: "#8B5CF6")
+            )
+        case .walletImport:
+            return StepPalette(
+                background: [Color(hex: "#0F172A"), Color(hex: "#020617")],
+                accent: Color(hex: "#22D3EE")
+            )
+        case .pinSetup:
+            return StepPalette(
+                background: [Color(hex: "#111827"), Color(hex: "#1E1B4B")],
+                accent: Color(hex: "#F97316")
+            )
+        case .biometricSetup:
+            return StepPalette(
+                background: [Color(hex: "#0F172A"), Color(hex: "#0B1120")],
+                accent: Color(hex: "#34D399")
+            )
+        case .congratulations:
+            return StepPalette(
+                background: [Color(hex: "#0F172A"), Color(hex: "#1F2937")],
+                accent: Color(hex: "#FACC15")
+            )
+        }
+    }
+
     private func progress(for step: AuthenticationScene.Step) -> Double {
         guard let index = orderedSteps.firstIndex(of: step), orderedSteps.count > 1 else {
             return 0
         }
         return Double(index) / Double(orderedSteps.count - 1)
-    }
-
-    private struct StepMetadata {
-        let title: String
-        let subtitle: String?
-        let iconSystemName: String?
     }
 
     // MARK: - Child Views
@@ -490,7 +543,7 @@ struct AuthenticationView: View {
                                     .textSelection(.enabled)
                                 Spacer()
                                 Button {
-                                    UIPasteboard.general.string = address
+                                    copyAddressToClipboard(address)
                                 } label: {
                                     Image(systemName: "doc.on.doc.fill")
                                         .font(.system(size: 16, weight: .semibold))
@@ -680,7 +733,19 @@ struct AuthenticationView: View {
     private func completeSetup() {
         viewStore.completeAuthentication()
     }
-    
+
+    private func copyAddressToClipboard(_ address: String) {
+        UIPasteboard.general.string = address
+        KingToastManager.shared.show(
+            KingToastItem(
+                type: .success,
+                title: "주소 복사 완료",
+                message: "지갑 주소가 클립보드에 저장되었습니다",
+                duration: 2.5
+            )
+        )
+    }
+
     private func copyMnemonicToClipboard(_ mnemonic: String) {
         // 클립보드에 복사
         UIPasteboard.general.string = mnemonic
@@ -709,9 +774,10 @@ struct AuthenticationView: View {
 }
 
 private struct AuthenticationNavigationBar: View {
-    let metadata: AuthenticationView.StepMetadata
+    let metadata: StepMetadata
     let progress: Double
     let canGoBack: Bool
+    let accentColor: Color
     let onBack: () -> Void
 
     var body: some View {
@@ -721,11 +787,11 @@ private struct AuthenticationNavigationBar: View {
                     Button(action: onBack) {
                         Image(systemName: "chevron.left")
                             .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(KingDesignTokens.Colors.primaryText)
+                            .foregroundColor(accentColor)
                             .frame(width: 38, height: 38)
                             .background(
                                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                    .fill(KingDesignTokens.Colors.surface.opacity(0.6))
+                                    .fill(accentColor.opacity(0.18))
                             )
                     }
                     .buttonStyle(.plain)
@@ -736,11 +802,11 @@ private struct AuthenticationNavigationBar: View {
                 if let icon = metadata.iconSystemName {
                     Image(systemName: icon)
                         .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(KingDesignTokens.Colors.accent)
+                        .foregroundColor(accentColor)
                         .padding(10)
                         .background(
                             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(KingDesignTokens.Colors.surface.opacity(0.4))
+                                .fill(accentColor.opacity(0.16))
                         )
                 }
             }
@@ -758,10 +824,16 @@ private struct AuthenticationNavigationBar: View {
             }
 
             if progress > 0 {
-                ProgressView(value: progress)
-                    .progressViewStyle(.linear)
-                    .tint(KingDesignTokens.Colors.accent)
-                    .frame(maxWidth: .infinity)
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .fill(KingDesignTokens.Colors.surface.opacity(0.45))
+                        .frame(height: 6)
+
+                    Capsule()
+                        .fill(LinearGradient(colors: [accentColor, accentColor.opacity(0.6)], startPoint: .leading, endPoint: .trailing))
+                        .frame(width: max(CGFloat(progress) * UIScreen.main.bounds.width * 0.35, 12), height: 6)
+                        .animation(.easeInOut(duration: 0.35), value: progress)
+                }
             }
         }
         .padding(.horizontal, KingDesignTokens.Spacing.lg)
@@ -783,4 +855,15 @@ private struct AuthenticationNavigationBar: View {
             )
         )
     }
+}
+
+private struct StepMetadata {
+    let title: String
+    let subtitle: String?
+    let iconSystemName: String?
+}
+
+private struct StepPalette {
+    let background: [Color]
+    let accent: Color
 }
